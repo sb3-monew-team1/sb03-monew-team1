@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "postinstall": "husky install",
+    "prepare": "husky install",
+    "postinstall": "chmod +x .husky/* || true",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
