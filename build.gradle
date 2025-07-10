@@ -16,23 +16,23 @@ jacocoTestReport {
         html.required = true
     }
 
+    def excludedPatterns = [
+            "**/*Application.class",
+            "**/config/**",
+            "**/dto/**",
+            "**/entity/**",
+            "**/exception/**",
+            "**/logging/**",
+            "**/mapper/**",
+            "**/util/**"
+    ]
+
     classDirectories.setFrom(
-            files(
-                    sourceSets.main.output.classesDirs.collect { dir ->
-                        fileTree(dir: dir) {
-                            exclude(
-                                    "**/*Application.class",
-                                    "**/config/**",
-                                    "**/dto/**",
-                                    "**/entity/**",
-                                    "**/exception/**",
-                                    "**/logging/**",
-                                    "**/mapper/**",
-                                    "**/util/**"
-                            )
-                        }
-                    }
-            )
+            files(sourceSets.main.output.classesDirs).collect { dir ->
+                fileTree(dir: dir).matching {
+                    exclude excludedPatterns
+                }
+            }
     )
 }
 
