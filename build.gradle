@@ -15,6 +15,21 @@ jacocoTestReport {
         xml.required = true
         html.required = true
     }
+
+    classDirectories.setFrom(
+            fileTree(dir: "$buildDir/classes/java/main") {
+                exclude(
+                        "**/*Application.class",
+                        "**/config/**",
+                        "**/dto/**",
+                        "**/entity/**",
+                        "**/exception/**",
+                        "**/logging/**",
+                        "**/mapper/**",
+                        "**/util/**"
+                )
+            }
+    )
 }
 
 group = 'com.sprint.mission'
