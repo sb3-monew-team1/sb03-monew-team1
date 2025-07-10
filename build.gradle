@@ -17,7 +17,7 @@ jacocoTestReport {
     }
 
     classDirectories.setFrom(
-            fileTree(dir: "$buildDir/classes/java/main") {
+            fileTree(dir: sourceSets.main.output.classesDirs.asPath) {
                 exclude(
                         "**/*Application.class",
                         "**/config/**",
