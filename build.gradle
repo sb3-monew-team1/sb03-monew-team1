@@ -17,17 +17,19 @@ jacocoTestReport {
     }
 
     classDirectories.setFrom(
-            fileTree(dir: sourceSets.main.output.classesDirs.asPath) {
-                exclude(
-                        "**/*Application.class",
-                        "**/config/**",
-                        "**/dto/**",
-                        "**/entity/**",
-                        "**/exception/**",
-                        "**/logging/**",
-                        "**/mapper/**",
-                        "**/util/**"
-                )
+            files(sourceSets.main.output.classesDirs).collect {
+                fileTree(dir: it) {
+                    exclude(
+                            "**/*Application.class",
+                            "**/config/**",
+                            "**/dto/**",
+                            "**/entity/**",
+                            "**/exception/**",
+                            "**/logging/**",
+                            "**/mapper/**",
+                            "**/util/**"
+                    )
+                }
             }
     )
 }
