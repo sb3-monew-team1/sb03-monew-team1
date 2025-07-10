@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: sb03-monew-team1
+
+  servlet:
+    multipart:
+      maxFileSize: 10MB # ?? ??? ?? ??
+      maxRequestSize: 30MB # ? ?? ?? ??? ?? ??
+
+  datasource:
+  # ???? ?????
+  # url: jdbc:postgresql://localhost:5432/db_name
+  # username: ${USER_NAME}
+  # password: ${USER_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        generate_statistics: true
+        default_batch_fetch_size: 100
+        format_sql: false
+        show_sql: false
+
+logging:
+  level:
+    root: info
+    com.sprint.mission: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers  # ????? ??
+      base-path: /actuator  # Actuator ????? ?? ??
+  endpoint:
+    health:
+      show-details: always      # ?? ?? ?? ?? ??
+      show-components: always   # ????? ?? ?? ??
