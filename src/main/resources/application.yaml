@@ -4,11 +4,11 @@ spring:
 
   servlet:
     multipart:
-      maxFileSize: 10MB # ?? ??? ?? ??
-      maxRequestSize: 30MB # ? ?? ?? ??? ?? ??
+      maxFileSize: 10MB # 파일 하나의 최대 크기
+      maxRequestSize: 30MB # 한 번에 최대 업로드 가능 용량
 
   datasource:
-  # ???? ?????
+  # 환경별로 오버라이드
   # url: jdbc:postgresql://localhost:5432/db_name
   # username: ${USER_NAME}
   # password: ${USER_PASSWORD}
@@ -33,9 +33,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,loggers  # ????? ??
-      base-path: /actuator  # Actuator ????? ?? ??
+        include: health,info,metrics,loggers  # 엔드포인트 노출
+      base-path: /actuator  # Actuator 엔드포인트 기본 경로
   endpoint:
     health:
-      show-details: always      # ?? ?? ?? ?? ??
-      show-components: always   # ????? ?? ?? ??
+      show-details: always      # 건강 상태 상세 정보 표시
+      show-components: always   # 컴포넌트별 상태 정보 표시
