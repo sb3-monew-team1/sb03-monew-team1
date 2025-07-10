@@ -5,14 +5,4 @@ coverage:
     patch:
       default:
 
-ignore:
-  - "**/*Application.java"
-  - "**/*Config.java"
-  - "**/dto/**"
-  - "**/entity/**"
-  - "**/exception/**"
-  - "**/logging/**"
-  - "**/mapper/**"
-  - "**/util/**"
-
-comment: false
+comment: true
