@@ -10,9 +10,9 @@ import static org.mockito.BDDMockito.then;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
-import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,48 +50,44 @@ public class UserServiceTest {
         @Test
         void 사용자를_생성하면_UserDto를_반환해야한다() {
             //Given
-            Long id = 1L;
-            String email = "test@example.com";
-            String nickname = "testuser";
-            String password = "!password123";
+            UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequest();
+            User savedUser = UserFixture.createUser();
+            UserDto expectedUserDto = UserFixture.createUserDto();
 
-            UserRegisterRequest userRegisterRequest = UserRegisterRequest.builder()
-                .email(email)
-                .nickname(nickname)
-                .password(password)
-                .build();
-
-            User savedUser = User.builder()
-                .email(email)
-                .nickname(nickname)
-                .password(password)
-                .build();
-
-            UserDto expectedUserDto = UserDto.builder()
-                .id(id)
-                .email(email)
-                .nickname(nickname)
-                .createdAt(Instant.now())
-                .build();
-
-            given(userRepository.existsByEmail(email)).willReturn(false);
+            given(userRepository.existsByEmail(userRegisterRequest.email())).willReturn(false);
             given(userRepository.save(any(User.class))).willReturn(savedUser);
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
-
 
             //When
             UserDto result = userService.create(userRegisterRequest);
 
             //Then
             assertThat(result).isNotNull();
-            assertThat(result.email()).isEqualTo(email);
-            assertThat(result.nickname()).isEqualTo(nickname);
+            assertThat(result.id()).isEqualTo(UserFixture.getDefaultId());
+            assertThat(result.email()).isEqualTo(UserFixture.getDefaultEmail());
+            assertThat(result.nickname()).isEqualTo(UserFixture.getDefaultNickname());
             assertThat(result.createdAt()).isNotNull();
 
-            then(userRepository).should().existsByEmail(email);
+            then(userRepository).should().existsByEmail(userRegisterRequest.email());
             then(userRepository).should().save(any(User.class));
             then(userMapper).should().toDto(savedUser);
+        }
 
+        @Test
+        void 회원가입시_이메일이_중복되면_예외가_발생한다() {
+            //Given
+            UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequestWithDuplicateEmail();
+
+            given(userRepository.existsByEmail(userRegisterRequest.email())).willReturn(true);
+
+            //When & Then
+            assertThatThrownBy(
+                () -> userService.create(userRegisterRequest)).isInstanceOf(
+                IllegalArgumentException.class);
+
+            then(userRepository).should().existsByEmail(userRegisterRequest.email());
+            then(userRepository).shouldHaveNoMoreInteractions();
+            then(userMapper).shouldHaveNoInteractions();
         }
     }
 
