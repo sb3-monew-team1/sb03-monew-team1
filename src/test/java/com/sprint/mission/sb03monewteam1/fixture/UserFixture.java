@@ -4,13 +4,14 @@ import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import java.time.Instant;
+import java.util.UUID;
 
 public class UserFixture {
 
     private static final String DEFAULT_EMAIL = "test@example.com";
     private static final String DEFAULT_NICKNAME = "testUser";
     private static final String DEFAULT_PASSWORD = "!password123";
-    private static final Long DEFAULT_ID = 1L;
+    private static final UUID DEFAULT_ID = UUID.randomUUID();
 
     // UserRegisterRequest 생성
     public static UserRegisterRequest createUserRegisterRequest() {
@@ -21,7 +22,8 @@ public class UserFixture {
             .build();
     }
 
-    public static UserRegisterRequest createUserRegisterRequest(String email, String nickname, String password) {
+    public static UserRegisterRequest createUserRegisterRequest(String email, String nickname,
+        String password) {
         return UserRegisterRequest.builder()
             .email(email)
             .nickname(nickname)
@@ -56,7 +58,7 @@ public class UserFixture {
             .build();
     }
 
-    public static UserDto createUserDto(Long id, String email, String nickname, Instant createdAt) {
+    public static UserDto createUserDto(UUID id, String email, String nickname, Instant createdAt) {
         return UserDto.builder()
             .id(id)
             .email(email)
@@ -110,7 +112,7 @@ public class UserFixture {
         return DEFAULT_NICKNAME;
     }
 
-    public static Long getDefaultId() {
+    public static UUID getDefaultId() {
         return DEFAULT_ID;
     }
 }

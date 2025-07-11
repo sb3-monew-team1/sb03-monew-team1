@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-@DisplayName("사용자 API 통합 테스트")
+@DisplayName("UserIntegration 테스트")
 public class UserIntegrationTest {
 
     @Autowired
@@ -48,8 +48,8 @@ public class UserIntegrationTest {
             .andExpect(jsonPath("$.email").value(UserFixture.getDefaultEmail()))
             .andExpect(jsonPath("$.nickname").value(UserFixture.getDefaultNickname()));
 
-        User user = userRepository.findById(1L).orElseThrow();
-        assertThat(user.getEmail()).isEqualTo(UserFixture.getDefaultEmail());
+        User user = userRepository.findByEmail(userRegisterRequest.email());
+        assertThat(user.getEmail()).isEqualTo(userRegisterRequest.email());
     }
 
     @Test

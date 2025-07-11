@@ -87,6 +87,7 @@ public class UserControllerTest {
     @Nested
     @DisplayName("회원가입 유효성 검증 테스트")
     class UserValidationTests {
+
         @Test
         @DisplayName("이메일이 빈 문자열이면 400 Bad Request를 반환해야 한다")
         void 이메일이_빈_문자열이면_400을_반환해야_한다() throws Exception {
@@ -132,7 +133,7 @@ public class UserControllerTest {
             UserRegisterRequest request = UserRegisterRequest.builder()
                 .email("test@example.com")
                 .nickname("testUser")
-                .password("!123456") // 영문자 없음
+                .password("!123456")
                 .build();
 
             // When & Then
@@ -141,7 +142,8 @@ public class UserControllerTest {
                     .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.details.password").value("비밀번호는 6자 이상 20자 이하이며, 최소 하나의 영문자, 숫자, 특수문자(@$!%*?&)를 포함해야 합니다"));
+                .andExpect(jsonPath("$.details.password").value(
+                    "비밀번호는 6자 이상 20자 이하이며, 최소 하나의 영문자, 숫자, 특수문자(@$!%*?&)를 포함해야 합니다"));
         }
 
     }
