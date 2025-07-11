@@ -2,7 +2,7 @@ package com.sprint.mission.sb03monewteam1.collector;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -15,13 +15,7 @@ class NewsCollectorTest {
 
     @BeforeAll
     static void setUp() {
-        Dotenv dotenv = Dotenv.configure()
-            .directory("./")
-            .load();
-
-        dotenv.entries().forEach(entry -> {
-            System.setProperty(entry.getKey(), entry.getValue());
-        });
+        TestEnvSetup.loadEnvVariables();
     }
 
     @Autowired
