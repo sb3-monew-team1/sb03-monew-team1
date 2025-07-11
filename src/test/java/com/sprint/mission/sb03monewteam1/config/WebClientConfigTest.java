@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootTest
-//@TestPropertySource(properties = { "news.api.naver.base-url=https://openapi.naver.com" })
 class WebClientConfigTest {
 
     @Autowired
