@@ -46,4 +46,9 @@ news:
       base-url: ${NEWS_API_NAVER_BASE_URL}
       client-id: ${NEWS_API_NAVER_CLIENT_ID}
       client-secret: ${NEWS_API_NAVER_CLIENT_SECRET}
-      source: ${NEWS_API_NAVER_SOURCE}
+    hankyung:
+      url: ${NEWS_RSS_HANKYUNG_URL}
+    chosun:
+      url: ${NEWS_RSS_CHOSUN_URL}
+    yonhap:
+      url: ${NEWS_RSS_YONHAP_URL}
