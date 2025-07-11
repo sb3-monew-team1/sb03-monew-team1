@@ -10,6 +10,7 @@ import static org.mockito.BDDMockito.then;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
@@ -83,7 +84,7 @@ public class UserServiceTest {
             // When & Then
             assertThatThrownBy(
                 () -> userService.create(userRegisterRequest)).isInstanceOf(
-                IllegalArgumentException.class);
+                EmailAlreadyExistsException.class);
 
             then(userRepository).should().existsByEmail(userRegisterRequest.email());
             then(userRepository).shouldHaveNoMoreInteractions();

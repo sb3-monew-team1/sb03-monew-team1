@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.service;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,8 @@ public class UserServiceImpl implements UserService {
         String password = userRegisterRequest.password();
 
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            log.warn("중복된 이메일로 회원가입 시도: email={}", email);
+            throw new EmailAlreadyExistsException(email);
         }
 
         User user = User.builder()
