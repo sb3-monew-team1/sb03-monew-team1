@@ -16,10 +16,9 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     properties:
       hibernate:
-        generate_statistics: true
         default_batch_fetch_size: 100
         format_sql: false
         show_sql: false
