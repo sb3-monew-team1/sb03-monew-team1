@@ -1,15 +1,14 @@
 package com.sprint.mission.sb03monewteam1.config;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootTest
-@TestPropertySource(properties = { "news.api.naver.base-url=https://openapi.naver.com" })
+//@TestPropertySource(properties = { "news.api.naver.base-url=https://openapi.naver.com" })
 class WebClientConfigTest {
 
     @Autowired

@@ -43,11 +43,7 @@ management:
 news:
   api:
     naver:
-      base-url: ${NAVER_API_BASE_URL}
-      client-id: ${NAVER_CLIENT_ID}
-      client-secret: ${NAVER_CLIENT_SECRET}
-      source: ${NAVER_SOURCE_NAME}
-    hankyung:
-    chosun:
-    yonhap:
-
+      base-url: ${NEWS_API_NAVER_BASE_URL}
+      client-id: ${NEWS_API_NAVER_CLIENT_ID}
+      client-secret: ${NEWS_API_NAVER_CLIENT_SECRET}
+      source: ${NEWS_API_NAVER_SOURCE}
