@@ -12,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
@@ -119,7 +120,7 @@ public class UserServiceTest {
             assertThat(result.nickname()).isEqualTo(UserFixture.getDefaultNickname());
             assertThat(result.createdAt()).isNotNull();
 
-            then(userRepository).should().existsByEmail(userLoginRequest.email());
+            then(userRepository).should().findByEmail(userLoginRequest.email());
             then(userMapper).should().toDto(existedUser);
         }
 
@@ -159,21 +160,40 @@ public class UserServiceTest {
                 correctPassword
             );
 
-
             given(userRepository.findByEmail(userLoginRequest.email())).willReturn(
                 Optional.of(existedUser)
             );
 
-
             // When & Then
             assertThatThrownBy(
                 () -> userService.login(userLoginRequest)).isInstanceOf(
-                    InvalidEmailOrPasswordException.class);
-
+                InvalidEmailOrPasswordException.class);
 
             then(userRepository).should().findByEmail(userLoginRequest.email());
             then(userRepository).shouldHaveNoMoreInteractions();
             then(userMapper).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 논리_삭제된_사용자가_로그인_할_경우_예외가_발생한다() {
+            // Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+
+            User deleteduser = UserFixture.createUser();
+            deleteduser.setDeleted();
+
+            given(userRepository.findByEmail(userLoginRequest.email())).willReturn(
+                Optional.of(deleteduser));
+
+            // When & Then
+            assertThatThrownBy(
+                () -> userService.login(userLoginRequest)).isInstanceOf(
+                InvalidEmailOrPasswordException.class);
+
+            then(userRepository).should().findByEmail(userLoginRequest.email());
+            then(userRepository).shouldHaveNoMoreInteractions();
+            then(userMapper).shouldHaveNoInteractions();
+
         }
     }
 
