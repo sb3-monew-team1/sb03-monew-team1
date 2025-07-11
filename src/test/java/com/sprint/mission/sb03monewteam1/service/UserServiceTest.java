@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserService 단위 테스트")
+@DisplayName("UserService 테스트")
 public class UserServiceTest {
 
     @Mock
@@ -49,7 +49,7 @@ public class UserServiceTest {
 
         @Test
         void 사용자를_생성하면_UserDto를_반환해야한다() {
-            //Given
+            // Given
             UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequest();
             User savedUser = UserFixture.createUser();
             UserDto expectedUserDto = UserFixture.createUserDto();
@@ -58,10 +58,10 @@ public class UserServiceTest {
             given(userRepository.save(any(User.class))).willReturn(savedUser);
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
 
-            //When
+            // When
             UserDto result = userService.create(userRegisterRequest);
 
-            //Then
+            // Then
             assertThat(result).isNotNull();
             assertThat(result.id()).isEqualTo(UserFixture.getDefaultId());
             assertThat(result.email()).isEqualTo(UserFixture.getDefaultEmail());
@@ -75,12 +75,12 @@ public class UserServiceTest {
 
         @Test
         void 회원가입시_이메일이_중복되면_예외가_발생한다() {
-            //Given
+            // Given
             UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequestWithDuplicateEmail();
 
             given(userRepository.existsByEmail(userRegisterRequest.email())).willReturn(true);
 
-            //When & Then
+            // When & Then
             assertThatThrownBy(
                 () -> userService.create(userRegisterRequest)).isInstanceOf(
                 IllegalArgumentException.class);
