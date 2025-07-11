@@ -67,7 +67,7 @@ public class UserControllerTest {
         }
 
         @Test
-        void 중복된_이메일로_회원가입시_400을_반환해야_한다() throws Exception {
+        void 중복된_이메일로_회원가입시_409를_반환해야_한다() throws Exception {
             // Given
             UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequestWithDuplicateEmail();
             UserDto userDto = UserFixture.createUserDto();

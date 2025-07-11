@@ -48,7 +48,7 @@ public class UserIntegrationTest {
             .andExpect(jsonPath("$.email").value(UserFixture.getDefaultEmail()))
             .andExpect(jsonPath("$.nickname").value(UserFixture.getDefaultNickname()));
 
-        User user = userRepository.findByEmail(userRegisterRequest.email());
+        User user = userRepository.findByEmail(userRegisterRequest.email()).orElseThrow();
         assertThat(user.getEmail()).isEqualTo(userRegisterRequest.email());
     }
 

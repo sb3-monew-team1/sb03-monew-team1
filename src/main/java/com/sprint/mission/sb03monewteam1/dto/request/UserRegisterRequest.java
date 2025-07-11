@@ -10,7 +10,7 @@ import lombok.Builder;
 public record UserRegisterRequest(
 
     @NotBlank(message = "이메일은 필수입니다")
-    @Email(message = "윺효한 이메일 형식이어야 합니다")
+    @Email(message = "유효한 이메일 형식이어야 합니다")
     String email,
 
     @NotBlank(message = "닉네임은 필수입니다")

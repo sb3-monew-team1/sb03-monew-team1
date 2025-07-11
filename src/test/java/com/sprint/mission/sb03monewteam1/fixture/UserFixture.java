@@ -11,7 +11,7 @@ public class UserFixture {
     private static final String DEFAULT_EMAIL = "test@example.com";
     private static final String DEFAULT_NICKNAME = "testUser";
     private static final String DEFAULT_PASSWORD = "!password123";
-    private static final UUID DEFAULT_ID = UUID.randomUUID();
+    private static final UUID DEFAULT_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
 
     // UserRegisterRequest 생성
     public static UserRegisterRequest createUserRegisterRequest() {
