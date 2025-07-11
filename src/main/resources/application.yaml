@@ -39,3 +39,15 @@ management:
     health:
       show-details: always      # 건강 상태 상세 정보 표시
       show-components: always   # 컴포넌트별 상태 정보 표시
+
+news:
+  api:
+    naver:
+      base-url: ${NAVER_API_BASE_URL}
+      client-id: ${NAVER_CLIENT_ID}
+      client-secret: ${NAVER_CLIENT_SECRET}
+      source: ${NAVER_SOURCE_NAME}
+    hankyung:
+    chosun:
+    yonhap:
+
