@@ -30,7 +30,9 @@ class InterestIntegrationTest {
         var request = new InterestCreateRequestDto("축구", List.of("스포츠", "해외축구"));
 
         mockMvc.perform(post("/api/interests")
+                .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("축구"));
     }
 }

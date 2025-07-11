@@ -19,5 +19,4 @@ class InterestServiceTest {
 
         assertEquals("축구", result.name());
     }
-
 }
