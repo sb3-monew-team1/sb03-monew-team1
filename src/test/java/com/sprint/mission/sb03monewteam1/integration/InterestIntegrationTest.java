@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -47,7 +48,6 @@ class InterestIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.name").value(request.name()));
 
-        // then
         boolean exists = interestRepository.existsByName(request.name());
         assertThat(exists).isTrue();
     }
@@ -63,7 +63,8 @@ class InterestIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-            .andExpect(jsonPath("$.message").value("관심사 이름은 필수입니다."));
+            .andExpect(jsonPath("$.message").value(containsString("관심사 이름은 필수입니다.")))
+            .andExpect(jsonPath("$.details.name").value(containsString("관심사 이름은 필수입니다.")));
     }
 
     @Test

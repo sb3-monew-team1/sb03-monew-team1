@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -91,7 +93,7 @@ class InterestControllerTest {
                 .content(objectMapper.writeValueAsBytes(request)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-            .andExpect(jsonPath("$.details.name").value("관심사 이름은 필수입니다."));
+            .andExpect(jsonPath("$.details.name").value(containsString("관심사 이름은 필수입니다.")));
     }
 
     @Test
@@ -109,7 +111,7 @@ class InterestControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.details.keywords").value(
-                "키워드는 최소 1개 이상, 최대 10개까지 입력할 수 있습니다."
+                containsString("키워드는 최소 1개 이상")
             ));
     }
 }

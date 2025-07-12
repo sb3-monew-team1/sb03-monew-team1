@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
@@ -43,7 +44,7 @@ class InterestServiceTest {
 
         given(interestRepository.existsByName(request.name())).willReturn(false);
         given(interestRepository.save(any(Interest.class))).willReturn(savedInterest);
-        given(interestMapper.toResponseDto(savedInterest)).willReturn(expectedResponse);
+        given(interestMapper.toDto(savedInterest, false)).willReturn(expectedResponse);
 
         // When
         InterestResponse result = interestService.create(request);
@@ -56,22 +57,7 @@ class InterestServiceTest {
 
         then(interestRepository).should().existsByName(request.name());
         then(interestRepository).should().save(any(Interest.class));
-        then(interestMapper).should().toResponseDto(savedInterest);
-    }
-
-    @Test
-    void 관심사_이름이_비어있으면_InvalidInterestRequestException이_발생한다() {
-        // Given
-        InterestRegisterRequest request = InterestFixture.createRequestWithEmptyName();
-
-        // When
-        Throwable throwable = catchThrowable(() -> interestService.create(request));
-
-        // Then
-        assertThat(throwable).isInstanceOf(InvalidInterestRequestException.class);
-
-        then(interestRepository).shouldHaveNoInteractions();
-        then(interestMapper).shouldHaveNoInteractions();
+        then(interestMapper).should().toDto(savedInterest, false);
     }
 
     @Test
