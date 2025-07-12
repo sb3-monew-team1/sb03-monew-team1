@@ -1,8 +1,8 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
@@ -51,7 +51,7 @@ class InterestControllerTest {
             "축구", List.of("스포츠")
         );
 
-        InterestResponse response = new InterestResponse(
+        InterestDto response = new InterestDto(
             UUID.randomUUID(),
             "축구",
             List.of("스포츠"),

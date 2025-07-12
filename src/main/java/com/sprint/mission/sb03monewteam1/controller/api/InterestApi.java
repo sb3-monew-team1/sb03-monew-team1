@@ -1,7 +1,7 @@
 package com.sprint.mission.sb03monewteam1.controller.api;
 
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,7 +21,7 @@ public interface InterestApi {
             description = "관심사 등록 성공",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = InterestResponse.class)
+                schema = @Schema(implementation = InterestDto.class)
             )
         ),
         @ApiResponse(
@@ -57,7 +57,7 @@ public interface InterestApi {
             )
         )
     })
-    ResponseEntity<InterestResponse> create(
+    ResponseEntity<InterestDto> create(
         InterestRegisterRequest interestRegisterRequest
     );
 }

@@ -1,7 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
@@ -24,7 +24,7 @@ public class InterestServiceImpl implements InterestService {
     private final InterestMapper interestMapper;
 
     @Override
-    public InterestResponse create(InterestRegisterRequest request) {
+    public InterestDto create(InterestRegisterRequest request) {
         log.info("새로운 관심사 등록 요청: {}", request);
 
         if (interestRepository.existsByName(request.name())) {
@@ -52,7 +52,7 @@ public class InterestServiceImpl implements InterestService {
 
         Interest saved = interestRepository.save(interest);
 
-        InterestResponse response = interestMapper.toDto(saved, false);
+        InterestDto response = interestMapper.toDto(saved, false);
         log.info("관심사 등록 완료: {}", response);
 
         return response;

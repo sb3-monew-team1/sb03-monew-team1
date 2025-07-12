@@ -1,7 +1,7 @@
 package com.sprint.mission.sb03monewteam1.fixture;
 
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,8 +38,8 @@ public class InterestFixture {
     }
 
     // 응답 DTO
-    public static InterestResponse createInterestResponseDto() {
-        return InterestResponse.builder()
+    public static InterestDto createInterestResponseDto() {
+        return InterestDto.builder()
             .id(DEFAULT_ID)
             .name(DEFAULT_NAME)
             .keywords(DEFAULT_KEYWORDS)
