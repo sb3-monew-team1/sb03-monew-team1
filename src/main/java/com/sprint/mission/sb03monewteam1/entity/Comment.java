@@ -25,10 +25,10 @@ public class Comment extends BaseUpdatableEntity {
     private String content;
 
     @Column(name = "like_count", nullable = false)
-    private Long likeCount;
+    private Long likeCount = 0L;
 
     @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

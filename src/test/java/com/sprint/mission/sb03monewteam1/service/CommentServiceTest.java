@@ -10,7 +10,10 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
+import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,10 +33,16 @@ public class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ArticleRepository articleRepository;
+
+    @Mock
     private CommentMapper commentMapper;
 
     @InjectMocks
-    private CommentService commentService;
+    private CommentServiceImpl commentService;
 
     @BeforeEach
     void setUp() {
@@ -71,8 +80,6 @@ public class CommentServiceTest {
 
             Comment savedComment = Comment.builder()
                     .content(content)
-                    .likeCount(0L)
-                    .isDeleted(false)
                     .article(article)
                     .author(user)
                     .build();
@@ -90,6 +97,8 @@ public class CommentServiceTest {
                     .likedByMe(false)
                     .build();
 
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.save(any(Comment.class))).willReturn(savedComment);
             given(commentMapper.toDto(any(Comment.class))).willReturn(expectedCommentDto);
 
