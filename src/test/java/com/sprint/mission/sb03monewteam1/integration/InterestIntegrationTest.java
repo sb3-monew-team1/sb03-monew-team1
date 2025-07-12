@@ -89,4 +89,22 @@ class InterestIntegrationTest {
             .andExpect(jsonPath("$.code").value("INTEREST_DUPLICATE"))
             .andExpect(jsonPath("$.message").value("이미 존재하는 관심사입니다."));
     }
+
+    @Test
+    void 관심사_이름_유사도가_80_퍼센트_이상일_경우_409를_반환한다() throws Exception {
+        // given
+        InterestRegisterRequest request = InterestFixture.createInterestCreateRequest();
+
+        Interest existingInterest = new Interest();
+        interestRepository.save(existingInterest);
+
+        // when
+        InterestRegisterRequest similarRequest = InterestFixture.createRequestWithSimilarName();
+
+        // then
+        mockMvc.perform(post("/api/interests")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(similarRequest)))
+            .andExpect(status().isConflict());
+    }
 }

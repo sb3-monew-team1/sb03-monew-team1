@@ -76,4 +76,20 @@ class InterestServiceTest {
         then(interestRepository).shouldHaveNoMoreInteractions();
         then(interestMapper).shouldHaveNoInteractions();
     }
+
+    @Test
+    void 관심사_이름_유사도가_80_퍼센트_이상일_경우_InterestSimilarityException이_발생한다() throws Exception {
+        // given
+        InterestRegisterRequest defaultRequest = InterestFixture.createInterestCreateRequest();
+        Interest defaultInterest = new Interest();
+        given(interestRepository.findByName(defaultRequest.name())).willReturn(Optional.of(defaultInterest));
+
+        // when
+        InterestRegisterRequest similarRequest = InterestFixture.createRequestWithSimilarName();
+
+        Throwable throwable = catchThrowable(() -> interestService.create(similarRequest));
+
+        // then
+        assertThat(throwable).isInstanceOf(InterestSimilarityException.class);
+    }
 }

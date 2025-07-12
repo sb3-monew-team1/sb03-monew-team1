@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
+import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 
 import org.junit.jupiter.api.DisplayName;
@@ -97,7 +98,6 @@ class InterestControllerTest {
     }
 
     @Test
-    @DisplayName("관심사 등록 시 키워드가 없으면 400 Bad Request를 반환한다")
     void 관심사_등록시_키워드가_없으면_400을_반환한다() throws Exception {
         // Given
         InterestRegisterRequest request = new InterestRegisterRequest(
@@ -113,5 +113,19 @@ class InterestControllerTest {
             .andExpect(jsonPath("$.details.keywords").value(
                 containsString("키워드는 최소 1개 이상")
             ));
+    }
+
+    @Test
+    void 관심사_이름_유사도가_80_퍼센트_이상일_경우_409_Conflict를_반환한다() throws Exception {
+        // Given
+        InterestRegisterRequest similarRequest = InterestFixture.createRequestWithSimilarName();
+
+        // When & Then
+        mockMvc.perform(post("/api/interests")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(similarRequest)))
+            .andExpect(status().isConflict())  // Expected status: 409 Conflict
+            .andExpect(jsonPath("$.code").value("INTEREST_SIMILARITY_ERROR"))
+            .andExpect(jsonPath("$.message").value("유사한 관심사 이름이 존재합니다."));
     }
 }
