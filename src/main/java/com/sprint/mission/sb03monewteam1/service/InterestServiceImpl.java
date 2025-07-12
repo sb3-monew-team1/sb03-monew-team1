@@ -1,7 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import com.sprint.mission.sb03monewteam1.dto.request.InterestCreateRequestDto;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponseDto;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,8 +11,8 @@ import java.util.UUID;
 public class InterestServiceImpl implements InterestService {
 
     @Override
-    public InterestResponseDto create(InterestCreateRequestDto request) {
-        return new InterestResponseDto(
+    public InterestResponse create(InterestRegisterRequest request) {
+        return new InterestResponse(
             UUID.randomUUID(),
             request.name(),
             List.of("스포츠"),

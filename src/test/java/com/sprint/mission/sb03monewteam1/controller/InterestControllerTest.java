@@ -1,10 +1,11 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.sb03monewteam1.dto.request.InterestCreateRequestDto;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponseDto;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(InterestController.class)
 @ActiveProfiles("test")
+@DisplayName("InterestController 테스트")
 class InterestControllerTest {
 
     @Autowired
@@ -35,13 +37,13 @@ class InterestControllerTest {
     private InterestService interestService;
 
     @Test
-    void 관심사를_등록하면_200과_DTO가_반환된다() throws Exception {
+    void 관심사를_등록하면_201과_DTO가_반환된다() throws Exception {
         // Given
-        InterestCreateRequestDto request = new InterestCreateRequestDto(
+        InterestRegisterRequest request = new InterestRegisterRequest(
             "축구", List.of("스포츠")
         );
 
-        InterestResponseDto response = new InterestResponseDto(
+        InterestResponse response = new InterestResponse(
             UUID.randomUUID(),
             "축구",
             List.of("스포츠"),
@@ -55,7 +57,59 @@ class InterestControllerTest {
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.name").value("축구"));
+    }
+
+    @Test
+    void 관심사_등록시_관심사가_중복되면_409를_반환한다() throws Exception {
+        // Given
+        InterestRegisterRequest request = new InterestRegisterRequest(
+            "축구", List.of("스포츠")
+        );
+
+        given(interestService.create(any()))
+            .willThrow(new InterestDuplicateException("이미 존재하는 관심사입니다."));
+
+        // When & Then
+        mockMvc.perform(post("/api/interests")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(request)))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void 관심사_등록시_이름이_비어있으면_400을_반환한다() throws Exception {
+        // Given
+        InterestRegisterRequest request = new InterestRegisterRequest(
+            "", List.of("스포츠")
+        );
+
+        // When & Then
+        mockMvc.perform(post("/api/interests")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.details.name").value("관심사 이름은 필수입니다."));
+    }
+
+    @Test
+    @DisplayName("관심사 등록 시 키워드가 없으면 400 Bad Request를 반환한다")
+    void 관심사_등록시_키워드가_없으면_400을_반환한다() throws Exception {
+        // Given
+        InterestRegisterRequest request = new InterestRegisterRequest(
+            "축구", List.of()
+        );
+
+        // When & Then
+        mockMvc.perform(post("/api/interests")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.details.keywords").value(
+                "키워드는 최소 1개 이상, 최대 10개까지 입력할 수 있습니다."
+            ));
     }
 }

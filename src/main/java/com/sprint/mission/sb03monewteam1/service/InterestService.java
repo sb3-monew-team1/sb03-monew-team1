@@ -1,8 +1,8 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import com.sprint.mission.sb03monewteam1.dto.request.InterestCreateRequestDto;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponseDto;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 
 public interface InterestService {
-    InterestResponseDto create(InterestCreateRequestDto request);
+    InterestResponse create(InterestRegisterRequest request);
 }

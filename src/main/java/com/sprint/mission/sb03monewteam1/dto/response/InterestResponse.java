@@ -2,8 +2,10 @@ package com.sprint.mission.sb03monewteam1.dto.response;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
 
-public record InterestResponseDto(
+@Builder
+public record InterestResponse(
     UUID id,
     String name,
     List<String> keywords,
