@@ -25,9 +25,11 @@ public class Comment extends BaseUpdatableEntity {
     private String content;
 
     @Column(name = "like_count", nullable = false)
+    @Builder.Default
     private Long likeCount = 0L;
 
     @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
     private Boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,16 +43,6 @@ public class Comment extends BaseUpdatableEntity {
     public void updateContent(String newContent) {
         if (newContent != null && !newContent.equals(this.content)) {
             this.content = newContent;
-        }
-    }
-
-    public void increaseLikeCount() {
-        this.likeCount++;
-    }
-
-    public void decreaseLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
         }
     }
 
