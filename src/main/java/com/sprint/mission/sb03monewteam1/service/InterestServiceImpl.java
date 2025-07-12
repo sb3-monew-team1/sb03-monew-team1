@@ -32,9 +32,10 @@ public class InterestServiceImpl implements InterestService {
             throw new InterestDuplicateException(request.name());
         }
 
-        if (isSimilarityAboveThreshold(request.name())) {
-            log.warn("유사한 관심사 이름: {}", request.name());
-            throw new InterestSimilarityException("request.name()");
+        String similarInterestName = findSimilarInterestName(request.name());
+        if (similarInterestName != null) {
+            log.warn("유사한 관심사 이름: {}", similarInterestName);
+            throw new InterestSimilarityException("유사한 관심사 이름이 존재합니다: " + similarInterestName);  // 수정된 부분
         }
 
         Interest interest = Interest.builder()
@@ -57,14 +58,14 @@ public class InterestServiceImpl implements InterestService {
         return response;
     }
 
-    private boolean isSimilarityAboveThreshold(String newInterestName) {
+    private String findSimilarInterestName(String newInterestName) {
         for (Interest existingInterest : interestRepository.findAll()) {
             double similarity = calculateSimilarity(existingInterest.getName(), newInterestName);
             if (similarity >= 0.8) {
-                return true;
+                return existingInterest.getName();
             }
         }
-        return false;
+        return null;
     }
 
     private double calculateSimilarity(String name1, String name2) {

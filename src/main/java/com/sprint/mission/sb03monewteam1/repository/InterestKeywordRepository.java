@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InterestKeywordRepository extends JpaRepository<InterestKeyword, Long> {
 
+    boolean existsByKeywordAndInterestName(String keyword, String interestName);
 }

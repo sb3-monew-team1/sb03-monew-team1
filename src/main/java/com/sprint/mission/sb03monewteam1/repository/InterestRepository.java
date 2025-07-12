@@ -8,5 +8,4 @@ public interface InterestRepository extends JpaRepository<Interest, Long> {
 
     boolean existsByName(String name);
 
-    Optional<Interest> findByName(String name);
 }
