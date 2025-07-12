@@ -1,9 +1,8 @@
 package com.sprint.mission.sb03monewteam1.fixture;
 
+import com.sprint.mission.sb03monewteam1.entity.Article;
 import java.time.Instant;
 import java.util.UUID;
-
-import com.sprint.mission.sb03monewteam1.entity.Article;
 
 public class ArticleFixture {
 

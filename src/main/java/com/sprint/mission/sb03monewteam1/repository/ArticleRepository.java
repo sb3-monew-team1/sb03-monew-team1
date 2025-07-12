@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.repository;
 
+import com.sprint.mission.sb03monewteam1.entity.Article;
 import java.util.Optional;
 import java.util.UUID;
 

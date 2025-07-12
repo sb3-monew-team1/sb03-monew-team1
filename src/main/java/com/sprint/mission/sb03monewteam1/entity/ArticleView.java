@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.entity;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import com.sprint.mission.sb03monewteam1.entity.base.BaseEntity;
