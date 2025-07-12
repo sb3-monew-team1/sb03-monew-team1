@@ -25,19 +25,21 @@ public interface ArticleApi {
     @Operation(summary = "기사 뷰 등록", description = "사용자가 기사를 조회했음을 기록합니다.")
     @PostMapping("/{articleId}/article-views")
     ResponseEntity<ArticleViewDto> createArticleView(
-            @RequestHeader("MoNew-Request-User-ID") UUID userId,
+            @RequestHeader("Monew-Request-User-ID") UUID userId,
             @PathVariable UUID articleId);
 
     @Operation(summary = "기사 목록 조회", description = "조건에 맞는 기사 목록을 조회합니다.")
     @GetMapping
     ResponseEntity<CursorPageResponseArticleDto> getArticles(
-            @RequestParam(required = false) String searchKeyword,
-            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<String> sourceIn,
             @RequestParam(required = false) List<String> interests,
-            @RequestParam(required = false) Instant startDate,
-            @RequestParam(required = false) Instant endDate,
-            @RequestParam(defaultValue = "publishDate") String sortBy,
+            @RequestParam(required = false) Instant publishDateFrom,
+            @RequestParam(required = false) Instant publishDateTo,
+            @RequestParam(required = false) String orderBy,
+            @RequestParam(required = false) String direction,
             @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) Instant after,
             @RequestParam(defaultValue = "10") int limit);
 
     @Operation(summary = "출처 목록 조회", description = "기사의 출처 목록을 조회합니다.")

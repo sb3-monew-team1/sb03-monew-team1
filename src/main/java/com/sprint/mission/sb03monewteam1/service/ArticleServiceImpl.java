@@ -37,14 +37,12 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public ArticleViewDto createArticleView(UUID userId, UUID articleId) {
-        log.info("기사 뷰 등록 시작 - userId: {}, articleId: {}", userId, articleId);
-
-        Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
-                .orElseThrow(ArticleNotFoundException::new);
-
         if (articleViewRepository.existsByUserIdAndArticleId(userId, articleId)) {
             throw new DuplicateArticleViewException();
         }
+
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new ArticleNotFoundException("기사를 찾을 수 없습니다."));
 
         article.increaseViewCount();
         articleRepository.save(article);
@@ -60,55 +58,45 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public CursorPageResponseArticleDto getArticles(
-            String searchKeyword,
-            String source,
+            String keyword,
+            List<String> sourceIn,
             List<String> interests,
-            Instant startDate,
-            Instant endDate,
-            String sortBy,
+            Instant publishDateFrom,
+            Instant publishDateTo,
+            String orderBy,
+            String direction,
             String cursor,
+            Instant after,
             int limit) {
 
-        log.info("기사 목록 조회 시작 - searchKeyword: {}, source: {}, sortBy: {}, cursor: {}, limit: {}",
-                searchKeyword, source, sortBy, cursor, limit);
+        log.info("기사 목록 조회 시작 - keyword: {}, sourceIn: {}, orderBy: {}, direction: {}, cursor: {}, limit: {}",
+                keyword, sourceIn, orderBy, direction, cursor, limit);
 
-        List<Article> articles;
+        String sortBy = orderBy != null ? orderBy : "publishDate";
+        boolean isAscending = "ASC".equalsIgnoreCase(direction);
 
-        // 정렬 기준에 따라 다른 쿼리 호출
-        if ("viewCount".equals(sortBy)) {
-            Long cursorValue = cursor != null ? Long.valueOf(cursor) : null;
-            articles = articleRepository.findArticlesWithCursorByViewCount(
-                    searchKeyword, source, startDate, endDate, cursorValue, limit + 1);
-        } else {
-            // 기본값: publishDate 정렬
-            Instant cursorValue = cursor != null ? Instant.parse(cursor) : null;
-            articles = articleRepository.findArticlesWithCursorByDate(
-                    searchKeyword, source, startDate, endDate, cursorValue, limit + 1);
-        }
+        List<Article> articles = getArticlesBySortType(
+                keyword, sourceIn, publishDateFrom, publishDateTo,
+                sortBy, isAscending, cursor, limit);
 
-        // 다음 페이지 존재 여부 확인
         boolean hasNext = articles.size() > limit;
         if (hasNext) {
             articles = articles.subList(0, limit);
         }
 
-        // DTO 변환
         List<ArticleDto> articleDtos = articles.stream()
                 .map(articleMapper::toDto)
                 .collect(Collectors.toList());
 
-        // 다음 커서 생성
-        String nextCursor = null;
-        if (hasNext && !articles.isEmpty()) {
-            Article lastArticle = articles.get(articles.size() - 1);
-            nextCursor = "viewCount".equals(sortBy)
-                    ? lastArticle.getViewCount().toString()
-                    : lastArticle.getPublishDate().toString();
-        }
+        String nextCursor = generateNextCursor(articles, sortBy, hasNext);
+        Instant nextAfter = generateNextAfter(articles, hasNext);
 
         CursorPageResponseArticleDto result = CursorPageResponseArticleDto.builder()
-                .articles(articleDtos)
+                .content(articleDtos)
                 .nextCursor(nextCursor)
+                .nextAfter(nextAfter)
+                .size(articleDtos.size())
+                .totalElements(null)
                 .hasNext(hasNext)
                 .build();
 
@@ -116,11 +104,59 @@ public class ArticleServiceImpl implements ArticleService {
         return result;
     }
 
+    private List<Article> getArticlesBySortType(
+            String keyword, List<String> sourceIn, Instant publishDateFrom, Instant publishDateTo,
+            String sortBy, boolean isAscending, String cursor, int limit) {
+
+        switch (sortBy) {
+            case "viewCount":
+                Long viewCountCursor = cursor != null ? Long.valueOf(cursor) : null;
+                return articleRepository.findArticlesWithCursorByViewCount(
+                        keyword, sourceIn, publishDateFrom, publishDateTo, viewCountCursor, limit + 1, isAscending);
+
+            case "commentCount":
+                Long commentCountCursor = cursor != null ? Long.valueOf(cursor) : null;
+                return articleRepository.findArticlesWithCursorByCommentCount(
+                        keyword, sourceIn, publishDateFrom, publishDateTo, commentCountCursor, limit + 1, isAscending);
+
+            case "publishDate":
+            default:
+                Instant dateCursor = cursor != null ? Instant.parse(cursor) : null;
+                return articleRepository.findArticlesWithCursorByDate(
+                        keyword, sourceIn, publishDateFrom, publishDateTo, dateCursor, limit + 1, isAscending);
+        }
+    }
+
+    private String generateNextCursor(List<Article> articles, String sortBy, boolean hasNext) {
+        if (!hasNext || articles.isEmpty()) {
+            return null;
+        }
+
+        Article lastArticle = articles.get(articles.size() - 1);
+
+        switch (sortBy) {
+            case "viewCount":
+                return lastArticle.getViewCount().toString();
+            case "commentCount":
+                return lastArticle.getCommentCount().toString();
+            case "publishDate":
+            default:
+                return lastArticle.getPublishDate().toString();
+        }
+    }
+
+    private Instant generateNextAfter(List<Article> articles, boolean hasNext) {
+        if (!hasNext || articles.isEmpty()) {
+            return null;
+        }
+
+        Article lastArticle = articles.get(articles.size() - 1);
+        return lastArticle.getPublishDate();
+    }
+
     @Override
     public List<String> getSources() {
-        log.info("기사 출처 목록 조회 시작");
-        List<String> sources = articleRepository.findDistinctSources();
-        log.info("기사 출처 목록 조회 완료 - 출처 수: {}", sources.size());
-        return sources;
+        log.info("기사 출처 목록 조회");
+        return articleRepository.findDistinctSources();
     }
 }

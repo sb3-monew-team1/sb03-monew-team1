@@ -1,14 +1,18 @@
 package com.sprint.mission.sb03monewteam1.repository;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.QArticle;
-import java.time.Instant;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository
@@ -19,131 +23,149 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     private final QArticle article = QArticle.article;
 
     @Override
-    public List<Article> findArticlesWithConditions(
-        String searchKeyword,
-        String source,
-        Instant startDate,
-        Instant endDate) {
-
-        log.debug("조건부 기사 조회 - searchKeyword: {}, source: {}, startDate: {}, endDate: {}",
-            searchKeyword, source, startDate, endDate);
-
-        BooleanBuilder builder = createBaseCondition();
-        addSearchConditions(builder, searchKeyword, source, startDate, endDate);
-
-        return queryFactory
-            .selectFrom(article)
-            .where(builder)
-            .orderBy(article.publishDate.desc())
-            .fetch();
-    }
-
-    @Override
     public List<Article> findArticlesWithCursorByDate(
-        String searchKeyword,
-        String source,
-        Instant startDate,
-        Instant endDate,
-        Instant cursor,
-        int limit) {
-
-        log.debug("날짜 기준 커서 페이지네이션 기사 조회 - cursor: {}, limit: {}", cursor, limit);
+            String keyword,
+            List<String> sourceIn,
+            Instant publishDateFrom,
+            Instant publishDateTo,
+            Instant cursor,
+            int limit,
+            boolean isAscending) {
 
         BooleanBuilder builder = createBaseCondition();
-        addSearchConditions(builder, searchKeyword, source, startDate, endDate);
-        addCursorCondition(builder, cursor, null, "date");
+        addSearchConditions(builder, keyword, sourceIn, publishDateFrom, publishDateTo);
+        addDateCursorCondition(builder, cursor, isAscending);
+
+        OrderSpecifier<?> orderBy = isAscending
+                ? article.publishDate.asc()
+                : article.publishDate.desc();
 
         return queryFactory
-            .selectFrom(article)
-            .where(builder)
-            .orderBy(article.publishDate.desc())
-            .limit(limit)
-            .fetch();
+                .selectFrom(article)
+                .where(builder)
+                .orderBy(orderBy)
+                .limit(limit)
+                .fetch();
     }
 
     @Override
     public List<Article> findArticlesWithCursorByViewCount(
-        String searchKeyword,
-        String source,
-        Instant startDate,
-        Instant endDate,
-        Long cursor,
-        int limit) {
-
-        log.debug("조회수 기준 커서 페이지네이션 기사 조회 - cursor: {}, limit: {}", cursor, limit);
+            String keyword,
+            List<String> sourceIn,
+            Instant publishDateFrom,
+            Instant publishDateTo,
+            Long cursor,
+            int limit,
+            boolean isAscending) {
 
         BooleanBuilder builder = createBaseCondition();
-        addSearchConditions(builder, searchKeyword, source, startDate, endDate);
-        addCursorCondition(builder, null, cursor, "viewCount");
+        addSearchConditions(builder, keyword, sourceIn, publishDateFrom, publishDateTo);
+        addViewCountCursorCondition(builder, cursor, isAscending);
+
+        OrderSpecifier<?>[] orderBy = isAscending
+                ? new OrderSpecifier[] { article.viewCount.asc(), article.publishDate.asc() }
+                : new OrderSpecifier[] { article.viewCount.desc(), article.publishDate.desc() };
 
         return queryFactory
-            .selectFrom(article)
-            .where(builder)
-            .orderBy(article.viewCount.desc(), article.publishDate.desc()) // 조회수 같을 때 날짜로 정렬
-            .limit(limit)
-            .fetch();
+                .selectFrom(article)
+                .where(builder)
+                .orderBy(orderBy)
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public List<Article> findArticlesWithCursorByCommentCount(
+            String keyword,
+            List<String> sourceIn,
+            Instant publishDateFrom,
+            Instant publishDateTo,
+            Long cursor,
+            int limit,
+            boolean isAscending) {
+
+        BooleanBuilder builder = createBaseCondition();
+        addSearchConditions(builder, keyword, sourceIn, publishDateFrom, publishDateTo);
+        addCommentCountCursorCondition(builder, cursor, isAscending);
+
+        OrderSpecifier<?>[] orderBy = isAscending
+                ? new OrderSpecifier[] { article.commentCount.asc(), article.publishDate.asc() }
+                : new OrderSpecifier[] { article.commentCount.desc(), article.publishDate.desc() };
+
+        return queryFactory
+                .selectFrom(article)
+                .where(builder)
+                .orderBy(orderBy)
+                .limit(limit)
+                .fetch();
     }
 
     @Override
     public List<String> findDistinctSources() {
-        log.debug("기사 출처 목록 조회");
-
         return queryFactory
-            .select(article.source)
-            .distinct()
-            .from(article)
-            .where(article.isDeleted.isFalse())
-            .orderBy(article.source.asc())
-            .fetch();
+                .select(article.source)
+                .distinct()
+                .from(article)
+                .where(article.isDeleted.eq(false))
+                .orderBy(article.source.asc())
+                .fetch();
     }
 
-    /**
-     * 기본 조건 (논리 삭제 제외)
-     */
     private BooleanBuilder createBaseCondition() {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(article.isDeleted.isFalse());
         return builder;
     }
 
-    /**
-     * 검색 조건 추가
-     */
-    private void addSearchConditions(BooleanBuilder builder, String searchKeyword, String source,
-        Instant startDate, Instant endDate) {
+    private void addSearchConditions(BooleanBuilder builder, String keyword,
+            List<String> sourceIn, Instant publishDateFrom, Instant publishDateTo) {
 
-        // 키워드 검색 (제목, 요약)
-        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
             builder.and(
-                article.title.containsIgnoreCase(searchKeyword)
-                    .or(article.summary.containsIgnoreCase(searchKeyword)));
+                    article.title.containsIgnoreCase(keyword)
+                            .or(article.summary.containsIgnoreCase(keyword)));
         }
 
-        // 출처 필터
-        if (source != null && !source.trim().isEmpty()) {
-            builder.and(article.source.eq(source));
+        if (sourceIn != null && !sourceIn.isEmpty()) {
+            builder.and(article.source.in(sourceIn));
         }
 
-        // 시작 날짜 필터
-        if (startDate != null) {
-            builder.and(article.publishDate.goe(startDate));
+        if (publishDateFrom != null) {
+            builder.and(article.publishDate.goe(publishDateFrom));
         }
 
-        // 종료 날짜 필터
-        if (endDate != null) {
-            builder.and(article.publishDate.loe(endDate));
+        if (publishDateTo != null) {
+            builder.and(article.publishDate.loe(publishDateTo));
         }
     }
 
-    /**
-     * 커서 조건 추가
-     */
-    private void addCursorCondition(BooleanBuilder builder, Instant dateCursor,
-        Long viewCountCursor, String sortBy) {
-        if ("date".equals(sortBy) && dateCursor != null) {
-            builder.and(article.publishDate.lt(dateCursor));
-        } else if ("viewCount".equals(sortBy) && viewCountCursor != null) {
-            builder.and(article.viewCount.lt(viewCountCursor));
+    private void addDateCursorCondition(BooleanBuilder builder, Instant cursor, boolean isAscending) {
+        if (cursor != null) {
+            if (isAscending) {
+                builder.and(article.publishDate.gt(cursor));
+            } else {
+                builder.and(article.publishDate.lt(cursor));
+            }
+        }
+    }
+
+    private void addViewCountCursorCondition(BooleanBuilder builder, Long cursor, boolean isAscending) {
+        if (cursor != null) {
+            if (isAscending) {
+                builder.and(article.viewCount.gt(cursor));
+            } else {
+                builder.and(article.viewCount.lt(cursor));
+            }
+        }
+    }
+
+    private void addCommentCountCursorCondition(BooleanBuilder builder, Long cursor, boolean isAscending) {
+        if (cursor != null) {
+            if (isAscending) {
+                builder.and(article.commentCount.gt(cursor));
+            } else {
+                builder.and(article.commentCount.lt(cursor));
+            }
         }
     }
 }

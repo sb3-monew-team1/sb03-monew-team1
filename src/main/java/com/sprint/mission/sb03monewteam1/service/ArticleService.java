@@ -8,16 +8,19 @@ import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
 
 public interface ArticleService {
+
     ArticleViewDto createArticleView(UUID userId, UUID articleId);
 
     CursorPageResponseArticleDto getArticles(
-            String searchKeyword,
-            String source,
+            String keyword,
+            List<String> sourceIn,
             List<String> interests,
-            Instant startDate,
-            Instant endDate,
-            String sortBy,
+            Instant publishDateFrom,
+            Instant publishDateTo,
+            String orderBy,
+            String direction,
             String cursor,
+            Instant after,
             int limit);
 
     List<String> getSources();

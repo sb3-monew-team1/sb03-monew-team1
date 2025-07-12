@@ -61,12 +61,10 @@ public class Article extends BaseEntity {
     @Builder.Default
     private Boolean isDeleted = false;
 
-    // ArticleView와의 연관관계
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ArticleView> articleViews = new ArrayList<>();
 
-    // 비즈니스 메서드
     public void increaseViewCount() {
         this.viewCount++;
     }
@@ -89,7 +87,6 @@ public class Article extends BaseEntity {
         this.isDeleted = false;
     }
 
-    // 조회용 메서드
     public boolean isDeleted() {
         return this.isDeleted;
     }

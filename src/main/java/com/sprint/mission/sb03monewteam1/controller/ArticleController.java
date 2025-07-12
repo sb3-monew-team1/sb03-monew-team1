@@ -31,20 +31,23 @@ public class ArticleController implements ArticleApi {
 
     @Override
     public ResponseEntity<CursorPageResponseArticleDto> getArticles(
-            String searchKeyword,
-            String source,
+            String keyword,
+            List<String> sourceIn,
             List<String> interests,
-            Instant startDate,
-            Instant endDate,
-            String sortBy,
+            Instant publishDateFrom,
+            Instant publishDateTo,
+            String orderBy,
+            String direction,
             String cursor,
+            Instant after,
             int limit) {
 
-        log.info("기사 목록 조회 요청 - searchKeyword: {}, source: {}, sortBy: {}",
-                searchKeyword, source, sortBy);
+        log.info("기사 목록 조회 요청 - keyword: {}, sourceIn: {}, orderBy: {}, direction: {}",
+                keyword, sourceIn, orderBy, direction);
 
         CursorPageResponseArticleDto result = articleService.getArticles(
-                searchKeyword, source, interests, startDate, endDate, sortBy, cursor, limit);
+                keyword, sourceIn, interests, publishDateFrom, publishDateTo,
+                orderBy, direction, cursor, after, limit);
 
         return ResponseEntity.ok(result);
     }
