@@ -42,9 +42,6 @@ public class ArticleController implements ArticleApi {
             Instant after,
             int limit) {
 
-        log.info("기사 목록 조회 요청 - keyword: {}, sourceIn: {}, orderBy: {}, direction: {}",
-                keyword, sourceIn, orderBy, direction);
-
         CursorPageResponseArticleDto result = articleService.getArticles(
                 keyword, sourceIn, interests, publishDateFrom, publishDateTo,
                 orderBy, direction, cursor, after, limit);

@@ -21,7 +21,8 @@ public interface ArticleRepositoryCustom {
             List<String> sourceIn,
             Instant publishDateFrom,
             Instant publishDateTo,
-            Long cursor,
+            Long cursorViewCount,
+            Instant cursorPublishDate,
             int limit,
             boolean isAscending);
 
@@ -30,7 +31,8 @@ public interface ArticleRepositoryCustom {
             List<String> sourceIn,
             Instant publishDateFrom,
             Instant publishDateTo,
-            Long cursor,
+            Long cursorCommentCount,
+            Instant cursorPublishDate,
             int limit,
             boolean isAscending);
 

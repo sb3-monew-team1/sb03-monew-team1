@@ -54,13 +54,14 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             List<String> sourceIn,
             Instant publishDateFrom,
             Instant publishDateTo,
-            Long cursor,
+            Long cursorViewCount,
+            Instant cursorPublishDate,
             int limit,
             boolean isAscending) {
 
         BooleanBuilder builder = createBaseCondition();
         addSearchConditions(builder, keyword, sourceIn, publishDateFrom, publishDateTo);
-        addViewCountCursorCondition(builder, cursor, isAscending);
+        addViewCountCursorCondition(builder, cursorViewCount, cursorPublishDate, isAscending);
 
         OrderSpecifier<?>[] orderBy = isAscending
                 ? new OrderSpecifier[] { article.viewCount.asc(), article.publishDate.asc() }
@@ -80,13 +81,14 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             List<String> sourceIn,
             Instant publishDateFrom,
             Instant publishDateTo,
-            Long cursor,
+            Long cursorCommentCount,
+            Instant cursorPublishDate,
             int limit,
             boolean isAscending) {
 
         BooleanBuilder builder = createBaseCondition();
         addSearchConditions(builder, keyword, sourceIn, publishDateFrom, publishDateTo);
-        addCommentCountCursorCondition(builder, cursor, isAscending);
+        addCommentCountCursorCondition(builder, cursorCommentCount, cursorPublishDate, isAscending);
 
         OrderSpecifier<?>[] orderBy = isAscending
                 ? new OrderSpecifier[] { article.commentCount.asc(), article.publishDate.asc() }
@@ -149,22 +151,36 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         }
     }
 
-    private void addViewCountCursorCondition(BooleanBuilder builder, Long cursor, boolean isAscending) {
-        if (cursor != null) {
+    private void addViewCountCursorCondition(BooleanBuilder builder, Long cursorViewCount,
+            Instant cursorPublishDate, boolean isAscending) {
+        if (cursorViewCount != null && cursorPublishDate != null) {
             if (isAscending) {
-                builder.and(article.viewCount.gt(cursor));
+                builder.and(
+                        article.viewCount.gt(cursorViewCount)
+                                .or(article.viewCount.eq(cursorViewCount)
+                                        .and(article.publishDate.gt(cursorPublishDate))));
             } else {
-                builder.and(article.viewCount.lt(cursor));
+                builder.and(
+                        article.viewCount.lt(cursorViewCount)
+                                .or(article.viewCount.eq(cursorViewCount)
+                                        .and(article.publishDate.lt(cursorPublishDate))));
             }
         }
     }
 
-    private void addCommentCountCursorCondition(BooleanBuilder builder, Long cursor, boolean isAscending) {
-        if (cursor != null) {
+    private void addCommentCountCursorCondition(BooleanBuilder builder, Long cursorCommentCount,
+            Instant cursorPublishDate, boolean isAscending) {
+        if (cursorCommentCount != null && cursorPublishDate != null) {
             if (isAscending) {
-                builder.and(article.commentCount.gt(cursor));
+                builder.and(
+                        article.commentCount.gt(cursorCommentCount)
+                                .or(article.commentCount.eq(cursorCommentCount)
+                                        .and(article.publishDate.gt(cursorPublishDate))));
             } else {
-                builder.and(article.commentCount.lt(cursor));
+                builder.and(
+                        article.commentCount.lt(cursorCommentCount)
+                                .or(article.commentCount.eq(cursorCommentCount)
+                                        .and(article.publishDate.lt(cursorPublishDate))));
             }
         }
     }
