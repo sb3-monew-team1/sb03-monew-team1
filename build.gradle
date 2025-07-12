@@ -54,6 +54,8 @@ dependencies {
     // RSS/XML parsing
     implementation 'com.rometools:rome:2.1.0'
     implementation 'com.rometools:rome-modules:2.1.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     // Swagger UI 활성화
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
