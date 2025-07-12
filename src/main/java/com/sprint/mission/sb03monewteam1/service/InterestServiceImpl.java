@@ -35,7 +35,7 @@ public class InterestServiceImpl implements InterestService {
         String similarInterestName = findSimilarInterestName(request.name());
         if (similarInterestName != null) {
             log.warn("유사한 관심사 이름: {}", similarInterestName);
-            throw new InterestSimilarityException("유사한 관심사 이름이 존재합니다: " + similarInterestName);  // 수정된 부분
+            throw new InterestSimilarityException(similarInterestName);
         }
 
         Interest interest = Interest.builder()
