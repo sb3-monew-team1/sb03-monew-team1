@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import com.sprint.mission.sb03monewteam1.entity.Article;
 
@@ -37,4 +38,6 @@ public interface ArticleRepositoryCustom {
             boolean isAscending);
 
     List<String> findDistinctSources();
+
+    long incrementViewCount(UUID articleId);
 }

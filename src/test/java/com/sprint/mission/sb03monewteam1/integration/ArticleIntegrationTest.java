@@ -11,7 +11,6 @@ import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,9 +40,6 @@ class ArticleIntegrationTest {
     @Autowired
     private ArticleRepository articleRepository;
 
-    @Autowired
-    private ArticleViewRepository articleViewRepository;
-
     private Article testArticle1;
     private Article testArticle2;
     private Article testArticle3;
@@ -56,8 +52,6 @@ class ArticleIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        articleViewRepository.deleteAll();
-        articleRepository.deleteAll();
 
         testArticle1 = Article.builder()
             .source("네이버뉴스")

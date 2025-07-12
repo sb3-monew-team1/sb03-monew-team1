@@ -2,8 +2,10 @@ package com.sprint.mission.sb03monewteam1.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
@@ -111,6 +113,17 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .where(article.isDeleted.eq(false))
                 .orderBy(article.source.asc())
                 .fetch();
+    }
+
+    @Override
+    @Transactional
+    public long incrementViewCount(UUID articleId) {
+        return queryFactory
+                .update(article)
+                .set(article.viewCount, article.viewCount.add(1))
+                .where(article.id.eq(articleId)
+                        .and(article.isDeleted.eq(false)))
+                .execute();
     }
 
     private BooleanBuilder createBaseCondition() {
