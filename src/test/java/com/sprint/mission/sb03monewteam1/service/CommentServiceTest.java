@@ -9,6 +9,9 @@ import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
+import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
@@ -58,44 +61,17 @@ public class CommentServiceTest {
 
             // given
             String content = "댓글 생성 테스트";
-            String userNickname = "testUser";
 
-            User user = User.builder()
-                    .nickname(userNickname)
-                    .build();
-
-            Article article = Article.builder().build();
-
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticle();
             ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
-            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
 
             UUID userId = user.getId();
             UUID articleId = article.getId();
 
-            CommentRegisterRequest commentRegisterRequest = CommentRegisterRequest.builder()
-                    .content(content)
-                    .articleId(articleId)
-                    .userId(userId)
-                    .build();
-
-            Comment savedComment = Comment.builder()
-                    .content(content)
-                    .article(article)
-                    .author(user)
-                    .build();
-
-            ReflectionTestUtils.setField(savedComment, "id", UUID.randomUUID());
-
-            CommentDto expectedCommentDto = CommentDto.builder()
-                    .id(savedComment.getId())
-                    .createdAt(savedComment.getCreatedAt())
-                    .articleId(articleId)
-                    .userId(userId)
-                    .content(savedComment.getContent())
-                    .userNickname(userNickname)
-                    .likeCount(0L)
-                    .likedByMe(false)
-                    .build();
+            CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, userId, articleId);
+            Comment savedComment = CommentFixture.createComment(content,user, article);
+            CommentDto expectedCommentDto = CommentFixture.createCommentDto(savedComment);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
             given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
