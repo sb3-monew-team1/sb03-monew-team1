@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +40,9 @@ class InterestControllerTest {
 
     @MockitoBean
     private InterestService interestService;
+
+    @MockitoBean
+    private InterestRepository interestRepository;
 
     @Test
     void 관심사를_등록하면_201과_DTO가_반환된다() throws Exception {
@@ -116,15 +121,18 @@ class InterestControllerTest {
     }
 
     @Test
-    void 관심사_이름_유사도가_80_퍼센트_이상일_경우_409_Conflict를_반환한다() throws Exception {
+    void 관심사_이름_유사도가_80퍼센트_이상일_경우_409를_반환한다() throws Exception {
         // Given
-        InterestRegisterRequest similarRequest = InterestFixture.createRequestWithSimilarName();
+        InterestRegisterRequest request = InterestFixture.createRequestWithSimilarName();
+
+        given(interestService.create(any()))
+            .willThrow(new InterestSimilarityException("유사한 관심사 이름이 존재합니다."));
 
         // When & Then
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(similarRequest)))
-            .andExpect(status().isConflict())  // Expected status: 409 Conflict
+                .content(objectMapper.writeValueAsBytes(request)))
+            .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("INTEREST_SIMILARITY_ERROR"))
             .andExpect(jsonPath("$.message").value("유사한 관심사 이름이 존재합니다."));
     }

@@ -38,10 +38,10 @@ class InterestIntegrationTest {
 
     @Test
     void 관심사를_등록하면_DB에_저장된다() throws Exception {
-        // given
+        // Given
         InterestRegisterRequest request = InterestFixture.createInterestCreateRequest();
 
-        // when & then
+        // When & Then
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -54,10 +54,10 @@ class InterestIntegrationTest {
 
     @Test
     void 관심사_등록시_이름이_비어있으면_400을_반환한다() throws Exception {
-        // given
+        // Given
         InterestRegisterRequest request = InterestFixture.createRequestWithEmptyName();
 
-        // when & then
+        // When & Then
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -69,19 +69,19 @@ class InterestIntegrationTest {
 
     @Test
     void 관심사_등록시_관심사가_중복되면_409를_반환한다() throws Exception {
-        // given
+        // Given
         InterestRegisterRequest request = InterestFixture.createInterestCreateRequest();
 
-        // when & then
+        // When & Then
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated());
 
-        // then
+        // Then
         assertThat(interestRepository.existsByName(request.name())).isTrue();
 
-        // when & then
+        // When & Then
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -92,19 +92,26 @@ class InterestIntegrationTest {
 
     @Test
     void 관심사_이름_유사도가_80_퍼센트_이상일_경우_409를_반환한다() throws Exception {
-        // given
+        // Given: DB에 이미 존재하는 관심사
         InterestRegisterRequest request = InterestFixture.createInterestCreateRequest();
+        mockMvc.perform(post("/api/interests")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
 
-        Interest existingInterest = new Interest();
-        interestRepository.save(existingInterest);
+        // DB에 관심사가 등록된 것을 확인
+        assertThat(interestRepository.existsByName(request.name())).isTrue();
 
-        // when
+        // Given: 유사한 이름을 가진 관심사 요청
         InterestRegisterRequest similarRequest = InterestFixture.createRequestWithSimilarName();
 
-        // then
+        // When & Then: 유사한 이름이 있을 경우 409 Conflict 반환
         mockMvc.perform(post("/api/interests")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(similarRequest)))
-            .andExpect(status().isConflict());
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("INTEREST_SIMILARITY_ERROR"))
+            .andExpect(jsonPath("$.message").value("유사한 관심사 이름이 존재합니다."));
     }
+
 }

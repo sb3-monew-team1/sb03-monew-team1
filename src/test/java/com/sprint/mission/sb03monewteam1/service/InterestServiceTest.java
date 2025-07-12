@@ -10,10 +10,12 @@ import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,18 +80,20 @@ class InterestServiceTest {
     }
 
     @Test
-    void 관심사_이름_유사도가_80_퍼센트_이상일_경우_InterestSimilarityException이_발생한다() throws Exception {
-        // given
-        InterestRegisterRequest defaultRequest = InterestFixture.createInterestCreateRequest();
-        Interest defaultInterest = new Interest();
-        given(interestRepository.findByName(defaultRequest.name())).willReturn(Optional.of(defaultInterest));
-
-        // when
+    void 관심사_이름_유사도가_80_퍼센트_이상일_경우_InterestSimilarityException이_발생한다() {
+        InterestRegisterRequest request = InterestFixture.createInterestCreateRequest();
         InterestRegisterRequest similarRequest = InterestFixture.createRequestWithSimilarName();
 
+        // Given
+        Interest existingInterest = new Interest();
+        existingInterest.setName(request.name());
+        given(interestRepository.findAll()).willReturn(List.of(existingInterest));
+
+        // When
         Throwable throwable = catchThrowable(() -> interestService.create(similarRequest));
 
-        // then
-        assertThat(throwable).isInstanceOf(InterestSimilarityException.class);
+        // Then
+        assertThat(throwable).isInstanceOf(InterestSimilarityException.class)
+            .hasMessageContaining("유사한 관심사 이름이 존재합니다.");
     }
 }

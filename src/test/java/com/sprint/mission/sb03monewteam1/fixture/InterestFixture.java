@@ -8,7 +8,8 @@ import java.util.UUID;
 
 public class InterestFixture {
 
-    private static final String DEFAULT_NAME = "축구";
+    private static final String DEFAULT_NAME = "football activity";
+    private static final String SIMILAR_NAME = "football activities";
     private static final List<String> DEFAULT_KEYWORDS = List.of("스포츠", "해외축구");
     private static final UUID DEFAULT_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
 
@@ -28,6 +29,14 @@ public class InterestFixture {
             .build();
     }
 
+    // 유사한 이름을 가진 요청 DTO (80% 이상 유사한 이름)
+    public static InterestRegisterRequest createRequestWithSimilarName() {
+        return InterestRegisterRequest.builder()
+            .name(SIMILAR_NAME)
+            .keywords(DEFAULT_KEYWORDS)
+            .build();
+    }
+
     // 응답 DTO
     public static InterestResponse createInterestResponseDto() {
         return InterestResponse.builder()
@@ -37,5 +46,13 @@ public class InterestFixture {
             .subscriberCount(0L)
             .subscribedByMe(false)
             .build();
+    }
+
+    public static String getSimilarName() {
+        return SIMILAR_NAME;
+    }
+
+    public static String getDefaultName() {
+        return DEFAULT_NAME;
     }
 }
