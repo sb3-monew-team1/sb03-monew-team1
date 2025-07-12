@@ -65,7 +65,9 @@ class ArticleServiceTest {
 
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
                 .thenReturn(false);
-        when(articleRepository.findById(articleId))
+        when(articleRepository.incrementViewCount(articleId))
+                .thenReturn(1L); // 성공적으로 업데이트됨
+        when(articleRepository.findByIdAndIsDeletedFalse(articleId))
                 .thenReturn(Optional.of(article));
         when(articleViewRepository.save(any(ArticleView.class)))
                 .thenReturn(articleView);
@@ -81,9 +83,9 @@ class ArticleServiceTest {
         assertThat(result.articleId()).isEqualTo(articleId);
 
         verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
-        verify(articleRepository).findById(articleId);
+        verify(articleRepository).incrementViewCount(articleId);
+        verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
         verify(articleViewRepository).save(any(ArticleView.class));
-        verify(articleRepository).save(article);
     }
 
     @Test
@@ -94,8 +96,8 @@ class ArticleServiceTest {
 
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
                 .thenReturn(false);
-        when(articleRepository.findById(articleId))
-                .thenReturn(Optional.empty());
+        when(articleRepository.incrementViewCount(articleId))
+                .thenReturn(0L); // 업데이트 실패 (기사가 없음)
 
         // when & then
         assertThatThrownBy(() -> articleService.createArticleView(userId, articleId))
@@ -103,7 +105,8 @@ class ArticleServiceTest {
                 .hasMessage("기사를 찾을 수 없습니다.");
 
         verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
-        verify(articleRepository).findById(articleId);
+        verify(articleRepository).incrementViewCount(articleId);
+        verify(articleRepository, never()).findByIdAndIsDeletedFalse(any());
         verify(articleViewRepository, never()).save(any());
     }
 
