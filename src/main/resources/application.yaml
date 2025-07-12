@@ -24,6 +24,10 @@ spring:
         format_sql: false
         show_sql: false
 
+  batch:
+    jdbc:
+      initialize-schema: always
+
 logging:
   level:
     root: info
