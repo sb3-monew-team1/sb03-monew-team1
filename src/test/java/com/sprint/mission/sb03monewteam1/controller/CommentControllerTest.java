@@ -44,7 +44,7 @@ public class CommentControllerTest {
     private CommentService commentService;
 
     @Nested
-    @DisplayName("댓글 등록 태스트")
+    @DisplayName("댓글 등록 테스트")
     class CommentCreateTest {
 
         @Test
@@ -55,6 +55,7 @@ public class CommentControllerTest {
             User user = UserFixture.createUser();
             Article article = ArticleFixture.createArticle();
             ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
 
             UUID userId = user.getId();
             UUID articleId = article.getId();
@@ -78,11 +79,12 @@ public class CommentControllerTest {
         }
 
         @Test
-        void 댓글을_등록할_때_존재하지_않는_사용자라면_400가_반환되어야_한다() throws Exception {
+        void 댓글을_등록할_때_존재하지_않는_사용자라면_404가_반환되어야_한다() throws Exception {
 
             // given
             String content = "댓글 생성 테스트";
             Article article = ArticleFixture.createArticle();
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
             UUID articleId = article.getId();
             UUID invalidUserId = UUID.randomUUID();
 
@@ -95,13 +97,13 @@ public class CommentControllerTest {
             mockMvc.perform(post("/api/comments")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(commentRegisterRequest)))
-                    .andExpect(status().isBadRequest())
+                    .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
                     .andExpect(jsonPath("$.message").value("사용자를 찾을 수 없습니다."));
         }
 
         @Test
-        void 댓글을_등록할_때_존재하지_않는_뉴스기사라면_400가_반환되어야_한다() throws Exception {
+        void 댓글을_등록할_때_존재하지_않는_뉴스기사라면_404가_반환되어야_한다() throws Exception {
 
             // given
             String content = "댓글 생성 테스트";
@@ -119,7 +121,7 @@ public class CommentControllerTest {
             mockMvc.perform(post("/api/comments")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsBytes(commentRegisterRequest)))
-                    .andExpect(status().isBadRequest())
+                    .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("ARTICLE_NOT_FOUND"))
                     .andExpect(jsonPath("$.message").value("기사를 찾을 수 없습니다."));
         }

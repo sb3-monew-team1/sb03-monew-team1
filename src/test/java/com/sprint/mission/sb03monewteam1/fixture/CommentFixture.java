@@ -36,7 +36,7 @@ public class CommentFixture {
                 .userId(comment.getAuthor().getId())
                 .content(comment.getContent())
                 .userNickname(comment.getAuthor().getNickname())
-                .likeCount(comment.getLikeCount())
+                .likeCount(0L)
                 .likedByMe(false)
                 .build();
     }
