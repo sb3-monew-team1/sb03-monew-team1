@@ -43,3 +43,6 @@ node_modules/
 application*.yaml
 !application.yaml
 !application-test.yaml
+
+### env ###
+*.env*
