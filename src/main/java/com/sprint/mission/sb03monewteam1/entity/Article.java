@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.sprint.mission.sb03monewteam1.entity.base.BaseEntity;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +15,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Article {
+public class Article extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -60,21 +61,10 @@ public class Article {
     @Builder.Default
     private Boolean isDeleted = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    // ArticleView와의 연관관계
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ArticleView> articleViews = new ArrayList<>();
 
-    // 생성 시점에 createdAt 설정
-    @PrePersist
-    protected void onCreate() {
-        createdAt = Instant.now();
-    }
-
-    // 비즈니스 메서드
     public void increaseViewCount() {
         this.viewCount++;
     }
@@ -97,7 +87,6 @@ public class Article {
         this.isDeleted = false;
     }
 
-    // 조회용 메서드
     public boolean isDeleted() {
         return this.isDeleted;
     }

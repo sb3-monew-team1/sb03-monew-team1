@@ -37,7 +37,7 @@ public class Comment extends BaseUpdatableEntity {
     private User author;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "news_article_id")
+    @JoinColumn(name = "article_id")
     private Article article;
 
     public void updateContent(String newContent) {
