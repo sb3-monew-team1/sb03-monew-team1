@@ -5,8 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
-import org.junit.jupiter.api.BeforeAll;
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -16,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+@LoadTestEnv
 @EnableScheduling
 @SpringBootTest
 @ActiveProfiles("test")
@@ -29,11 +29,6 @@ class ArticleBatchSchedulerTest {
 
     @Autowired
     private ArticleBatchScheduler articleBatchScheduler;
-
-    @BeforeAll
-    static void setUp() {
-        TestEnvSetup.loadEnvVariables();
-    }
 
     @Test
     void 스케줄러가_주기적으로_배치잡을_실행한다() throws Exception {
