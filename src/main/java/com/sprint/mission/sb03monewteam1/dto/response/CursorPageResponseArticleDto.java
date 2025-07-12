@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.dto;
+package com.sprint.mission.sb03monewteam1.dto.response;
 
 import java.util.List;
 
