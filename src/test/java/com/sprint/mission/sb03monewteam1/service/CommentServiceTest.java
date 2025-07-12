@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
@@ -9,6 +10,8 @@ import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
@@ -53,11 +56,11 @@ public class CommentServiceTest {
     }
 
     @Nested
-    @DisplayName("댓글 생성 테스트")
+    @DisplayName("댓글 등록 테스트")
     class CommentCreateTest {
 
         @Test
-        void 댓글을_생성하면_CommentDto를_반환해야한다() {
+        void 댓글을_등록하면_CommentDto를_반환해야한다() {
 
             // given
             String content = "댓글 생성 테스트";
@@ -89,6 +92,49 @@ public class CommentServiceTest {
             assertThat(result.likeCount()).isEqualTo(expectedCommentDto.likeCount());
             assertThat(result.likedByMe()).isEqualTo(expectedCommentDto.likedByMe());
             assertThat(result.createdAt()).isEqualTo(expectedCommentDto.createdAt());
+        }
+
+        @Test
+        void 댓글을_등록할_때_존재하지_않는_사용자라면_예외가_발생한다() {
+
+            // given
+            String content = "댓글 생성 테스트";
+            Article article = ArticleFixture.createArticle();
+            UUID articleId = article.getId();
+            UUID invalidUserId = UUID.randomUUID();
+
+            CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, invalidUserId, articleId);
+
+            given(userRepository.findById(invalidUserId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.create(commentRegisterRequest))
+                    .isInstanceOf(CommentException.class)
+                    .extracting(e -> ((CommentException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        void 댓글을_등록할_때_존재하지_않는_뉴스기사라면_예외가_발생한다() {
+
+            // given
+            String content = "댓글 생성 테스트";
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            UUID userId = user.getId();
+            UUID invalidArticleId = UUID.randomUUID();
+
+            CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, userId, invalidArticleId);
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(articleRepository.findById(invalidArticleId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.create(commentRegisterRequest))
+                    .isInstanceOf(CommentException.class)
+                    .extracting(e -> ((CommentException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.ARTICLE_NOT_FOUND);
         }
     }
 }
