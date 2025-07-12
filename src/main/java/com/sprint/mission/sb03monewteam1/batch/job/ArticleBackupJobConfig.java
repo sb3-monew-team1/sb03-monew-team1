@@ -9,6 +9,9 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Configuration
 public class ArticleBackupJobConfig {
@@ -21,10 +24,19 @@ public class ArticleBackupJobConfig {
     }
 
     @Bean
-    public Step articleBackupStep(JobRepository jobRepository,
-        PlatformTransactionManager transactionManager) {
+    public Step articleBackupStep(
+        JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        S3Client s3Client) {
         return new StepBuilder("articleBackupStep", jobRepository)
             .tasklet((contribution, chunkContext) -> {
+                PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket("test-bucket")
+                    .key("backup.txt")
+                    .build();
+                RequestBody body = RequestBody.fromString("backup data");
+                s3Client.putObject(request, body);
+
                 System.out.println("Article Backup Step executed!");
                 return RepeatStatus.FINISHED;
             }, transactionManager)

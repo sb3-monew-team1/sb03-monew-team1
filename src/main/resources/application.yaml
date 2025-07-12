@@ -56,3 +56,10 @@ news:
       url: ${NEWS_RSS_CHOSUN_URL}
     yonhap:
       url: ${NEWS_RSS_YONHAP_URL}
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_S3_REGION}
+    access-key: ${AWS_S3_ACCESS_KEY}
+    secret-key: ${AWS_S3_SECRET_KEY}
