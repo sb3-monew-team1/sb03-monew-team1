@@ -28,6 +28,21 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 환경 변수 설정 (Variables)
+      - name: Set environment variables
+        run: |
+          echo "NEWS_API_NAVER_BASE_URL=${{ vars.NEWS_API_NAVER_BASE_URL }}" >> $GITHUB_ENV
+          echo "NEWS_API_NAVER_SOURCE=${{ vars.NEWS_API_NAVER_SOURCE }}" >> $GITHUB_ENV
+          echo "NEWS_RSS_HANKYUNG_URL=${{ vars.NEWS_RSS_HANKYUNG_URL }}" >> $GITHUB_ENV
+          echo "NEWS_RSS_CHOSUN_URL=${{ vars.NEWS_RSS_CHOSUN_URL }}" >> $GITHUB_ENV
+          echo "NEWS_RSS_YONHAP_URL=${{ vars.NEWS_RSS_YONHAP_URL }}" >> $GITHUB_ENV
+
+      # 환경 변수 설정 (Secrets)
+      - name: Set environment secrets
+        run: |
+          echo "NEWS_API_NAVER_CLIENT_ID=${{ secrets.NEWS_API_NAVER_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "NEWS_API_NAVER_CLIENT_SECRET=${{ secrets.NEWS_API_NAVER_CLIENT_SECRET }}" >> $GITHUB_ENV
+
       # Gradle 캐시 활용 (빌드 속도 향상)
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
