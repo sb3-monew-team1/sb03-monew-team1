@@ -8,8 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
+import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -144,6 +146,62 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.details.password").value(
                     "비밀번호는 6자 이상 20자 이하이며, 최소 하나의 영문자, 숫자, 특수문자(@$!%*?&)를 포함해야 합니다"));
+        }
+
+    }
+
+    @Nested
+    @DisplayName("사용자 로그인 테스트")
+    class UserLoginTests {
+
+        @Test
+        void 로그인에_성공하면_201이_반환되어야_한다() throws Exception {
+            // Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest)).willReturn(userDto);
+
+            // When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(UserFixture.getDefaultEmail()))
+                .andExpect(jsonPath("$.nickname").value(UserFixture.getDefaultNickname()));
+
+        }
+
+        @Test
+        void 등록되지_않은_이메일로_로그인_시_401을_반환해야_한다() throws Exception {
+            //Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest))
+                .willThrow(new InvalidEmailOrPasswordException(UserFixture.getDefaultEmail()));
+
+            //When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void 틀린_비밀번호로_로그인_시_401을_반환해야_한다() throws Exception {
+            //Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest))
+                .willThrow(new InvalidEmailOrPasswordException(UserFixture.getDefaultEmail()));
+
+            //When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isUnauthorized());
         }
 
     }
