@@ -24,6 +24,9 @@ public enum ErrorCode {
     INTEREST_DUPLICATE(HttpStatus.CONFLICT, "이미 존재하는 관심사입니다."),
     INTEREST_NOT_FOUND(HttpStatus.NOT_FOUND, "관심사를 찾을 수 없습니다."),
 
+    // 뉴스 기사 관련 예외
+    ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "기사를 찾을 수 없습니다."),
+
     // 유효성 검증 관련 예외
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "");
 
