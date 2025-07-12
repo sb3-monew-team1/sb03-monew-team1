@@ -185,7 +185,7 @@ class ArticleServiceTest {
                 ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByViewCount(
-                isNull(), isNull(), isNull(), isNull(), eq(100L), eq(11), eq(true)))
+                isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1), eq(true)))
                 .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
                 .thenReturn(articleDtos.get(0), articleDtos.get(1));
@@ -199,7 +199,7 @@ class ArticleServiceTest {
         assertThat(result.hasNext()).isFalse();
 
         verify(articleRepository).findArticlesWithCursorByViewCount(
-                isNull(), isNull(), isNull(), isNull(), eq(100L), eq(11), eq(true));
+                isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1), eq(true));
     }
 
     @Test
@@ -219,7 +219,7 @@ class ArticleServiceTest {
                 ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByCommentCount(
-                isNull(), isNull(), isNull(), isNull(), eq(50L), eq(11), eq(false)))
+                isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1), eq(false)))
                 .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
                 .thenReturn(articleDtos.get(0), articleDtos.get(1));
@@ -233,7 +233,7 @@ class ArticleServiceTest {
         assertThat(result.hasNext()).isFalse();
 
         verify(articleRepository).findArticlesWithCursorByCommentCount(
-                isNull(), isNull(), isNull(), isNull(), eq(50L), eq(11), eq(false));
+                isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1), eq(false));
     }
 
     @Test
