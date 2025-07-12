@@ -23,6 +23,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
+import com.sprint.mission.sb03monewteam1.exception.article.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
@@ -276,5 +277,50 @@ class ArticleServiceTest {
         assertThat(result).containsExactly("연합뉴스", "조선일보", "한국일보");
 
         verify(articleRepository).findDistinctSources();
+    }
+
+    @Test
+    void 기사_목록_조회_실패_잘못된_조회수_커서_형식() {
+        // given
+        String orderBy = "viewCount";
+        String direction = "DESC";
+        String invalidCursor = "invalid-number";
+        int limit = 10;
+
+        // when & then
+        assertThatThrownBy(() -> articleService.getArticles(
+                null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+                .isInstanceOf(InvalidCursorException.class)
+                .hasMessage("잘못된 조회수 커서 형식입니다: " + invalidCursor);
+    }
+
+    @Test
+    void 기사_목록_조회_실패_잘못된_댓글수_커서_형식() {
+        // given
+        String orderBy = "commentCount";
+        String direction = "ASC";
+        String invalidCursor = "not-a-number";
+        int limit = 10;
+
+        // when & then
+        assertThatThrownBy(() -> articleService.getArticles(
+                null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+                .isInstanceOf(InvalidCursorException.class)
+                .hasMessage("잘못된 댓글수 커서 형식입니다: " + invalidCursor);
+    }
+
+    @Test
+    void 기사_목록_조회_실패_잘못된_날짜_커서_형식() {
+        // given
+        String orderBy = "publishDate";
+        String direction = "DESC";
+        String invalidCursor = "2024-13-45T25:99:99Z"; // 잘못된 날짜 형식
+        int limit = 10;
+
+        // when & then
+        assertThatThrownBy(() -> articleService.getArticles(
+                null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+                .isInstanceOf(InvalidCursorException.class)
+                .hasMessage("잘못된 날짜 커서 형식입니다: " + invalidCursor);
     }
 }
