@@ -70,6 +70,9 @@ dependencies {
     // dotenv-java 의존성 추가
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 
+    // Apache Commons Text 의존성 추가
+    implementation 'org.apache.commons:commons-text:1.13.1'
+
     // Metrics
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
