@@ -20,7 +20,7 @@ public interface InterestApi {
             responseCode = "201",
             description = "관심사 등록 성공",
             content = @Content(
-                mediaType = "*/*",
+                mediaType = "application/json",
                 schema = @Schema(implementation = InterestResponse.class)
             )
         ),
@@ -28,7 +28,7 @@ public interface InterestApi {
             responseCode = "400",
             description = "잘못된 요청 (입력값 검증 실패)",
             content = @Content(
-                mediaType = "*/*",
+                mediaType = "application/json",
                 schema = @Schema(implementation = ErrorResponse.class)
             )
         ),
@@ -36,7 +36,7 @@ public interface InterestApi {
             responseCode = "409",
             description = "이미 존재하는 관심사",
             content = @Content(
-                mediaType = "*/*",
+                mediaType = "application/json",
                 schema = @Schema(implementation = ErrorResponse.class)
             )
         ),
@@ -44,7 +44,7 @@ public interface InterestApi {
             responseCode = "409",
             description = "유사한 관심사 존재",
             content = @Content(
-                mediaType = "*/*",
+                mediaType = "application/json",
                 schema = @Schema(implementation = ErrorResponse.class)
             )
         ),
@@ -52,7 +52,7 @@ public interface InterestApi {
             responseCode = "500",
             description = "서버 내부 오류",
             content = @Content(
-                mediaType = "*/*",
+                mediaType = "application/json",
                 schema = @Schema(implementation = ErrorResponse.class)
             )
         )
