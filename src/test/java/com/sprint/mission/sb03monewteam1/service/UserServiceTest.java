@@ -11,12 +11,14 @@ import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -194,6 +196,70 @@ public class UserServiceTest {
             then(userRepository).shouldHaveNoMoreInteractions();
             then(userMapper).shouldHaveNoInteractions();
 
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 수정 테스트")
+    class UserUpdateTests {
+
+        @Test
+        void 사용자가_닉네임을_수정하면_DTO를_반환한다() {
+            // Given
+            UUID userId = UserFixture.getDefaultId();
+            User existedUser = UserFixture.createUser();
+            UserDto existedUserDto = UserFixture.createUserDto();
+            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest();
+
+            given(userRepository.findById(existedUser.getId())).willReturn(Optional.of(existedUser));
+            given(userMapper.toDto(existedUser)).willReturn(existedUserDto);
+
+            // When
+            UserDto result = userService.update(userId, userUpdateRequest);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.id()).isEqualTo(UserFixture.getDefaultId());
+            assertThat(result.email()).isEqualTo(UserFixture.getDefaultEmail());
+            assertThat(result.nickname()).isEqualTo(UserFixture.getDefaultNickname());
+            assertThat(result.createdAt()).isNotNull();
+
+            then(userRepository).should().findById(existedUser.getId());
+            then(userMapper).should().toDto(existedUser);
+        }
+
+        @Test
+        void 다른_사용자의_닉네임을_수정하려_하면_예외가_발생한다() {
+            // Given
+            UUID targetId = UserFixture.getDefaultId();
+            UUID requesterId = UUID.randomUUID();
+            User existedUser = UserFixture.createUser();
+            UserDto existedUserDto = UserFixture.createUserDto();
+            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest();
+
+            // When & Then
+            assertThatThrownBy(
+                () -> userService.update(requesterId, targetId, userUpdateRequest))
+                .isInstanceOf(ForbiddenAccessException.class)
+                .hasMessageContaining("다른 사용자의 정보를 수정할 수 없습니다")
+                .extracting("errcode")
+                .isEqualTo(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        @Test
+        void 존재하지_않는_사용자를_수정하면_예외가_발생한다() {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest();
+
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> userService.update(userId, userId, request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining("사용자를 찾을 수 없습니다")
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
         }
     }
 

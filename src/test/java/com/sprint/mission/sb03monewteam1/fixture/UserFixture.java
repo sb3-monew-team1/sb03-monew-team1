@@ -47,6 +47,19 @@ public class UserFixture {
             .build();
     }
 
+    // UserUpdateRequest
+    public static UserUpdateRequest userUpdateRequest() {
+        return userUpdateRequest.builder()
+            .nickname(DEFAULT_NICKNAME)
+            .build;
+    }
+
+    public static UserUpdateRequest userUpdateRequest(String nickname) {
+        return userUpdateRequest.builder()
+            .nickname(nickname)
+            .build;
+    }
+
     // User 엔티티 생성
     public static User createUser() {
         return User.builder()
