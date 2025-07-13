@@ -13,12 +13,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final LoginInterceptor loginInterceptor;
+    private final MDCLoggingInterceptor mdcLoggingInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
             .addPathPatterns("/api/**")
             .excludePathPatterns("/api/users/login", "/api/users");
+        registry.addInterceptor(mdcLoggingInterceptor)
+            .addPathPatterns("/api/**");
     }
-
 }
