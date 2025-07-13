@@ -30,8 +30,9 @@ public enum ErrorCode {
     ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "기사를 찾을 수 없습니다."),
     DUPLICATE_ARTICLE_VIEW(HttpStatus.CONFLICT, "이미 조회한 기사입니다."),
 
-    // 유효성 검증 관련 예외
-    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "");
+    // Monew-Request-User-ID 헤더 관련 예외
+    MISS_REQUEST_HEADER(HttpStatus.UNAUTHORIZED, "Monew-Request-User-ID 헤더를 찾을 수 없습니다");
+
 
     private final HttpStatus httpStatus;
     private final String message;

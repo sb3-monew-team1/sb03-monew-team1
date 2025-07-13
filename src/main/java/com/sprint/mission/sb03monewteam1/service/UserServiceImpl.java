@@ -81,14 +81,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request) {
+
+        log.info("사용자 정보 수정 시작 - userId={}, nickname={}", userId, request.nickname());
+
         if (!requestHeaderUserId.equals(userId)) {
-            throw new ForbiddenAccessException("다른 사용자의 정보를 수정할 수 없습니다");
+            log.warn("수정 실패 (다른 사용자 정보 수정 요청): requestUserId={}, userId={}", requestHeaderUserId,
+                userId);
+            throw new ForbiddenAccessException("다른 사용자의 정보는 수정할 수 없습니다");
         }
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UserNotFoundException(userId));
+            .orElseThrow(
+                () -> {
+                    log.warn("수정 실패 (존재하지 않는 사용자): userId={}", userId);
+                    return new UserNotFoundException(userId);
+                });
 
         user.update(request.nickname());
+
+        log.info("사용자 정보 수정 완료 - id={}, nickname={}", user.getId(), user.getNickname());
 
         return userMapper.toDto(user);
     }
