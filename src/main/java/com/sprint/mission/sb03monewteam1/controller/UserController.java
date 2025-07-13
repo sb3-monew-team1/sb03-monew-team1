@@ -2,11 +2,14 @@ package com.sprint.mission.sb03monewteam1.controller;
 
 import com.sprint.mission.sb03monewteam1.controller.api.UserApi;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
+import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.interceptor.LoginInterceptor;
 import com.sprint.mission.sb03monewteam1.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,5 +40,23 @@ public class UserController implements UserApi {
             userDto.id(), userDto.email(), userDto.nickname());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userDto);
+    }
+
+    @Override
+    @PostMapping("/login")
+    public ResponseEntity<UserDto> login(
+        @RequestBody @Valid UserLoginRequest userLoginRequest
+    ) {
+        log.info("로그인 요청: email={}", userLoginRequest.email());
+
+        UserDto userDto = userService.login(userLoginRequest);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(LoginInterceptor.REQUEST_USER_ID_HEADER, userDto.id().toString());
+
+        log.info("로그인 완료: id={}, email={}, nickname={}",
+            userDto.id(), userDto.email(), userDto.nickname());
+
+        return ResponseEntity.status(HttpStatus.OK).headers(httpHeaders).body(userDto);
     }
 }

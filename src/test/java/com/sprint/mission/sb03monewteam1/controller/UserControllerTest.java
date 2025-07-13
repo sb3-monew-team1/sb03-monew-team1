@@ -3,13 +3,16 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
+import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,15 +85,9 @@ public class UserControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("이미 존재하는 이메일입니다."));
         }
-    }
-
-    @Nested
-    @DisplayName("회원가입 유효성 검증 테스트")
-    class UserValidationTests {
 
         @Test
-        @DisplayName("이메일이 빈 문자열이면 400 Bad Request를 반환해야 한다")
-        void 이메일이_빈_문자열이면_400을_반환해야_한다() throws Exception {
+        void 회원가입_시_이메일이_빈_문자열이면_400을_반환해야_한다() throws Exception {
             // Given
             UserRegisterRequest request = UserRegisterRequest.builder()
                 .email("")
@@ -108,8 +105,7 @@ public class UserControllerTest {
         }
 
         @Test
-        @DisplayName("닉네임이 빈 문자열이면 400 Bad Request를 반환해야 한다")
-        void 닉네임이_빈_문자열이면_400을_반환해야_한다() throws Exception {
+        void 회원가입_시_닉네임이_빈_문자열이면_400을_반환해야_한다() throws Exception {
             // Given
             UserRegisterRequest request = UserRegisterRequest.builder()
                 .email("test@example.com")
@@ -127,8 +123,7 @@ public class UserControllerTest {
         }
 
         @Test
-        @DisplayName("비밀번호에 영문자가 없으면 400 Bad Request를 반환해야 한다")
-        void 비밀번호에_영문자가_없으면_400을_반환해야_한다() throws Exception {
+        void 회원가입_시_비밀번호에_영문자가_없으면_400을_반환해야_한다() throws Exception {
             // Given
             UserRegisterRequest request = UserRegisterRequest.builder()
                 .email("test@example.com")
@@ -144,6 +139,93 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.details.password").value(
                     "비밀번호는 6자 이상 20자 이하이며, 최소 하나의 영문자, 숫자, 특수문자(@$!%*?&)를 포함해야 합니다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 로그인 테스트")
+    class UserLoginTests {
+
+        @Test
+        void 로그인에_성공하면_201이_반환되어야_한다() throws Exception {
+            // Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest)).willReturn(userDto);
+
+            // When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(UserFixture.getDefaultEmail()))
+                .andExpect(jsonPath("$.nickname").value(UserFixture.getDefaultNickname()));
+
+        }
+
+        @Test
+        void 등록되지_않은_이메일로_로그인_시_401을_반환해야_한다() throws Exception {
+            //Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest))
+                .willThrow(new InvalidEmailOrPasswordException(UserFixture.getDefaultEmail()));
+
+            //When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void 틀린_비밀번호로_로그인_시_401을_반환해야_한다() throws Exception {
+            //Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest))
+                .willThrow(new InvalidEmailOrPasswordException(UserFixture.getDefaultEmail()));
+
+            //When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void 로그인_시_이메일이_빈_칸_이면_400을_반환해야_한다() throws Exception {
+            // Given
+            UserLoginRequest request = UserLoginRequest.builder()
+                .email("")
+                .password("!password123")
+                .build();
+
+            // When & Then
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.details.email").value("이메일은 필수입니다"));
+        }
+
+        @Test
+        void 로그인한_사용자는_MoNew_Request_User_ID_헤더가_포함된다() throws Exception {
+            // Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest)).willReturn(userDto);
+
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Monew-Request-User-ID"));
         }
 
     }

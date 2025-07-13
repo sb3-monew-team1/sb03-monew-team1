@@ -1,6 +1,5 @@
 package com.sprint.mission.sb03monewteam1.exception;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,8 +20,8 @@ public class GlobalExceptionHandler {
         log.error("CustomException: {}", e.getErrorCode().name(), e);
 
         return ResponseEntity
-                .status(e.getErrorCode().getHttpStatus())
-                .body(ErrorResponse.of(e));
+            .status(e.getErrorCode().getHttpStatus())
+            .body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(Exception.class)
@@ -31,8 +30,8 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
 
         return ResponseEntity
-                .status(errorCode.getHttpStatus())
-                .body(ErrorResponse.of(errorCode, e));
+            .status(errorCode.getHttpStatus())
+            .body(ErrorResponse.of(errorCode, e));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
