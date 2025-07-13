@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Profile("dev")
 @RequiredArgsConstructor
-public class UserDataSeeder implements DataSeeder{
+public class UserDataSeeder implements DataSeeder {
 
     private final UserRepository userRepository;
 
@@ -37,12 +37,11 @@ public class UserDataSeeder implements DataSeeder{
     }
 
 
-
     private User createUser(String email, String nickname, String password) {
         return User.builder()
             .email(email)
             .nickname(nickname)
-            .password(password) // 필요하다면 인코딩 처리
+            .password(password)
             .build();
     }
 }
