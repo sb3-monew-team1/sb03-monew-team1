@@ -5,6 +5,7 @@ import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -17,6 +18,28 @@ public class CommentFixture {
                 .article(article)
                 .build();
         ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        return comment;
+    }
+
+    public static Comment createCommentWithLikeCount(String content, User user, Article article, Long count) {
+        Comment comment = Comment.builder()
+                .content(content)
+                .author(user)
+                .article(article)
+                .likeCount(count)
+                .build();
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        return comment;
+    }
+
+    public static Comment createCommentWithCreatedAt(String content, User user, Article article, Instant createdAt) {
+        Comment comment = Comment.builder()
+            .content(content)
+            .author(user)
+            .article(article)
+            .build();
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
         return comment;
     }
 
