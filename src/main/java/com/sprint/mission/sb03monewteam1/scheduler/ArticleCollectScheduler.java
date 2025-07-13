@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ArticleBatchScheduler {
+public class ArticleCollectScheduler {
 
     private final InterestRepository interestRepository;
     private final NaverNewsCollector naverNewsCollector;
@@ -31,7 +31,7 @@ public class ArticleBatchScheduler {
         }
     }
 
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 5 * * * *")
     public void collectHankyungNews() {
         List<Interest> interests = interestRepository.findAllWithKeywords();
         for (Interest interest : interests) {

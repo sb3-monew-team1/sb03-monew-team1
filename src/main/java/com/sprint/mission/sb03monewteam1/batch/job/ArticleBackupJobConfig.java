@@ -29,7 +29,7 @@ public class ArticleBackupJobConfig {
 
     private final ArticleRepositoryCustom articleRepositoryCustom;
     private final ObjectMapper objectMapper;
-    private final S3Util s3Util; // S3Util 주입
+    private final S3Util s3Util;
 
     @Bean
     public Job articleBackupJob(JobRepository jobRepository, Step articleBackupStep) {
