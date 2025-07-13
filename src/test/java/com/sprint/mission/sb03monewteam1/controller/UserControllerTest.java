@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -210,6 +211,21 @@ public class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.details.email").value("이메일은 필수입니다"));
+        }
+
+        @Test
+        void 로그인한_사용자는_MoNew_Request_User_ID_헤더가_포함된다() throws Exception {
+            // Given
+            UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
+            UserDto userDto = UserFixture.createUserDto();
+
+            given(userService.login(userLoginRequest)).willReturn(userDto);
+
+            mockMvc.perform(post("/api/users/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(userLoginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("MoNew-Request-User-ID"));
         }
 
     }

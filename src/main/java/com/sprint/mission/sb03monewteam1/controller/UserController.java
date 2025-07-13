@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,9 +50,12 @@ public class UserController implements UserApi {
 
         UserDto userDto = userService.login(userLoginRequest);
 
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("MoNew-Request-User-ID", userDto.id().toString());
+
         log.info("로그인 완료: id={}, email={}, nickname={}",
             userDto.id(), userDto.email(), userDto.nickname());
 
-        return ResponseEntity.status(HttpStatus.OK).body(userDto);
+        return ResponseEntity.status(HttpStatus.OK).headers(httpHeaders).body(userDto);
     }
 }
