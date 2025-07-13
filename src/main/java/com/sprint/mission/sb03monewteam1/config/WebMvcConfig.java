@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.config;
 
 import com.sprint.mission.sb03monewteam1.interceptor.LoginInterceptor;
+import com.sprint.mission.sb03monewteam1.interceptor.MDCLoggingInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
