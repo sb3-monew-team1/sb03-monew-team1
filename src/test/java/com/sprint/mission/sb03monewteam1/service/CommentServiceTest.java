@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.With;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -157,15 +158,17 @@ public class CommentServiceTest {
         void 커서없이_조회시_날짜기준_최신순으로_반환한다() throws InterruptedException {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             User user = UserFixture.createUser();
+
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
             List<Comment> commentList = new ArrayList<>();
 
-            for (int i=0;i<10;i++) {
+            for (int i = 0; i < pageSize+1 ;i++) {
                 Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now().plusMillis(i));
                 commentList.add(comment);
             }
@@ -174,16 +177,22 @@ public class CommentServiceTest {
                     .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
                     .collect(Collectors.toList());
 
-            List<Comment> firstPage = sorted.subList(0, pageSize);
+            List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
-                eq(article.getId()), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+                eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
-            given(commentRepository.countByArticleId(article.getId())).willReturn(10L);
+            given(commentRepository.countByArticleId(articleId)).willReturn(10L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                Comment comment = invocation.getArgument(0);
+                return CommentFixture.createCommentDto(comment);
+                }
+            );
 
             // when
             CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
-                article.getId(), null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection
             );
 
             // then
@@ -199,7 +208,7 @@ public class CommentServiceTest {
                 .toList();
 
             assertThat(actualContents).isEqualTo(expectedContents);
-            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize-1).getId().toString());
+            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize-1).getCreatedAt().toString());
             assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize-1).getCreatedAt());
             assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(10L);
@@ -210,7 +219,8 @@ public class CommentServiceTest {
         void 커서없이_조회시_좋아요수기준_내림차순으로_반환한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             User user = UserFixture.createUser();
             int pageSize = 5;
             String sortBy = "likeCount";
@@ -228,22 +238,28 @@ public class CommentServiceTest {
                     .sorted(Comparator.comparing(Comment::getLikeCount).reversed())
                     .collect(Collectors.toList());
 
-            List<Comment> firstPage = sorted.subList(0, pageSize);
+            List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
-                eq(article.getId()), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+                eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
-            given(commentRepository.countByArticleId(article.getId())).willReturn(10L);
+            given(commentRepository.countByArticleId(articleId)).willReturn(10L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                    Comment comment = invocation.getArgument(0);
+                    return CommentFixture.createCommentDto(comment);
+                }
+            );
 
             // when
             CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
-                article.getId(), null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection
             );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result.content()).hasSize(pageSize);
-            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize-1).getId().toString());
+            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize-1).getLikeCount().toString());
             assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize-1).getCreatedAt());
             assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(10L);
@@ -254,7 +270,8 @@ public class CommentServiceTest {
         void 커서기반으로_다음페이지를_정상조회한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             User user = UserFixture.createUser();
             int pageSize = 5;
             String sortBy = "createdAt";
@@ -271,20 +288,27 @@ public class CommentServiceTest {
                 .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
                 .collect(Collectors.toList());
 
-            List<Comment> firstPage = sorted.subList(0, pageSize);
-            List<Comment> secondPage = sorted.subList(pageSize, 10);
+            List<Comment> firstPage = sorted.subList(0, pageSize + 1);
+            List<Comment> secondPage = sorted.subList(pageSize, sorted.size());
 
-            UUID cursor = firstPage.get(pageSize - 1).getId();
-            Instant after = firstPage.get(pageSize - 1).getCreatedAt();
+            Comment lastOfFirstPage = firstPage.get(pageSize - 1);
+            Instant cursor = lastOfFirstPage.getCreatedAt();
+            Instant after = lastOfFirstPage.getCreatedAt();
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
-                eq(article.getId()), eq(cursor.toString()), eq(after), eq(pageSize), eq(sortBy), eq(sortDirection)))
+                eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(secondPage);
             given(commentRepository.countByArticleId(article.getId())).willReturn(10L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                    Comment comment = invocation.getArgument(0);
+                    return CommentFixture.createCommentDto(comment);
+                }
+            );
 
             // when
             CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
-                article.getId(), cursor.toString(), after, pageSize, sortBy, sortDirection
+                articleId, cursor.toString(), after, pageSize, sortBy, sortDirection
             );
 
             // then
@@ -308,7 +332,8 @@ public class CommentServiceTest {
         void 커서기반으로_마지막페이지를_정상조회한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             User user = UserFixture.createUser();
             int pageSize = 5;
             String sortBy = "createdAt";
@@ -325,19 +350,25 @@ public class CommentServiceTest {
                 .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
                 .collect(Collectors.toList());
 
-            UUID nextCursor = sorted.get(pageSize-1).getId();
+            Instant nextCursor = sorted.get(pageSize-1).getCreatedAt();
             Instant nextAfter = sorted.get(pageSize-1).getCreatedAt();
 
-            List<Comment> lastPage = sorted.subList(pageSize, 10);
+            List<Comment> lastPage = sorted.subList(pageSize, sorted.size());
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
-                eq(article.getId()), eq(nextCursor.toString()), eq(nextAfter), eq(pageSize), eq(sortBy), eq(sortDirection)))
+                eq(articleId), eq(nextCursor.toString()), eq(nextAfter), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(lastPage);
-            given(commentRepository.countByArticleId(article.getId())).willReturn(10L);
+            given(commentRepository.countByArticleId(articleId)).willReturn(10L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                    Comment comment = invocation.getArgument(0);
+                    return CommentFixture.createCommentDto(comment);
+                }
+            );
 
             // when
             CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
-                article.getId(), nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection
+                articleId, nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection
             );
 
             // then
@@ -352,8 +383,8 @@ public class CommentServiceTest {
                 .toList();
             assertThat(actualContents).isEqualTo(expectedContents);
 
-            assertThat(result.nextCursor()).isEqualTo(lastPage.get(pageSize - 1).getId().toString());
-            assertThat(result.nextAfter()).isEqualTo(lastPage.get(pageSize - 1).getCreatedAt());
+            assertThat(result.nextCursor()).isNull();
+            assertThat(result.nextAfter()).isNull();
             assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(10L);
             assertThat(result.hasNext()).isFalse();
@@ -363,19 +394,21 @@ public class CommentServiceTest {
         void 댓글이_없는_기사를_조회하면_빈_리스트를_반환한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
-                eq(article.getId()), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+                eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(Collections.emptyList());
             given(commentRepository.countByArticleId(article.getId())).willReturn(0L);
 
             // when
             CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
-                article.getId(), null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection
             );
 
             // then
@@ -383,7 +416,7 @@ public class CommentServiceTest {
             assertThat(result.content()).isEmpty();
             assertThat(result.nextCursor()).isNull();
             assertThat(result.nextAfter()).isNull();
-            assertThat(result.size()).isEqualTo(0);
+            assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(0L);
             assertThat(result.hasNext()).isFalse();
         }
@@ -392,7 +425,8 @@ public class CommentServiceTest {
         void 댓글_수가_페이지_크기와_일치할_때_hasNext는_false를_반환한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             User user = UserFixture.createUser();
             int pageSize = 5;
             String sortBy = "createdAt";
@@ -405,14 +439,15 @@ public class CommentServiceTest {
                 commentList.add(comment);
             }
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
-                eq(article.getId()), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+                eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(commentList.subList(0, pageSize));
-            given(commentRepository.countByArticleId(article.getId())).willReturn(5L);
+            given(commentRepository.countByArticleId(articleId)).willReturn(5L);
 
             // when
             CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
-                article.getId(), null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection
             );
 
             // then
@@ -426,31 +461,45 @@ public class CommentServiceTest {
         void 유효하지_않은_커서로_조회시_예외가_발생한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
-            String invalidCursor = "invalid-uuid"; // UUID 형식이 아닌 커서
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
+            String invalidCursor = "invalid-value";
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
+            List<Comment> comments = new ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                comments.add(CommentFixture.createCommentWithCreatedAt("test" + i, UserFixture.createUser(), article, Instant.now()));
+            }
+
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(commentRepository.findCommentsWithCursorBySort(
+                eq(articleId), eq(invalidCursor), eq(null), eq(pageSize + 1), eq("createdAt"), eq("DESC"))
+            ).willReturn(comments);
+
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(article.getId(), invalidCursor, null, pageSize, sortBy, sortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection)
             ).isInstanceOf(InvalidCursorException.class)
-                .hasMessageContaining("유효하지 않은 커서 값입니다.");
+                .hasMessageContaining("유효하지 않은 커서입니다.");
         }
 
         @Test
         void 유효하지_않은_페이지_크기로_조회시_예외가_발생한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             int invalidPageSize = -1;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(article.getId(), null, null, invalidPageSize, sortBy, sortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, null, null, invalidPageSize, sortBy, sortDirection)
             ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("페이지 크기는 1 이상이어야 합니다");
         }
@@ -459,14 +508,17 @@ public class CommentServiceTest {
         void 잘못된_정렬기준_입력시_예외가_발생한다() {
 
             // given
-            Article article = ArticleFixture.createArticle();
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             String invalidSort = "unknownField"; // 허용되지 않은 정렬 기준
             int pageSize = 5;
             String sortDirection = "DESC";
 
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(article.getId(), null, null, pageSize, invalidSort, sortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, invalidSort, sortDirection)
             ).isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining("허용되지 않은 정렬 기준입니다");
         }

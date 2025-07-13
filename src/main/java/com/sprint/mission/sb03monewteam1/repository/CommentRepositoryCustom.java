@@ -9,12 +9,10 @@ public interface CommentRepositoryCustom {
 
     List<Comment> findCommentsWithCursorBySort(
         UUID articleId,
-        String cusrosr,
+        String cursor,
         Instant nextAfter,
         int limit,
         String sortBy,
         String sortDirection
     );
-
-    Long countByArticleId(UUID articleId);
 }
