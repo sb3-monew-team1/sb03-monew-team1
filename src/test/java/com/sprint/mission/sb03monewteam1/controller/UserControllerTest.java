@@ -225,7 +225,7 @@ public class UserControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsBytes(userLoginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("MoNew-Request-User-ID"));
+                .andExpect(header().exists("Monew-Request-User-ID"));
         }
 
     }

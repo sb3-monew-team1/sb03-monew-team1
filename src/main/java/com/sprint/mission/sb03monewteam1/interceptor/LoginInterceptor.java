@@ -5,15 +5,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Slf4j
-@Controller
+@Component
 @Profile("!test")
 public class LoginInterceptor implements HandlerInterceptor {
 
-    public static final String REQUEST_USER_ID_HEADER = "MoNew-Request-User-ID";
+    public static final String REQUEST_USER_ID_HEADER = "Monew-Request-User-ID";
 
     @Override
     public boolean preHandle(
@@ -22,6 +22,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 
         if (userId == null || userId.isBlank()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
             response.getWriter().write("{\"code\":\"UNAUTHORIZED\", \"message\":\"로그인이 필요합니다.\"}");
             return false;
         }
