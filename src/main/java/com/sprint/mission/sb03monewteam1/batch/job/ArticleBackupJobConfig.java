@@ -1,20 +1,35 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.repository.ArticleRepositoryCustom;
+import com.sprint.mission.sb03monewteam1.util.S3Util;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.support.IteratorItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Configuration
+@RequiredArgsConstructor
+@Slf4j
 public class ArticleBackupJobConfig {
+
+    private final ArticleRepositoryCustom articleRepositoryCustom;
+    private final ObjectMapper objectMapper;
+    private final S3Util s3Util; // S3Util 주입
 
     @Bean
     public Job articleBackupJob(JobRepository jobRepository, Step articleBackupStep) {
@@ -26,20 +41,43 @@ public class ArticleBackupJobConfig {
     @Bean
     public Step articleBackupStep(
         JobRepository jobRepository,
-        PlatformTransactionManager transactionManager,
-        S3Client s3Client) {
+        PlatformTransactionManager transactionManager) {
         return new StepBuilder("articleBackupStep", jobRepository)
-            .tasklet((contribution, chunkContext) -> {
-                PutObjectRequest request = PutObjectRequest.builder()
-                    .bucket("test-bucket")
-                    .key("backup.txt")
-                    .build();
-                RequestBody body = RequestBody.fromString("backup data");
-                s3Client.putObject(request, body);
-
-                System.out.println("Article Backup Step executed!");
-                return RepeatStatus.FINISHED;
-            }, transactionManager)
+            .<ArticleDto, ArticleDto>chunk(100, transactionManager)
+            .reader(reader())
+            .processor(processor())
+            .writer(writer())
             .build();
+    }
+
+    @Bean
+    public ItemReader<ArticleDto> reader() {
+        List<ArticleDto> articles = articleRepositoryCustom.findAllCreatedYesterday();
+        return new IteratorItemReader<>(articles);
+    }
+
+    @Bean
+    public ItemProcessor<ArticleDto, ArticleDto> processor() {
+        return articleDto -> articleDto;
+    }
+
+    @Bean
+    public ItemWriter<ArticleDto> writer() {
+        return articles -> {
+            String key = "articles/backup-articles-" + LocalDate.now().minusDays(1) + ".json";
+            try {
+                log.info("백업 파일 업로드 시작: key={}", key);
+                String json = objectMapper.writeValueAsString(articles);
+                byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+
+                s3Util.upload(key, new java.io.ByteArrayInputStream(jsonBytes), jsonBytes.length,
+                    "application/json");
+
+                log.info("백업 파일 업로드 완료: key={}", key);
+            } catch (Exception e) {
+                log.error("백업 파일 업로드 중 오류 발생", e);
+                throw new RuntimeException(e);
+            }
+        };
     }
 }

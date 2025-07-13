@@ -20,7 +20,6 @@ public class ArticleBatchScheduler {
     private final HankyungNewsCollector hankyungNewsCollector;
     private final ArticleService articleService;
 
-    // 기존 스케줄러용(전체 수집)
     @Scheduled(cron = "0 0 * * * *")
     public void collectNaverNews() {
         List<Interest> interests = interestRepository.findAllWithKeywords();
@@ -32,7 +31,7 @@ public class ArticleBatchScheduler {
         }
     }
 
-    @Scheduled(cron = "0 10 * * * *")
+    @Scheduled(cron = "0 0 2 * * *")
     public void collectHankyungNews() {
         List<Interest> interests = interestRepository.findAllWithKeywords();
         for (Interest interest : interests) {
