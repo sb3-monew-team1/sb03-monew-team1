@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.fixture;
 
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
+import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import java.time.Instant;
@@ -27,6 +28,21 @@ public class UserFixture {
         return UserRegisterRequest.builder()
             .email(email)
             .nickname(nickname)
+            .password(password)
+            .build();
+    }
+
+    // UserLoginRequest 생성
+    public static UserLoginRequest createUserLoginRequest() {
+        return UserLoginRequest.builder()
+            .email(DEFAULT_EMAIL)
+            .password(DEFAULT_PASSWORD)
+            .build();
+    }
+
+    public static UserLoginRequest createUserLoginRequest(String email, String password) {
+        return UserLoginRequest.builder()
+            .email(email)
             .password(password)
             .build();
     }
