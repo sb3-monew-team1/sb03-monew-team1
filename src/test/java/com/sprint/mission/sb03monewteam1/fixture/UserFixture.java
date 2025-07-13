@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.fixture;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import java.time.Instant;
 import java.util.UUID;
@@ -49,15 +50,15 @@ public class UserFixture {
 
     // UserUpdateRequest
     public static UserUpdateRequest userUpdateRequest() {
-        return userUpdateRequest.builder()
+        return UserUpdateRequest.builder()
             .nickname(DEFAULT_NICKNAME)
-            .build;
+            .build();
     }
 
     public static UserUpdateRequest userUpdateRequest(String nickname) {
-        return userUpdateRequest.builder()
+        return UserUpdateRequest.builder()
             .nickname(nickname)
-            .build;
+            .build();
     }
 
     // User 엔티티 생성

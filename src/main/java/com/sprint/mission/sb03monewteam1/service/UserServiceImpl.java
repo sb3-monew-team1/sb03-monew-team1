@@ -3,11 +3,15 @@ package com.sprint.mission.sb03monewteam1.service;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,6 +75,20 @@ public class UserServiceImpl implements UserService {
         }
 
         log.info("로그인 성공 - email={}, nickname={}", user.getEmail(), user.getNickname());
+
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    public UserDto update(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request) {
+        if (!requestHeaderUserId.equals(userId)) {
+            throw new ForbiddenAccessException("다른 사용자의 정보를 수정할 수 없습니다");
+        }
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        user.update(request.nickname());
 
         return userMapper.toDto(user);
     }

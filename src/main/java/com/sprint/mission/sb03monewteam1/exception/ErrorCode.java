@@ -19,6 +19,7 @@ public enum ErrorCode {
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 이메일입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     INVALID_USER_CREDENTIALS(HttpStatus.UNAUTHORIZED, "잘못된 로그인 입력 값 입니다."),
+    FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, "접근 권한이 없습니다"),
 
     // 관심사 관련 예외
     INTEREST_SIMILARITY_ERROR(HttpStatus.CONFLICT, "유사한 관심사 이름이 존재합니다."),
