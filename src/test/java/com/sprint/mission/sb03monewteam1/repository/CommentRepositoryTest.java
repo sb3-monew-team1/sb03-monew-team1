@@ -24,11 +24,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
-@Import({TestJpaAuditConfig.class, QueryDslConfig.class, ArticleMapperImpl.class})
+@ComponentScan(basePackages = "com.sprint.mission.sb03monewteam1.mapper")
+@Import({TestJpaAuditConfig.class, QueryDslConfig.class})
 @ActiveProfiles("test")
 @DisplayName("CommentRepository 슬라이스 테스트")
 public class CommentRepositoryTest {
