@@ -14,35 +14,28 @@ public class CommentFixture {
     private static final UUID DEFAULT_COMMENT_ID = UUID.randomUUID();
 
     public static Comment createComment(String content, User user, Article article) {
-        Comment comment = Comment.builder()
+        return Comment.builder()
                 .content(content)
                 .author(user)
                 .article(article)
                 .build();
-//        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-        return comment;
     }
 
     public static Comment createCommentWithLikeCount(String content, User user, Article article, Long count) {
-        Comment comment = Comment.builder()
+        return Comment.builder()
                 .content(content)
                 .author(user)
                 .article(article)
                 .likeCount(count)
                 .build();
-//        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-        return comment;
     }
 
     public static Comment createCommentWithCreatedAt(String content, User user, Article article, Instant createdAt) {
-        Comment comment = Comment.builder()
+        return Comment.builder()
             .content(content)
             .author(user)
             .article(article)
             .build();
-//        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-//        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
-        return comment;
     }
 
 

@@ -75,10 +75,28 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom{
 
     private BooleanBuilder buildLikeCountCondition(QComment q, Order direction, String cursorValue, Instant nextAfter) {
         Long likeCount = Long.parseLong(cursorValue);
+        BooleanBuilder builder = new BooleanBuilder();
 
-        return direction == Order.ASC
-            ? new BooleanBuilder(q.likeCount.gt(likeCount).or(q.likeCount.eq(likeCount).and(q.createdAt.gt(nextAfter))))
-            : new BooleanBuilder(q.likeCount.lt(likeCount).or(q.likeCount.eq(likeCount).and(q.createdAt.lt(nextAfter))));
+        if (nextAfter == null) {
+            if (direction == Order.ASC) {
+                builder.and(q.likeCount.gt(likeCount));
+            } else {
+                builder.and(q.likeCount.lt(likeCount));
+            }
+        } else {
+            if (direction == Order.ASC) {
+                builder.and(
+                    q.likeCount.gt(likeCount)
+                        .or(q.likeCount.eq(likeCount).and(q.createdAt.gt(nextAfter)))
+                );
+            } else {
+                builder.and(
+                    q.likeCount.lt(likeCount)
+                        .or(q.likeCount.eq(likeCount).and(q.createdAt.lt(nextAfter)))
+                );
+            }
+        }
+        return builder;
     }
 
     private OrderSpecifier<?> createOrderSpecifier(String sortBy, Order direction, QComment q) {

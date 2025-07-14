@@ -97,7 +97,7 @@ public class CommentServiceImpl implements CommentService {
             switch (orderField) {
                 case "createdAt" -> parseInstant(cursor);
                 case "likeCount" -> parseLong(cursor);
-                default -> throw new InvalidSortOptionException(orderField);
+                default -> throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderField);
             };
         }
 
@@ -120,12 +120,15 @@ public class CommentServiceImpl implements CommentService {
             nextCursor = switch (orderField) {
                 case "createdAt" -> lastComment.getCreatedAt().toString();
                 case "likeCount" -> String.valueOf(lastComment.getLikeCount());
-                default -> throw new InvalidSortOptionException(orderField);
+                default -> throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderField);
             };
             nextCursorAfter = lastComment.getCreatedAt();
         }
 
-        Long totalElements = commentRepository.countByArticleId(articleId);
+        Long totalElements = (articleId == null)
+            ? commentRepository.count()
+            : commentRepository.countByArticleId(articleId);
+
         comments = hasNext ? comments.subList(0, size) : comments;
         List<CommentDto> commentDtos = comments.stream()
             .map(commentMapper::toDto)

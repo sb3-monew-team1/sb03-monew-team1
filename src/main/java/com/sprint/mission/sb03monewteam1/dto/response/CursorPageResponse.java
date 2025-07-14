@@ -6,12 +6,12 @@ import lombok.Builder;
 
 @Builder
 public record CursorPageResponse<T>(
-        List<T> content,
-        String nextCursor,
-        Instant nextAfter,
-        int size,
-        Long totalElements,
-        boolean hasNext
+    List<T> content,
+    String nextCursor,
+    Instant nextAfter,
+    int size,
+    Long totalElements,
+    boolean hasNext
 ) {
 
 }

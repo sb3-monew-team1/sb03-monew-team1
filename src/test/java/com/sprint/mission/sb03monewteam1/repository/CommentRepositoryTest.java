@@ -13,6 +13,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.mapper.ArticleMapperImpl;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -27,17 +28,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
-@Import({TestJpaAuditConfig.class, QueryDslConfig.class})
+@Import({TestJpaAuditConfig.class, QueryDslConfig.class, ArticleMapperImpl.class})
 @ActiveProfiles("test")
 @DisplayName("CommentRepository 슬라이스 테스트")
 public class CommentRepositoryTest {
 
     @Autowired
     private CommentRepository commentRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ArticleRepository articleRepository;
     @Autowired
     private TestEntityManager em;
 
