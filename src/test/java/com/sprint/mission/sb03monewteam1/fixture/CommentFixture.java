@@ -11,13 +11,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class CommentFixture {
 
+    private static final UUID DEFAULT_COMMENT_ID = UUID.randomUUID();
+
     public static Comment createComment(String content, User user, Article article) {
         Comment comment = Comment.builder()
                 .content(content)
                 .author(user)
                 .article(article)
                 .build();
-        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+//        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
         return comment;
     }
 
@@ -28,7 +30,7 @@ public class CommentFixture {
                 .article(article)
                 .likeCount(count)
                 .build();
-        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+//        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
         return comment;
     }
 
@@ -38,10 +40,11 @@ public class CommentFixture {
             .author(user)
             .article(article)
             .build();
-        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
+//        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+//        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
         return comment;
     }
+
 
     public static CommentRegisterRequest createCommentRegisterRequest(String content, UUID userId, UUID articleId) {
         return CommentRegisterRequest.builder()

@@ -495,7 +495,11 @@ public class CommentServiceTest {
     private List<Comment> createCommentsWithCreatedAt(int count, Article article, User user) {
         List<Comment> comments = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            comments.add(CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now()));
+            Instant createdAt = Instant.now().plusMillis(i);
+            Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, createdAt);
+            ReflectionTestUtils.setField(comment, "createdAt", createdAt);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            comments.add(comment);
         }
         return comments;
     }
@@ -503,7 +507,9 @@ public class CommentServiceTest {
     private List<Comment> createCommentsWithLikeCount(int count, Article article, User user) {
         List<Comment> comments = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            comments.add(CommentFixture.createCommentWithLikeCount("test" + i, user, article, (long) i));
+            Comment comment = CommentFixture.createCommentWithLikeCount("test" + i, user, article, (long) i);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            comments.add(comment);
         }
         return comments;
     }
