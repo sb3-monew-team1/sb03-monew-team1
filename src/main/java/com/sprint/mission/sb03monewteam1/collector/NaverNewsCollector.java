@@ -9,6 +9,7 @@ import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectExcepti
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleParseException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -53,6 +54,7 @@ public class NaverNewsCollector {
                 .header("X-Naver-Client-Secret", naverClientSecret)
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(30))
                 .block();
 
             try {
