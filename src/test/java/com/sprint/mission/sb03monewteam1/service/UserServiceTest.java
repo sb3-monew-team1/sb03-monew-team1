@@ -20,6 +20,7 @@ import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -212,7 +213,12 @@ public class UserServiceTest {
             UUID requesterId = UserFixture.getDefaultId();
             UUID userId = UserFixture.getDefaultId();
             User existedUser = UserFixture.createUser();
-            UserDto existedUserDto = UserFixture.createUserDto();
+            UserDto existedUserDto = UserFixture.createUserDto(
+                userId,
+                UserFixture.getDefaultEmail(),
+                "newNickname",
+                Instant.now()
+            );
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
             given(userRepository.findById(userId)).willReturn(Optional.of(existedUser));
@@ -225,7 +231,7 @@ public class UserServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.id()).isEqualTo(UserFixture.getDefaultId());
             assertThat(result.email()).isEqualTo(UserFixture.getDefaultEmail());
-            assertThat(result.nickname()).isEqualTo(UserFixture.getDefaultNickname());
+            assertThat(result.nickname()).isEqualTo(userUpdateRequest.nickname());
             assertThat(result.createdAt()).isNotNull();
 
             then(userRepository).should().findById(userId);
