@@ -165,6 +165,7 @@ public class CommentControllerTest {
             for (int i = 0; i < totalCount; i++) {
                 Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, baseTime.plusSeconds(i * 1000));
                 ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+                ReflectionTestUtils.setField(comment, "createdAt", baseTime.plusSeconds(i * 1000));
                 CommentDto commentDto = CommentFixture.createCommentDto(comment);
                 commentDtos.add(commentDto);
             }
@@ -216,6 +217,7 @@ public class CommentControllerTest {
             for (int i = 0; i < totalCount; i++) {
                 Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, baseTime.plusSeconds(i * 1000));
                 ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+                ReflectionTestUtils.setField(comment, "createdAt", baseTime.plusSeconds(i * 1000));
                 CommentDto commentDto = CommentFixture.createCommentDto(comment);
                 commentDtos.add(commentDto);
             }
