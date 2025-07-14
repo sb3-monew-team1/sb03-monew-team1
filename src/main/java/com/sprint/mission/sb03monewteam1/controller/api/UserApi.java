@@ -3,13 +3,17 @@ package com.sprint.mission.sb03monewteam1.controller.api;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
 import com.sprint.mission.sb03monewteam1.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "사용자 관리", description = "사용자 관련 API")
@@ -54,7 +58,7 @@ public interface UserApi {
         UserRegisterRequest userRegisterRequest
     );
 
-    @Operation(summary = "로그인")
+    @Operation(summary = "로그인", description = "사용자 로그인을 처리합니다.")
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -92,4 +96,55 @@ public interface UserApi {
     ResponseEntity<UserDto> login(
         UserLoginRequest userLoginRequest
     );
+
+    @Operation(summary = "사용자 정보 수정", description = "사용자의 닉네임을 수정합니다.")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "사용자 정보 수정 성공",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = UserDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청 (입력값 검증 실패)",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "사용자 정보 수정 권한 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "사용자 정보 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<UserDto> update(
+        @Parameter(description = "수정할 사용자 ID", required = true)
+        UUID userId,
+        UserUpdateRequest request,
+        HttpServletRequest httpServletRequest
+    );
+
 }

@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.interceptor;
 
+import com.sprint.mission.sb03monewteam1.exception.user.MissMonewIdHeaderException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
@@ -21,10 +22,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         String userId = request.getHeader(REQUEST_USER_ID_HEADER);
 
         if (userId == null || userId.isBlank()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"code\":\"UNAUTHORIZED\", \"message\":\"로그인이 필요합니다.\"}");
-            return false;
+            throw new MissMonewIdHeaderException("Monew-Request-User-ID 헤더를 찾을 수 없습니다");
         }
 
         try {

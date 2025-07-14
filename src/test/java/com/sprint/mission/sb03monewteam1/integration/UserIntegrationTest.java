@@ -1,17 +1,21 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
+import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@LoadTestEnv
 @Transactional
+@ActiveProfiles("test")
 @DisplayName("UserIntegration 테스트")
 public class UserIntegrationTest {
 
@@ -84,8 +89,7 @@ public class UserIntegrationTest {
     }
 
     @Test
-    @DisplayName("정상적인 로그인 시 사용자 정보와 헤더가 반환되어야 한다")
-    void 정상적인_로그인_시_사용자_정보와_헤더가_반환되어야_한다() throws Exception {
+    void 정상적인_로그인_시_사용자_정보가_반환되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
         User savedUser = userRepository.save(user);
@@ -98,9 +102,7 @@ public class UserIntegrationTest {
                 .content(objectMapper.writeValueAsBytes(userLoginRequest)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.email").value("test@example.com"))
-            .andExpect(jsonPath("$.nickname").value("testUser"))
-            .andExpect(header().exists("MoNew-Request-User-ID"))
-            .andExpect(header().string("MoNew-Request-User-ID", savedUser.getId().toString()));
+            .andExpect(jsonPath("$.nickname").value("testUser"));
     }
 
     @Test
@@ -127,7 +129,7 @@ public class UserIntegrationTest {
 
     @Test
     void 잘못된_비밀번호로_로그인_시_401을_반환해야_한다() throws Exception {
-        // Given - 사용자 생성 및 저장
+        // Given
         User user = User.builder()
             .email("test@example.com")
             .nickname("testUser")
@@ -145,6 +147,58 @@ public class UserIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(loginRequest)))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 사용자_정보_수정에_성공_시_레포지터리까지_반영되어야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        User savedUser = userRepository.save(user);
+        UUID requestHeaderUserId = savedUser.getId();
+        UUID userId = savedUser.getId();
+
+        userRepository.save(user);
+        UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickName");
+
+        // When & Then
+        mockMvc.perform(patch("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(userUpdateRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.email").value(UserFixture.getDefaultEmail()))
+            .andExpect(jsonPath("$.nickname").value("newNickName"));
+    }
+
+    @Test
+    void 타인의_정보를_수정하려_하면_403을_반환해야_한다() throws Exception {
+        // Given
+        UUID requestHeaderUserId = UserFixture.getDefaultId();
+        UUID userId = UUID.randomUUID();
+        UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
+
+        // When & Then
+        mockMvc.perform(patch("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(userUpdateRequest)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 존재하지_않는_사용자의_정보를_수정하면_404를_반환해야_한다() throws Exception {
+        // Given
+        UUID requestHeaderUserId = UserFixture.getDefaultId();
+        UUID userId = UserFixture.getDefaultId();
+        UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
+        UserDto userDto = UserFixture.createUserDto();
+
+        // When & Then
+        mockMvc.perform(patch("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(userUpdateRequest)))
+            .andExpect(status().isNotFound());
     }
 
 
