@@ -1,5 +1,7 @@
 package com.sprint.mission.sb03monewteam1.util;
 
+import com.sprint.mission.sb03monewteam1.exception.util.S3DownloadException;
+import com.sprint.mission.sb03monewteam1.exception.util.S3UploadException;
 import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +38,8 @@ public class S3Util {
 
             log.info("S3 파일 업로드 성공: key={}", key);
         } catch (Exception e) {
-            log.error("S3 파일 업로드 실패: key={}, message={}", key, e.getMessage(), e);
-            throw new RuntimeException("S3 파일 업로드 실패", e);
+            log.error("S3 파일 업로드 실패: key={}", key, e);
+            throw new S3UploadException("S3 파일 업로드 실패: " + e.getMessage());
         }
     }
 
@@ -56,8 +58,8 @@ public class S3Util {
             log.info("S3 파일 다운로드 완료: key={}", key);
             return objectBytes.asByteArray();
         } catch (Exception e) {
-            log.error("S3 파일 다운로드 실패: key={}, message={}", key, e.getMessage(), e);
-            throw new RuntimeException("S3 파일 다운로드 실패", e);
+            log.error("S3 파일 다운로드 실패: key={}", key, e);
+            throw new S3DownloadException("S3 파일 다운로드 실패: " + e.getMessage());
         }
     }
 }
