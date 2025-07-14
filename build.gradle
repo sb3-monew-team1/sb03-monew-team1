@@ -30,6 +30,10 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
 }
 
 repositories {
@@ -48,8 +52,11 @@ dependencies {
     // https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-native-macos
     runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.2.2.Final:osx-aarch_64'
 
-    // logging aop 추가
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    // logging
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.apache.logging.log4j:log4j-layout-template-json:2.20.0'
+    implementation 'org.fusesource.jansi:jansi:2.4.0'
+    implementation 'org.apache.logging.log4j:log4j-jul' // Tomcat log
 
     // RSS/XML parsing
     implementation 'com.rometools:rome:2.1.0'

@@ -44,5 +44,8 @@ application*.yaml
 !application.yaml
 !application-test.yaml
 
+### logs ###
+logs/
+
 ### env ###
 *.env*
