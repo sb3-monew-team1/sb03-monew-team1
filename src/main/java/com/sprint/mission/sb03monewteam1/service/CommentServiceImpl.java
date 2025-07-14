@@ -84,7 +84,7 @@ public class CommentServiceImpl implements CommentService {
 
         // 정렬 기준 유효성 검사
         if (!orderField.equals("createdAt") && !orderField.equals("likeCount")) {
-            throw new InvalidSortOptionException(sortBy);
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderField);
         }
 
         // 정렬 방향 유효성 검사
