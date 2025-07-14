@@ -490,6 +490,26 @@ public class CommentServiceTest {
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
         }
+
+        @Test
+        void 잘못된_정렬방향_입력시_예외가_발생한다() {
+
+            // given
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
+            int pageSize = 5;
+            String sortBy = "createdAt";
+            String invalidSortDirection = "unknownDirection";  // 허용되지 않은 정렬 방향
+
+            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+
+            // when & then
+            assertThatThrownBy(() ->
+                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, sortBy, invalidSortDirection)
+            )
+                .isInstanceOf(InvalidSortOptionException.class)
+                .hasMessageContaining(ErrorCode.INVALID_SORT_DIRECTION.getMessage());
+        }
     }
 
     private List<Comment> createCommentsWithCreatedAt(int count, Article article, User user) {

@@ -40,6 +40,7 @@ public enum ErrorCode {
     INVALID_CURSOR_COUNT(HttpStatus.BAD_REQUEST,"잘못된 숫자 커서 형식입니다."),
 
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST,"지원하지 않는 정렬 필드입니다."),
+    INVALID_SORT_DIRECTION(HttpStatus.BAD_REQUEST,"지원하지 않는 정렬 방향입니다."),
 
     // Monew-Request-User-ID 헤더 관련 예외
     MISS_REQUEST_HEADER(HttpStatus.UNAUTHORIZED, "Monew-Request-User-ID 헤더를 찾을 수 없습니다");

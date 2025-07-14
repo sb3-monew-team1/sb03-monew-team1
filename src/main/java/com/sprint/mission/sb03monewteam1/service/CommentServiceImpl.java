@@ -87,6 +87,11 @@ public class CommentServiceImpl implements CommentService {
             throw new InvalidSortOptionException(sortBy);
         }
 
+        // 정렬 방향 유효성 검사
+        if (!orderDirection.equals("DESC") && !orderDirection.equals("ASC")) {
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection", orderDirection);
+        }
+
         // 커서 유효성 검사
         if (cursor != null) {
             switch (orderField) {
