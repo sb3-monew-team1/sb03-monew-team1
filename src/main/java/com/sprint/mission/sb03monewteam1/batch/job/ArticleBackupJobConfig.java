@@ -6,6 +6,7 @@ import com.sprint.mission.sb03monewteam1.repository.ArticleRepositoryCustom;
 import com.sprint.mission.sb03monewteam1.util.S3Util;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.IteratorItemReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -30,6 +32,12 @@ public class ArticleBackupJobConfig {
     private final ArticleRepositoryCustom articleRepositoryCustom;
     private final ObjectMapper objectMapper;
     private final S3Util s3Util;
+
+    @Value("${aws.s3.bucket:}")
+    private String backupBucket;
+
+    @Value("${aws.s3.backup-prefix:articles/}")
+    private String backupPrefix;
 
     @Bean
     public Job articleBackupJob(JobRepository jobRepository, Step articleBackupStep) {
@@ -64,14 +72,20 @@ public class ArticleBackupJobConfig {
     @Bean
     public ItemWriter<ArticleDto> writer() {
         return articles -> {
-            String key = "articles/backup-articles-" + LocalDate.now().minusDays(1) + ".json";
+            String key = backupPrefix + "backup-articles-" +
+                LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1) + ".json";
             try {
                 log.info("백업 파일 업로드 시작: key={}", key);
                 String json = objectMapper.writeValueAsString(articles);
                 byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
 
-                s3Util.upload(key, new java.io.ByteArrayInputStream(jsonBytes), jsonBytes.length,
-                    "application/json");
+                s3Util.upload(
+                    backupBucket,
+                    key,
+                    new java.io.ByteArrayInputStream(jsonBytes),
+                    jsonBytes.length,
+                    "application/json"
+                );
 
                 log.info("백업 파일 업로드 완료: key={}", key);
             } catch (Exception e) {

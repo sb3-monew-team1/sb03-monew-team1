@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -71,9 +72,14 @@ public class NaverNewsCollector {
             String link = item.has("link") ? item.get("link").asText() : "";
             String pubDateStr = item.has("pubDate") ? item.get("pubDate").asText() : null;
             Instant pubDate = null;
+
             if (pubDateStr != null) {
-                // Naver pubDate 예시: "Mon, 08 Jul 2024 09:00:00 +0900"
-                pubDate = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(pubDateStr));
+                try {
+                    pubDate = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(pubDateStr));
+                } catch (DateTimeParseException e) {
+                    log.warn("날짜 파싱 실패: {}", pubDateStr);
+                    pubDate = null;
+                }
             }
             String summary = item.has("description") ? item.get("description").asText() : title;
 

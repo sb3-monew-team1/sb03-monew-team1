@@ -213,16 +213,31 @@ public class ArticleServiceImpl implements ArticleService {
         saveCollectedArticles(collectedArticles, interest, keyword);
     }
 
+    private boolean shouldIncludeArticle(CollectedArticleDto dto, String keyword) {
+        String kw = keyword.toLowerCase();
+        return (dto.title() != null && dto.title().toLowerCase().contains(kw))
+            || (dto.summary() != null && dto.summary().toLowerCase().contains(kw));
+    }
+
+    private Article createArticleFromDto(CollectedArticleDto dto) {
+        return Article.builder()
+            .source(dto.source())
+            .sourceUrl(dto.sourceUrl())
+            .title(dto.title())
+            .publishDate(dto.publishDate())
+            .summary(dto.summary())
+            .viewCount(0L)
+            .commentCount(0L)
+            .isDeleted(false)
+            .build();
+    }
+
     private void saveCollectedArticles(List<CollectedArticleDto> collectedArticles,
         Interest interest,
         String keyword) {
-        String kw = keyword.toLowerCase();
         List<Article> filtered = new ArrayList<>();
         for (CollectedArticleDto dto : collectedArticles) {
-            boolean containsKeyword =
-                (dto.title() != null && dto.title().toLowerCase().contains(kw))
-                    || (dto.summary() != null && dto.summary().toLowerCase().contains(kw));
-            if (!containsKeyword) {
+            if (!shouldIncludeArticle(dto, keyword)) {
                 continue;
             }
 
@@ -231,21 +246,14 @@ public class ArticleServiceImpl implements ArticleService {
                 continue;
             }
 
-            Article article = Article.builder()
-                .source(dto.source())
-                .sourceUrl(dto.sourceUrl())
-                .title(dto.title())
-                .publishDate(dto.publishDate())
-                .summary(dto.summary())
-                .viewCount(0L)
-                .commentCount(0L)
-                .isDeleted(false)
-                .build();
-
-            articleRepository.save(article);
+            Article article = createArticleFromDto(dto);
             filtered.add(article);
-            log.info("기사 저장: {}", article.getTitle());
         }
-        log.info("최종 저장된 기사 수: {}", filtered.size());
+
+        if (!filtered.isEmpty()) {
+            articleRepository.saveAll(filtered);
+            log.info("기사 배치 저장 완료: {}개", filtered.size());
+            filtered.forEach(article -> log.debug("저장된 기사: {}", article.getTitle()));
+        }
     }
 }
