@@ -113,7 +113,7 @@ public class UserServiceImpl implements UserService {
         if (!requestHeaderUserId.equals(userId)) {
             log.warn("논리 삭제 실패 (다른 사용자 논리 삭제 요청): requestUserId={}, userId={}", requestHeaderUserId,
                 userId);
-            throw new ForbiddenAccessException("다른 사용자의 정보는 삭제할 수 없습니다");
+            throw new ForbiddenAccessException("다른 사용자는 삭제할 수 없습니다");
         }
 
         User user = userRepository.findById(userId)
