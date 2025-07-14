@@ -11,4 +11,6 @@ public record InterestDto(
     List<String> keywords,
     long subscriberCount,
     boolean subscribedByMe
-) {}
+) {
+
+}

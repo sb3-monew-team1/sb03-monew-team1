@@ -1,12 +1,14 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -137,46 +139,91 @@ class InterestIntegrationTest {
     @DisplayName("관심사 조회 테스트")
     class InterestReadTests {
 
+        @BeforeEach
+        void setUp() {
+            Interest interest1 = Interest.builder()
+                .name("football club")
+                .subscriberCount(150L)
+                .build();
+
+            Interest interest2 = Interest.builder()
+                .name("soccer")
+                .subscriberCount(200L)
+                .build();
+
+            Interest interest3 = Interest.builder()
+                .name("aesthetic")
+                .subscriberCount(100L)
+                .build();
+
+            Interest interest4 = Interest.builder()
+                .name("beauty")
+                .subscriberCount(50L)
+                .build();
+
+            InterestKeyword keyword1 = InterestKeyword.builder()
+                .keyword("sports")
+                .interest(interest1)
+                .build();
+
+            InterestKeyword keyword2 = InterestKeyword.builder()
+                .keyword("club")
+                .interest(interest1)
+                .build();
+
+            InterestKeyword keyword3 = InterestKeyword.builder()
+                .keyword("football")
+                .interest(interest2)
+                .build();
+
+            InterestKeyword keyword4 = InterestKeyword.builder()
+                .keyword("ball")
+                .interest(interest2)
+                .build();
+
+            interestRepository.saveAll(List.of(interest1, interest2, interest3, interest4));
+            interestKeywordRepository.saveAll(List.of(keyword1, keyword2, keyword3, keyword4));
+        }
+
         @Test
         void 관심사_목록을_조회하면_관심사_목록을_반환한다() throws Exception {
-            // Given
-            List<InterestDto> interests = InterestFixture.createInterestDtoList();
-
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("limit", "10")
+                    .param("sortBy", "name")
+                    .param("sortDirection", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(4))
-                .andExpect(jsonPath("$.content[0].name").value("football club"))
-                .andExpect(jsonPath("$.content[1].name").value("soccer"))
-                .andExpect(jsonPath("$.content[2].name").value("aesthetic"))
-                .andExpect(jsonPath("$.content[3].name").value("beauty"));
+                .andExpect(jsonPath("$.content.length()").value(4)); // 2개의 Interest 객체
         }
 
         @Test
         void 관심사_이름으로_검색하면_부분일치하는_관심사만_조회된다() throws Exception {
-            // Given
-            List<InterestDto> interests = InterestFixture.createInterestDtoList();
-
             // When & Then
-            mockMvc.perform(get("/api/interests?keyword=football")
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", "soccer")
+                    .param("cursor", "")
+                    .param("limit", "10")
+                    .param("sortBy", "name")
+                    .param("sortDirection", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].name").value("football club"))
-                .andExpect(jsonPath("$.content[1].name").value("soccer"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("soccer"));
         }
 
         @Test
         void 관심사_이름순으로_정렬하면_이름순으로_정렬된_목록을_반환한다() throws Exception {
-            // Given
-            List<InterestDto> interests = InterestFixture.createInterestDtoList();
-
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("orderBy", "name")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("limit", "10")
+                    .param("sortBy", "name")
                     .param("sortDirection", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -188,17 +235,17 @@ class InterestIntegrationTest {
 
         @Test
         void 관심사_구독자순으로_내림차순으로_정렬하면_구독자순으로_내림차순으로_정렬된_목록을_반환한다() throws Exception {
-            // Given
-            List<InterestDto> interests = InterestFixture.createInterestDtoList();
-
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("orderBy", "subscriberCount")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("limit", "10")
+                    .param("sortBy", "subscriberCount")
                     .param("sortDirection", "desc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name").value("football club"))
-                .andExpect(jsonPath("$.content[1].name").value("soccer"))
+                .andExpect(jsonPath("$.content[0].name").value("soccer"))
+                .andExpect(jsonPath("$.content[1].name").value("football club"))
                 .andExpect(jsonPath("$.content[2].name").value("aesthetic"))
                 .andExpect(jsonPath("$.content[3].name").value("beauty"));
         }

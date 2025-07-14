@@ -1,11 +1,12 @@
 package com.sprint.mission.sb03monewteam1.dto.response;
 
-import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import java.time.Instant;
 import java.util.List;
+import lombok.Builder;
 
-public record CursorPageResponseInterestDto(
-    List<InterestDto> content,
+@Builder
+public record CursorPageResponse<T>(
+    List<T> content,
     String nextCursor,
     Instant nextAfter,
     int size,

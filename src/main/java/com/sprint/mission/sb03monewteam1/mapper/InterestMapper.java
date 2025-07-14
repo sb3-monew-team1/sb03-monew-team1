@@ -14,9 +14,6 @@ public interface InterestMapper {
     InterestDto toDto(Interest interest, boolean subscribedByMe);
 
     default List<String> map(List<InterestKeyword> keywords) {
-        if (keywords == null) {
-            return null;
-        }
         return keywords.stream()
             .map(InterestKeyword::getKeyword)
             .collect(Collectors.toList());

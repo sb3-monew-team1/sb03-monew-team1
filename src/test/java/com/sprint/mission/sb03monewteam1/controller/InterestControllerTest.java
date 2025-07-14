@@ -3,12 +3,15 @@ package com.sprint.mission.sb03monewteam1.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 
+import java.time.Instant;
+import java.util.Arrays;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -147,27 +150,34 @@ class InterestControllerTest {
     @DisplayName("관심사 조회 테스트")
     class InterestReadTests {
 
-        private static final UUID REQUEST_USER_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-
         @Test
         void 관심사_목록을_조회하면_관심사_목록을_반환한다() throws Exception {
             // Given
             List<InterestDto> interestDtos = InterestFixture.createInterestDtoList();
+            CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(
+                interestDtos, null, null, 10, 4, false
+            );
 
-            given(interestService.search(
-                REQUEST_USER_ID, null, null, 10, "name", "asc"))
-                .willReturn(interestDtos);
+            // When
+            given(interestService.getInterests(
+                anyString(), anyString(), anyInt(), anyString(), anyString()))
+                .willReturn(responseDto);
 
-            // When & Then
+            // Then
             mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("limit", "10")
+                    .param("sortBy", "name")
+                    .param("sortDirection", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(4))
-                .andExpect(jsonPath("$.content[0].name").value("aesthetic"))
-                .andExpect(jsonPath("$.content[1].name").value("beauty"))
-                .andExpect(jsonPath("$.content[2].name").value("football"))
-                .andExpect(jsonPath("$.content[3].name").value("soccer"));
+                .andExpect(jsonPath("$.content[0].name").value("football club"))
+                .andExpect(jsonPath("$.content[1].name").value("soccer"))
+                .andExpect(jsonPath("$.content[2].name").value("aesthetic"))
+                .andExpect(jsonPath("$.content[3].name").value("beauty"));
         }
 
         @Test
@@ -177,13 +187,22 @@ class InterestControllerTest {
                 InterestFixture.createInterestResponseDto("football", List.of("club", "sport")),
                 InterestFixture.createInterestResponseDto("soccer", List.of("ball", "sports"))
             );
+            CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(
+                interestDtos, null, null, 10, 2, false
+            );
 
-            given(interestService.search(
-                REQUEST_USER_ID, "football", null, 10, "name", "asc"))
-                .willReturn(interestDtos);
+            // When
+            given(interestService.getInterests(
+                eq("football"), anyString(), eq(10), eq("name"), eq("asc")))
+                .willReturn(responseDto);
 
-            // When & Then
-            mockMvc.perform(get("/api/interests?keyword=football")
+            // Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", "football")
+                    .param("cursor", "")
+                    .param("limit", "10")
+                    .param("sortBy", "name")
+                    .param("sortDirection", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -195,20 +214,38 @@ class InterestControllerTest {
         @Test
         void 관심사를_구독자수로_정렬하여_반환한다() throws Exception {
             // Given
-            List<InterestDto> interestDtos = InterestFixture.createInterestDtoList();
+            List<InterestDto> interestDtos = Arrays.asList(
+                InterestDto.builder().id(UUID.randomUUID()).name("soccer").subscriberCount(200L).build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("football club").subscriberCount(150L).build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("aesthetic").subscriberCount(100L).build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("beauty").subscriberCount(50L).build()
+            );
 
-            given(interestService.search(
-                REQUEST_USER_ID, null, null, 10, "subscriberCount", "desc"))
-                .willReturn(interestDtos);
+            CursorPageResponse<InterestDto> responseDto = CursorPageResponse.<InterestDto>builder()
+                .content(interestDtos)
+                .nextCursor("50")
+                .nextAfter(Instant.now())
+                .size(10)
+                .totalElements(4)
+                .hasNext(false)
+                .build();
 
-            // When & Then
+            // When
+            given(interestService.getInterests(
+                anyString(), anyString(), eq(10), eq("subscriberCount"), eq("desc")))
+                .willReturn(responseDto);
+
+            // Then
             mockMvc.perform(get("/api/interests")
-                    .param("orderBy", "subscriberCount")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("sortBy", "subscriberCount")
                     .param("sortDirection", "desc")
+                    .param("limit", "10")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name").value("football"))
-                .andExpect(jsonPath("$.content[1].name").value("soccer"))
+                .andExpect(jsonPath("$.content[0].name").value("soccer"))
+                .andExpect(jsonPath("$.content[1].name").value("football club"))
                 .andExpect(jsonPath("$.content[2].name").value("aesthetic"))
                 .andExpect(jsonPath("$.content[3].name").value("beauty"))
                 .andExpect(jsonPath("$.content[0].subscriberCount").value(200L))
@@ -220,21 +257,39 @@ class InterestControllerTest {
         @Test
         void 관심사를_이름순으로_정렬하여_반환한다() throws Exception {
             // Given
-            List<InterestDto> interestDtos = InterestFixture.createInterestDtoList();
+            List<InterestDto> interestDtos = Arrays.asList(
+                InterestDto.builder().id(UUID.randomUUID()).name("aesthetic").build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("beauty").build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("football club").build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("soccer").build()
+            );
 
-            given(interestService.search(
-                REQUEST_USER_ID, null, null, 10, "name", "asc"))
-                .willReturn(interestDtos);
+            CursorPageResponse<InterestDto> responseDto = CursorPageResponse.<InterestDto>builder()
+                .content(interestDtos)
+                .nextCursor("50")
+                .nextAfter(Instant.now())
+                .size(10)
+                .totalElements(4)
+                .hasNext(false)
+                .build();
 
-            // When & Then
+            // When
+            given(interestService.getInterests(
+                anyString(), anyString(), eq(10), eq("name"), eq("asc")))
+                .willReturn(responseDto);
+
+            // Then
             mockMvc.perform(get("/api/interests")
-                    .param("orderBy", "name")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("sortBy", "name")
                     .param("sortDirection", "asc")
+                    .param("limit", "10")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("aesthetic"))
                 .andExpect(jsonPath("$.content[1].name").value("beauty"))
-                .andExpect(jsonPath("$.content[2].name").value("football"))
+                .andExpect(jsonPath("$.content[2].name").value("football club"))
                 .andExpect(jsonPath("$.content[3].name").value("soccer"));
         }
     }

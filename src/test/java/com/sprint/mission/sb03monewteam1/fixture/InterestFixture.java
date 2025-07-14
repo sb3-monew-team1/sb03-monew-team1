@@ -8,13 +8,14 @@ import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class InterestFixture {
 
     private static final String DEFAULT_NAME = "football activity";
     private static final String SIMILAR_NAME = "football activities";
     private static final List<String> DEFAULT_KEYWORDS = List.of("스포츠", "해외축구");
-    private static final UUID DEFAULT_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
 
     // 기본 요청 DTO
     public static InterestRegisterRequest createInterestRegisterRequest() {
@@ -42,8 +43,8 @@ public class InterestFixture {
 
     // 여러 DTO를 한 번에 생성
     public static List<InterestDto> createInterestDtoList() {
-        InterestDto interestDto1 = createInterestResponseDto("football club", List.of("sports", "club"), 200L);
-        InterestDto interestDto2 = createInterestResponseDto("soccer", List.of("football", "ball"), 150L);
+        InterestDto interestDto1 = createInterestResponseDto("football club", List.of("sports", "club"), 150L);
+        InterestDto interestDto2 = createInterestResponseDto("soccer", List.of("football", "ball"), 200L);
         InterestDto interestDto3 = createInterestResponseDto("aesthetic", List.of("spa", "cosmetics"), 100L);
         InterestDto interestDto4 = createInterestResponseDto("beauty", List.of("massage", "spa"), 50L);
 
@@ -70,5 +71,20 @@ public class InterestFixture {
             .subscriberCount(subscriberCount)
             .subscribedByMe(false)
             .build();
+    }
+
+    // Interest 엔티티 객체 생성
+    public static Interest createInterest(String name, List<String> keywords, long subscriberCount) {
+        Interest interest = new Interest();
+        interest.setName(name);
+        interest.setSubscriberCount(subscriberCount);
+
+        List<InterestKeyword> interestKeywords = new ArrayList<>();
+        for (String keyword : keywords) {
+            interestKeywords.add(new InterestKeyword(keyword, interest));
+        }
+        interest.setKeywords(interestKeywords);
+
+        return interest;
     }
 }

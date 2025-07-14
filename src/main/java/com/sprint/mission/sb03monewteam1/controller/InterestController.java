@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 import com.sprint.mission.sb03monewteam1.controller.api.InterestApi;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,24 @@ public class InterestController implements InterestApi {
         log.info("응답: {}", response);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<CursorPageResponse> getInterests(
+        @RequestParam(defaultValue = "") String searchKeyword,
+        @RequestParam(defaultValue = "") String cursor,
+        @RequestParam(defaultValue = "10") int limit,
+        @RequestParam String sortBy,
+        @RequestParam String sortDirection) {
+
+        log.info("요청 받은 파라미터 - searchKeyword: {}, cursor: {}, limit: {}, sortBy: {}, sortDirection: {}",
+            searchKeyword, cursor, limit, sortBy, sortDirection);
+
+        CursorPageResponse response = interestService.getInterests(
+            searchKeyword, cursor, limit, sortBy, sortDirection);
+
+        log.info("응답: {}", response);
+
+        return ResponseEntity.ok(response);
     }
 }
