@@ -1,11 +1,17 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
+import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
+import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +29,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto create(UserRegisterRequest userRegisterRequest) {
 
-        log.debug("사용자 생성 시작: email={}, nickname={}", userRegisterRequest.email(),
+        log.info("사용자 생성 시작: email={}, nickname={}", userRegisterRequest.email(),
             userRegisterRequest.nickname());
 
         String email = userRegisterRequest.email();
@@ -43,9 +49,58 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        log.debug("사용자 생성 완료: id={}, email={}, nickname={}",
+        log.info("사용자 생성 완료: id={}, email={}, nickname={}",
             savedUser.getId(), savedUser.getEmail(), savedUser.getNickname());
 
         return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    public UserDto login(UserLoginRequest userLoginRequest) {
+        String email = userLoginRequest.email();
+        String password = userLoginRequest.password();
+
+        log.info("로그인 인증 시작 - email={}", email);
+
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(
+                () -> {
+                    log.warn("로그인 실패 - 존재하지 않는 이메일: {}", email);
+                    return new InvalidEmailOrPasswordException(email);
+                });
+
+        if (!user.getPassword().equals(password) || user.isDeleted()) {
+            log.warn("로그인 실패 - 비밀번호 불일치, 입력한 비밀번호: {}", password);
+            throw new InvalidEmailOrPasswordException(email);
+        }
+
+        log.info("로그인 성공 - email={}, nickname={}", user.getEmail(), user.getNickname());
+
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    public UserDto update(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request) {
+
+        log.info("사용자 정보 수정 시작 - userId={}, nickname={}", userId, request.nickname());
+
+        if (!requestHeaderUserId.equals(userId)) {
+            log.warn("수정 실패 (다른 사용자 정보 수정 요청): requestUserId={}, userId={}", requestHeaderUserId,
+                userId);
+            throw new ForbiddenAccessException("다른 사용자의 정보는 수정할 수 없습니다");
+        }
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(
+                () -> {
+                    log.warn("수정 실패 (존재하지 않는 사용자): userId={}", userId);
+                    return new UserNotFoundException(userId);
+                });
+
+        user.update(request.nickname());
+
+        log.info("사용자 정보 수정 완료 - id={}, nickname={}", user.getId(), user.getNickname());
+
+        return userMapper.toDto(user);
     }
 }

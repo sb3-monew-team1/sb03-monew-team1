@@ -25,6 +25,10 @@ spring:
     # OSIV 비활성화
     open-in-view: false
 
+  batch:
+    job:
+      enabled: false
+
 logging:
   level:
     root: info
