@@ -1,10 +1,12 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +41,11 @@ class InterestIntegrationTest {
 
     @Autowired
     private InterestKeywordRepository interestKeywordRepository;
+
+    @BeforeAll
+    static void setUp() {
+        TestEnvSetup.loadEnvVariables();
+    }
 
     @Test
     void 관심사를_등록하면_DB에_저장된다() throws Exception {
