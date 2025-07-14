@@ -217,5 +217,44 @@ class InterestServiceTest {
 
             verify(interestRepository).searchByKeywordOrName(isNull(), isNull(), eq(limit), eq(sortBy), eq(sortDirection));
         }
+
+        @Test
+        void 관심사를_조회해서_다음_페이지가_있을_경우_반환한다() throws Exception {
+            // Given
+            int limit = 2;
+            String sortBy = "name";
+            String sortDirection = "asc";
+            String cursor = null;
+
+            Interest interest1 = InterestFixture.createInterest("aesthetic", Arrays.asList("경기", "스포츠"), 150);
+            Interest interest2 = InterestFixture.createInterest("soccer", Arrays.asList("경기", "스포츠"), 200);
+            Interest interest3 = InterestFixture.createInterest("art", Arrays.asList("예술", "문화"), 50);
+            Interest interest4 = InterestFixture.createInterest("football", Arrays.asList("스포츠", "경기"), 300);
+
+            List<Interest> interests = Arrays.asList(interest1, interest2, interest3, interest4);  // 전체 4개
+            List<InterestDto> interestDtos = Arrays.asList(
+                InterestDto.builder().id(interest1.getId()).name("aesthetic").subscriberCount(150).build(),
+                InterestDto.builder().id(interest2.getId()).name("soccer").subscriberCount(200).build(),
+                InterestDto.builder().id(interest3.getId()).name("art").subscriberCount(50).build(),
+                InterestDto.builder().id(interest4.getId()).name("football").subscriberCount(300).build()
+            );
+
+            when(interestRepository.searchByKeywordOrName(isNull(), cursor, eq(limit), eq(sortBy), eq(sortDirection)))
+                .thenReturn(interests.subList(0, 2));
+            when(interestMapper.toDto(any(Interest.class), eq(true)))
+                .thenReturn(interestDtos.get(0), interestDtos.get(1));
+
+            // When
+            CursorPageResponse<InterestDto> result = interestService.getInterests(null, cursor, limit, sortBy, sortDirection);
+
+            // Then
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.hasNext()).isTrue();
+            assertThat(result.nextCursor()).isNotNull();
+            assertThat(result.nextAfter()).isNotNull();
+            assertThat(result.size()).isEqualTo(2);
+
+            verify(interestRepository).searchByKeywordOrName(isNull(), cursor, eq(limit), eq(sortBy), eq(sortDirection));
+        }
     }
 }

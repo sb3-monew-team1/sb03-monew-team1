@@ -1,11 +1,5 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
@@ -19,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,11 +27,11 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@LoadTestEnv
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-@LoadTestEnv
 @DisplayName("InterestIntegration 테스트")
 class InterestIntegrationTest {
 
@@ -255,6 +250,23 @@ class InterestIntegrationTest {
                 .andExpect(jsonPath("$.content[1].name").value("football club"))
                 .andExpect(jsonPath("$.content[2].name").value("aesthetic"))
                 .andExpect(jsonPath("$.content[3].name").value("beauty"));
+        }
+
+        @Test
+        void 관심사를_조회해서_다음_페이지가_있을_경우_반환한다() throws Exception {
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("limit", "2")
+                    .param("sortBy", "name")
+                    .param("sortDirection", "asc")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.nextCursor").value("nextCursorToken"))
+                .andExpect(jsonPath("$.hasNext").value(true));
         }
     }
 }

@@ -158,12 +158,11 @@ class InterestControllerTest {
                 interestDtos, null, null, 10, 4, false
             );
 
-            // When
             given(interestService.getInterests(
                 anyString(), anyString(), anyInt(), anyString(), anyString()))
                 .willReturn(responseDto);
 
-            // Then
+            // When & Then
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
@@ -191,12 +190,11 @@ class InterestControllerTest {
                 interestDtos, null, null, 10, 2, false
             );
 
-            // When
             given(interestService.getInterests(
                 eq("football"), anyString(), eq(10), eq("name"), eq("asc")))
                 .willReturn(responseDto);
 
-            // Then
+            // When & Then
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "football")
                     .param("cursor", "")
@@ -230,12 +228,11 @@ class InterestControllerTest {
                 .hasNext(false)
                 .build();
 
-            // When
             given(interestService.getInterests(
                 anyString(), anyString(), eq(10), eq("subscriberCount"), eq("desc")))
                 .willReturn(responseDto);
 
-            // Then
+            // When & Then
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
@@ -273,12 +270,11 @@ class InterestControllerTest {
                 .hasNext(false)
                 .build();
 
-            // When
             given(interestService.getInterests(
                 anyString(), anyString(), eq(10), eq("name"), eq("asc")))
                 .willReturn(responseDto);
 
-            // Then
+            // When & Then
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
@@ -292,5 +288,42 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.content[2].name").value("football club"))
                 .andExpect(jsonPath("$.content[3].name").value("soccer"));
         }
+
+        @Test
+        void 관심사를_조회해서_다음_페이지가_있을_경우_반환한다() throws Exception {
+            // Given
+            List<InterestDto> interestDtos = Arrays.asList(
+                InterestDto.builder().id(UUID.randomUUID()).name("football club").subscriberCount(150L).build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("soccer").subscriberCount(200L).build()
+            );
+
+            CursorPageResponse<InterestDto> responseDto = CursorPageResponse.<InterestDto>builder()
+                .content(interestDtos)
+                .nextCursor("nextCursorToken")
+                .nextAfter(Instant.now())
+                .size(2)
+                .totalElements(4)
+                .hasNext(true)
+                .build();
+
+            given(interestService.getInterests(
+                anyString(), anyString(), eq(2), eq("name"), eq("asc")))
+                .willReturn(responseDto);
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", "")
+                    .param("cursor", "")
+                    .param("limit", "2")
+                    .param("sortBy", "name")
+                    .param("sortDirection", "asc")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.nextCursor").value("nextCursorToken"))
+                .andExpect(jsonPath("$.hasNext").value(true));
+        }
+
     }
 }
