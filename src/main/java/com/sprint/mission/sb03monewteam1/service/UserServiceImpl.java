@@ -57,6 +57,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto login(UserLoginRequest userLoginRequest) {
+
         String email = userLoginRequest.email();
         String password = userLoginRequest.password();
 
@@ -102,5 +103,25 @@ public class UserServiceImpl implements UserService {
         log.info("사용자 정보 수정 완료 - id={}, nickname={}", user.getId(), user.getNickname());
 
         return userMapper.toDto(user);
+    }
+
+    @Override
+    public void delete(UUID requestHeaderUserId, UUID userId) {
+
+        log.info("사용자 논리 삭제 시작: userId={}", userId);
+
+        if (!requestHeaderUserId.equals(userId)) {
+            log.warn("논리 삭제 실패 (다른 사용자 논리 삭제 요청): requestUserId={}, userId={}", requestHeaderUserId,
+                userId);
+            throw new ForbiddenAccessException("다른 사용자의 정보는 삭제할 수 없습니다");
+        }
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        user.setDeleted();
+
+        log.info("사용자 논리 삭제 완료: userId={}", userId);
+
     }
 }

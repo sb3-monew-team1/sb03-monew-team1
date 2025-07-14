@@ -243,8 +243,6 @@ public class UserServiceTest {
             // Given
             UUID targetId = UserFixture.getDefaultId();
             UUID requesterId = UUID.randomUUID();
-            User existedUser = UserFixture.createUser();
-            UserDto existedUserDto = UserFixture.createUserDto();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
             // When & Then
@@ -281,12 +279,13 @@ public class UserServiceTest {
         void 사용자_논리_삭제_시_204를_반환해야_한다() {
             // Given
             User existedUser = UserFixture.createUser();
-            UUID userId = existedUser.getId();
+            UUID userId = UserFixture.getDefaultId();
+            UUID requesterId = UserFixture.getDefaultId();
 
             given(userRepository.findById(userId)).willReturn(Optional.of(existedUser));
 
             // When
-            userService.delete(userId);
+            userService.delete(requesterId, userId);
 
             // then
             assertThat(existedUser.isDeleted()).isTrue();
@@ -297,16 +296,30 @@ public class UserServiceTest {
         }
 
         @Test
-        void 존재하지_않는_사용자를_논리_삭제_시_예외를_반환한다() {
+        void 다른_사용자를_논리_삭제_시_예외가_발생한다() {
+            // Given
+            UUID requestUserId = UUID.randomUUID();
+            UUID targetUserId = UUID.randomUUID();
+
+            // When & Then
+            assertThatThrownBy(() -> userService.delete(requestUserId, targetUserId))
+                .isInstanceOf(ForbiddenAccessException.class);
+
+            then(userRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 존재하지_않는_사용자를_논리_삭제_시_예외가_발생한다() {
             // Given
             User existedUser = UserFixture.createUser();
-            UUID userId = existedUser.getId();
+            UUID userId = UserFixture.getDefaultId();
+            UUID requesterId = UserFixture.getDefaultId();
 
             given(userRepository.findById(userId)).willThrow(UserNotFoundException.class);
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(userId))
-                .isInstanceOf(new UserNotFoundException(userId));
+            assertThatThrownBy(() -> userService.delete(requesterId, userId))
+                .isInstanceOf(UserNotFoundException.class);
 
             then(userRepository).should().findById(userId);
             then(userRepository).shouldHaveNoMoreInteractions();
