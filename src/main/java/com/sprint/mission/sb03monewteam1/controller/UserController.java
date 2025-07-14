@@ -4,14 +4,19 @@ import com.sprint.mission.sb03monewteam1.controller.api.UserApi;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
 import com.sprint.mission.sb03monewteam1.interceptor.LoginInterceptor;
 import com.sprint.mission.sb03monewteam1.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,12 +56,28 @@ public class UserController implements UserApi {
 
         UserDto userDto = userService.login(userLoginRequest);
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(LoginInterceptor.REQUEST_USER_ID_HEADER, userDto.id().toString());
-
         log.info("로그인 완료: id={}, email={}, nickname={}",
             userDto.id(), userDto.email(), userDto.nickname());
 
-        return ResponseEntity.status(HttpStatus.OK).headers(httpHeaders).body(userDto);
+        return ResponseEntity.status(HttpStatus.OK).body(userDto);
+    }
+
+    @Override
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserDto> update(
+        @PathVariable UUID userId,
+        @RequestBody @Valid UserUpdateRequest request,
+        HttpServletRequest httpServletRequest
+    ) {
+        log.info("사용자 정보 수정 요청: userId={}, nickname={}", userId, request.nickname());
+
+        UUID requestUserId = (UUID) httpServletRequest.getAttribute("userId");
+        log.info("Monew-Request-User-ID: {}", requestUserId);
+
+        UserDto userDto = userService.update(requestUserId, userId, request);
+
+        log.info("사용자 정보 수정 완료: id={}, nickname={}", userDto.id(), userDto.nickname());
+
+        return ResponseEntity.ok(userDto);
     }
 }
