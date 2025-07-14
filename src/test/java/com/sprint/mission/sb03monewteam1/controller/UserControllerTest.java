@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -272,7 +271,7 @@ public class UserControllerTest {
             UUID userId = UUID.randomUUID();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
-            given(userService.update(requestHeaderUserId,userId,userUpdateRequest))
+            given(userService.update(requestHeaderUserId, userId, userUpdateRequest))
                 .willThrow(new ForbiddenAccessException("권한이 없습니다"));
 
             // When & Then
@@ -284,14 +283,14 @@ public class UserControllerTest {
         }
 
         @Test
-        void 존재하지_않는_사용자의_정보를_수정하면_404를_반환해야_한다() throws Exception{
+        void 존재하지_않는_사용자의_정보를_수정하면_404를_반환해야_한다() throws Exception {
             // Given
             UUID requestHeaderUserId = UserFixture.getDefaultId();
             UUID userId = UserFixture.getDefaultId();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
             UserDto userDto = UserFixture.createUserDto();
 
-            given(userService.update(requestHeaderUserId,userId,userUpdateRequest))
+            given(userService.update(requestHeaderUserId, userId, userUpdateRequest))
                 .willThrow(new UserNotFoundException(userId));
 
             // When & Then
