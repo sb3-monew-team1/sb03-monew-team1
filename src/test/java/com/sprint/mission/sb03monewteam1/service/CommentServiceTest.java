@@ -7,16 +7,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseCommentDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
-import com.sprint.mission.sb03monewteam1.exception.article.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
-import com.sprint.mission.sb03monewteam1.exception.comment.InvalidSortOptionException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.With;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -166,12 +164,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            List<Comment> commentList = new ArrayList<>();
-
-            for (int i = 0; i < pageSize+1 ;i++) {
-                Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now().plusMillis(i));
-                commentList.add(comment);
-            }
+            List<Comment> commentList = createCommentsWithCreatedAt(10, article, user);
 
             List<Comment> sorted = commentList.stream()
                     .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
@@ -191,7 +184,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
                 articleId, null, null, pageSize, sortBy, sortDirection
             );
 
@@ -208,8 +201,8 @@ public class CommentServiceTest {
                 .toList();
 
             assertThat(actualContents).isEqualTo(expectedContents);
-            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize-1).getCreatedAt().toString());
-            assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize-1).getCreatedAt());
+            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize).getCreatedAt().toString());
+            assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize).getCreatedAt());
             assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(10L);
             assertThat(result.hasNext()).isTrue();
@@ -226,13 +219,7 @@ public class CommentServiceTest {
             String sortBy = "likeCount";
             String sortDirection = "DESC";
 
-            List<Comment> commentList = new ArrayList<>();
-
-            for (int i=0;i<10;i++) {
-                long likeCount = i;
-                Comment comment = CommentFixture.createCommentWithLikeCount("test" + i, user, article, likeCount);
-                commentList.add(comment);
-            }
+            List<Comment> commentList = createCommentsWithLikeCount(10, article, user);
 
             List<Comment> sorted = commentList.stream()
                     .sorted(Comparator.comparing(Comment::getLikeCount).reversed())
@@ -252,15 +239,15 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
                 articleId, null, null, pageSize, sortBy, sortDirection
             );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result.content()).hasSize(pageSize);
-            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize-1).getLikeCount().toString());
-            assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize-1).getCreatedAt());
+            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize).getLikeCount().toString());
+            assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize).getCreatedAt());
             assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(10L);
             assertThat(result.hasNext()).isTrue();
@@ -277,12 +264,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            List<Comment> commentList = new ArrayList<>();
-
-            for (int i = 0; i < 10; i++) {
-                Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now().plusMillis(i));
-                commentList.add(comment);
-            }
+            List<Comment> commentList = createCommentsWithCreatedAt(10, article, user);
 
             List<Comment> sorted = commentList.stream()
                 .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
@@ -307,7 +289,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
                 articleId, cursor.toString(), after, pageSize, sortBy, sortDirection
             );
 
@@ -339,12 +321,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            List<Comment> commentList = new ArrayList<>();
-
-            for (int i = 0; i < 10; i++) {
-                Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now().plusMillis(i));
-                commentList.add(comment);
-            }
+            List<Comment> commentList = createCommentsWithCreatedAt(10, article, user);
 
             List<Comment> sorted = commentList.stream()
                 .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
@@ -367,7 +344,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
                 articleId, nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection
             );
 
@@ -407,7 +384,7 @@ public class CommentServiceTest {
             given(commentRepository.countByArticleId(article.getId())).willReturn(0L);
 
             // when
-            CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
                 articleId, null, null, pageSize, sortBy, sortDirection
             );
 
@@ -432,12 +409,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            List<Comment> commentList = new ArrayList<>();
-
-            for (int i = 0; i < pageSize; i++) {
-                Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now().plusMillis(i));
-                commentList.add(comment);
-            }
+            List<Comment> commentList = createCommentsWithCreatedAt(pageSize, article, user);
 
             given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
@@ -446,7 +418,7 @@ public class CommentServiceTest {
             given(commentRepository.countByArticleId(articleId)).willReturn(5L);
 
             // when
-            CursorPageResponseCommentDto result = commentService.getCommentsWithCursorBySort(
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
                 articleId, null, null, pageSize, sortBy, sortDirection
             );
 
@@ -463,26 +435,21 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            User user = UserFixture.createUser();
             String invalidCursor = "invalid-value";
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            List<Comment> comments = new ArrayList<>();
-            for (int i = 0; i < 6; i++) {
-                comments.add(CommentFixture.createCommentWithCreatedAt("test" + i, UserFixture.createUser(), article, Instant.now()));
-            }
+            List<Comment> comments = createCommentsWithCreatedAt(pageSize, article, user);
 
             given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
-            given(commentRepository.findCommentsWithCursorBySort(
-                eq(articleId), eq(invalidCursor), eq(null), eq(pageSize + 1), eq("createdAt"), eq("DESC"))
-            ).willReturn(comments);
 
             // when & then
             assertThatThrownBy(() ->
                 commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection)
             ).isInstanceOf(InvalidCursorException.class)
-                .hasMessageContaining("유효하지 않은 커서입니다.");
+                .hasMessageContaining(ErrorCode.INVALID_CURSOR_DATE.getMessage());
         }
 
         @Test
@@ -519,8 +486,25 @@ public class CommentServiceTest {
             // when & then
             assertThatThrownBy(() ->
                 commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, invalidSort, sortDirection)
-            ).isInstanceOf(InvalidSortOptionException.class)
-                .hasMessageContaining("허용되지 않은 정렬 기준입니다");
+            )
+                .isInstanceOf(InvalidSortOptionException.class)
+                .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
         }
+    }
+
+    private List<Comment> createCommentsWithCreatedAt(int count, Article article, User user) {
+        List<Comment> comments = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            comments.add(CommentFixture.createCommentWithCreatedAt("test" + i, user, article, Instant.now()));
+        }
+        return comments;
+    }
+
+    private List<Comment> createCommentsWithLikeCount(int count, Article article, User user) {
+        List<Comment> comments = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            comments.add(CommentFixture.createCommentWithLikeCount("test" + i, user, article, (long) i));
+        }
+        return comments;
     }
 }

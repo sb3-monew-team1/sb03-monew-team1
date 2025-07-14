@@ -30,7 +30,15 @@ public enum ErrorCode {
     DUPLICATE_ARTICLE_VIEW(HttpStatus.CONFLICT, "이미 조회한 기사입니다."),
 
     // 유효성 검증 관련 예외
-    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "");
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, ""),
+
+    // 커서 기반 페이지네이션 관련 예외
+    INVALID_CURSOR_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 커서 형식입니다."),
+    INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST,"잘못된 ID 커서 형식입니다."),
+    INVALID_CURSOR_DATE(HttpStatus.BAD_REQUEST,"잘못된 날짜 커서 형식입니다."),
+    INVALID_CURSOR_COUNT(HttpStatus.BAD_REQUEST,"잘못된 숫자 커서 형식입니다."),
+
+    INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST,"지원하지 않는 정렬 필드입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

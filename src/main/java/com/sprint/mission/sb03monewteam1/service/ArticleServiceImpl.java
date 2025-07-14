@@ -16,7 +16,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
-import com.sprint.mission.sb03monewteam1.exception.article.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
