@@ -49,12 +49,6 @@ public class UserFixture {
     }
 
     // UserUpdateRequest
-    public static UserUpdateRequest userUpdateRequest() {
-        return UserUpdateRequest.builder()
-            .nickname(DEFAULT_NICKNAME)
-            .build();
-    }
-
     public static UserUpdateRequest userUpdateRequest(String nickname) {
         return UserUpdateRequest.builder()
             .nickname(nickname)

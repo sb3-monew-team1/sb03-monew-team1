@@ -213,7 +213,7 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             User existedUser = UserFixture.createUser();
             UserDto existedUserDto = UserFixture.createUserDto();
-            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest();
+            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
             given(userRepository.findById(userId)).willReturn(Optional.of(existedUser));
             given(userMapper.toDto(existedUser)).willReturn(existedUserDto);
@@ -239,7 +239,7 @@ public class UserServiceTest {
             UUID requesterId = UUID.randomUUID();
             User existedUser = UserFixture.createUser();
             UserDto existedUserDto = UserFixture.createUserDto();
-            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest();
+            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
             // When & Then
             assertThatThrownBy(
@@ -254,7 +254,7 @@ public class UserServiceTest {
         void 존재하지_않는_사용자를_수정하면_예외가_발생한다() {
             // Given
             UUID userId = UUID.randomUUID();
-            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest();
+            UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
             given(userRepository.findById(userId)).willReturn(Optional.empty());
 

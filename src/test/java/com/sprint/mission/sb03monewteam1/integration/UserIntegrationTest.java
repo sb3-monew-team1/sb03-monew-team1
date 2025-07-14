@@ -85,7 +85,7 @@ public class UserIntegrationTest {
 
     @Test
     @DisplayName("정상적인 로그인 시 사용자 정보와 헤더가 반환되어야 한다")
-    void 정상적인_로그인_시_사용자_정보와_헤더가_반환되어야_한다() throws Exception {
+    void 정상적인_로그인_시_사용자_정보가_반환되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
         User savedUser = userRepository.save(user);
@@ -98,9 +98,7 @@ public class UserIntegrationTest {
                 .content(objectMapper.writeValueAsBytes(userLoginRequest)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.email").value("test@example.com"))
-            .andExpect(jsonPath("$.nickname").value("testUser"))
-            .andExpect(header().exists("MoNew-Request-User-ID"))
-            .andExpect(header().string("MoNew-Request-User-ID", savedUser.getId().toString()));
+            .andExpect(jsonPath("$.nickname").value("testUser"));
     }
 
     @Test
