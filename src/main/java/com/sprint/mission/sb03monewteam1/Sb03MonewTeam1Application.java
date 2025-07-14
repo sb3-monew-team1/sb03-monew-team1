@@ -2,7 +2,9 @@ package com.sprint.mission.sb03monewteam1;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling
 @SpringBootApplication
 public class Sb03MonewTeam1Application {
 

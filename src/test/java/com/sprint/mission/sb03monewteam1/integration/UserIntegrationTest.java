@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
@@ -16,7 +16,6 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@LoadTestEnv
 @Transactional
+@ActiveProfiles("test")
 @DisplayName("UserIntegration 테스트")
 public class UserIntegrationTest {
 
@@ -42,11 +42,6 @@ public class UserIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @BeforeAll
-    static void setUp() {
-        TestEnvSetup.loadEnvVariables();
-    }
 
     @Test
     void 사용자_생성_시_Repository까지_반영되어야_한다() throws Exception {

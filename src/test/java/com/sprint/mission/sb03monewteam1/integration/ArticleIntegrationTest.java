@@ -7,13 +7,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import java.time.Instant;
 import java.util.List;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+@LoadTestEnv
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -44,11 +44,6 @@ class ArticleIntegrationTest {
     private Article testArticle2;
     private Article testArticle3;
     private Article testArticle4;
-
-    @BeforeAll
-    static void setupEnvironment() {
-        TestEnvSetup.loadEnvVariables();
-    }
 
     @BeforeEach
     void setUp() {

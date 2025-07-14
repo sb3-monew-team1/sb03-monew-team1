@@ -1,15 +1,19 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.sb03monewteam1.config.TestEnvSetup;
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,15 +22,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
+@LoadTestEnv
 @DisplayName("InterestIntegration 테스트")
 class InterestIntegrationTest {
 
@@ -41,11 +41,6 @@ class InterestIntegrationTest {
 
     @Autowired
     private InterestKeywordRepository interestKeywordRepository;
-
-    @BeforeAll
-    static void setUp() {
-        TestEnvSetup.loadEnvVariables();
-    }
 
     @Test
     void 관심사를_등록하면_DB에_저장된다() throws Exception {
@@ -65,7 +60,8 @@ class InterestIntegrationTest {
         assertThat(exists).isTrue();
 
         for (String keyword : request.keywords()) {
-            boolean keywordExists = interestKeywordRepository.existsByKeywordAndInterestName(keyword, request.name());
+            boolean keywordExists = interestKeywordRepository.existsByKeywordAndInterestName(
+                keyword, request.name());
             assertThat(keywordExists).isTrue();
         }
     }
