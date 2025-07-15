@@ -4,13 +4,20 @@ import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final InterestRepository interestRepository;
+    private final CommentLikeRepository commentLikeRepository;
+    private final CommentRepository commentRepository;
     private final UserMapper userMapper;
 
     @Override
@@ -120,6 +131,20 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(() -> new UserNotFoundException(userId));
 
         user.setDeleted();
+
+        List<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId);
+        log.debug("사용자 관심사 구독자 수 감소 시작: userId={}", userId);
+        subscriptions.forEach(subscription -> {
+            interestRepository.decrementSubscriberCount(subscription.getInterest().getId());
+        });
+        log.debug("사용자 관심사 구독자 수 감소 완료: userId={}", userId);
+
+        List<CommentLike> commentLikes = commentLikeRepository.findAllByUserId(userId);
+        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 시작: userId={}", userId);
+        commentLikes.forEach(commentLike -> {
+            commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId());
+        });
+        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 처리 완료: userId={}", userId);
 
         log.info("사용자 논리 삭제 완료: userId={}", userId);
 
