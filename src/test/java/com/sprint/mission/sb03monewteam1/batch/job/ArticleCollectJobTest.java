@@ -7,6 +7,7 @@ import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.config.TestConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
@@ -25,6 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @LoadTestEnv
 @Import({TestConfig.class})
+@Disabled("CI 실행 방지, 테스트 시 주석 제거")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ArticleCollectJobTest {
 

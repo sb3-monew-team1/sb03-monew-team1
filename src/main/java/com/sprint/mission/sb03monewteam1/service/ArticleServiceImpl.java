@@ -101,7 +101,7 @@ public class ArticleServiceImpl implements ArticleService {
 
         List<Article> articles = getArticlesBySortType(
             keyword, sourceIn, from, to,
-            sortBy, isAscending, cursor, limit);
+            sortBy, isAscending, cursor, after, limit);
 
         boolean hasNext = articles.size() > limit;
         if (hasNext) {
@@ -130,7 +130,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     private List<Article> getArticlesBySortType(
         String keyword, List<String> sourceIn, Instant publishDateFrom, Instant publishDateTo,
-        String sortBy, boolean isAscending, String cursor, int limit) {
+        String sortBy, boolean isAscending, String cursor, Instant after, int limit) {
 
         switch (sortBy) {
             case "viewCount":
@@ -142,10 +142,9 @@ public class ArticleServiceImpl implements ArticleService {
                         throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_COUNT, cursor);
                     }
                 }
-                Instant viewCountPublishDate = Instant.now();
                 return articleRepository.findArticlesWithCursorByViewCount(
                     keyword, sourceIn, publishDateFrom, publishDateTo,
-                    viewCountCursor, viewCountPublishDate, limit + 1, isAscending);
+                    viewCountCursor, after, limit + 1, isAscending);
 
             case "commentCount":
                 Long commentCountCursor = null;
@@ -156,10 +155,9 @@ public class ArticleServiceImpl implements ArticleService {
                         throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_COUNT, cursor);
                     }
                 }
-                Instant commentCountPublishDate = Instant.now();
                 return articleRepository.findArticlesWithCursorByCommentCount(
                     keyword, sourceIn, publishDateFrom, publishDateTo,
-                    commentCountCursor, commentCountPublishDate, limit + 1, isAscending);
+                    commentCountCursor, after, limit + 1, isAscending);
 
             case "publishDate":
             default:
@@ -186,10 +184,9 @@ public class ArticleServiceImpl implements ArticleService {
 
         switch (sortBy) {
             case "viewCount":
-                return lastArticle.getViewCount() + ":" + lastArticle.getPublishDate().toString();
+                return String.valueOf(lastArticle.getViewCount());
             case "commentCount":
-                return lastArticle.getCommentCount() + ":" + lastArticle.getPublishDate()
-                    .toString();
+                return String.valueOf(lastArticle.getCommentCount());
             case "publishDate":
             default:
                 return lastArticle.getPublishDate().toString();

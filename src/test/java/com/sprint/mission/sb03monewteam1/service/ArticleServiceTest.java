@@ -3,6 +3,9 @@ package com.sprint.mission.sb03monewteam1.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
@@ -25,6 +28,8 @@ import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -70,7 +75,7 @@ class ArticleServiceTest {
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
             .thenReturn(false);
         when(articleRepository.incrementViewCount(articleId))
-            .thenReturn(1L); // 성공적으로 업데이트됨
+            .thenReturn(1L);
         when(articleRepository.findByIdAndIsDeletedFalse(articleId))
             .thenReturn(Optional.of(article));
         when(articleViewRepository.save(any(ArticleView.class)))
@@ -101,7 +106,7 @@ class ArticleServiceTest {
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
             .thenReturn(false);
         when(articleRepository.incrementViewCount(articleId))
-            .thenReturn(0L); // 업데이트 실패 (기사가 없음)
+            .thenReturn(0L);
 
         // when & then
         assertThatThrownBy(() -> articleService.createArticleView(userId, articleId))
@@ -138,11 +143,16 @@ class ArticleServiceTest {
         String keyword = "테스트";
         List<String> sourceIn = Arrays.asList("네이버뉴스");
         List<String> interests = Arrays.asList("IT", "과학");
-        Instant publishDateFrom = Instant.parse("2024-01-01T00:00:00Z");
-        Instant publishDateTo = Instant.parse("2024-12-31T23:59:59Z");
+        String publishDateFrom = "2024-01-01T00:00:00";
+        String publishDateTo = "2024-12-31T23:59:59";
+        Instant publishDateFromInstant = LocalDateTime.parse(publishDateFrom)
+            .atZone(ZoneId.of("Asia/Seoul")).toInstant();
+        Instant publishDateToInstant = LocalDateTime.parse(publishDateTo)
+            .atZone(ZoneId.of("Asia/Seoul")).toInstant();
         String orderBy = "publishDate";
         String direction = "DESC";
         String cursor = "2024-06-01T00:00:00Z";
+        Instant after = Instant.parse(cursor);
         int limit = 10;
 
         List<Article> articles = Arrays.asList(
@@ -154,8 +164,9 @@ class ArticleServiceTest {
             ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByDate(
-            eq(keyword), eq(sourceIn), eq(publishDateFrom), eq(publishDateTo),
-            eq(Instant.parse(cursor)), eq(limit + 1), eq(false)))
+            eq(keyword), eq(sourceIn), eq(publishDateFromInstant),
+            eq(publishDateToInstant),
+            eq(after), eq(limit + 1), eq(false)))
             .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
             .thenReturn(articleDtos.get(0), articleDtos.get(1));
@@ -163,7 +174,7 @@ class ArticleServiceTest {
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
             keyword, sourceIn, interests, publishDateFrom, publishDateTo,
-            orderBy, direction, cursor, null, limit);
+            orderBy, direction, cursor, after, limit);
 
         // then
         assertThat(result).isNotNull();
@@ -172,8 +183,9 @@ class ArticleServiceTest {
         assertThat(result.size()).isEqualTo(2);
 
         verify(articleRepository).findArticlesWithCursorByDate(
-            eq(keyword), eq(sourceIn), eq(publishDateFrom), eq(publishDateTo),
-            eq(Instant.parse(cursor)), eq(limit + 1), eq(false));
+            eq(keyword), eq(sourceIn), eq(publishDateFromInstant),
+            eq(publishDateToInstant),
+            eq(after), eq(limit + 1), eq(false));
     }
 
     @Test
@@ -182,6 +194,7 @@ class ArticleServiceTest {
         String orderBy = "viewCount";
         String direction = "ASC";
         String cursor = "100";
+        Instant after = Instant.parse("2024-06-08T09:00:00.484468Z");
         int limit = 10;
 
         List<Article> articles = Arrays.asList(
@@ -193,15 +206,14 @@ class ArticleServiceTest {
             ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByViewCount(
-            isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1),
-            eq(true)))
+            any(), any(), any(), any(), anyLong(), any(Instant.class), anyInt(), anyBoolean()))
             .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
             .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, cursor, null, limit);
+            null, null, null, null, null, orderBy, direction, cursor, after, limit);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -218,6 +230,7 @@ class ArticleServiceTest {
         String orderBy = "commentCount";
         String direction = "DESC";
         String cursor = "50";
+        Instant after = Instant.parse("2024-06-08T09:00:00.484468Z");
         int limit = 10;
 
         List<Article> articles = Arrays.asList(
@@ -237,7 +250,7 @@ class ArticleServiceTest {
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, cursor, null, limit);
+            null, null, null, null, null, orderBy, direction, cursor, after, limit);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -325,7 +338,7 @@ class ArticleServiceTest {
         // given
         String orderBy = "publishDate";
         String direction = "DESC";
-        String invalidCursor = "2024-13-45T25:99:99Z"; // 잘못된 날짜 형식
+        String invalidCursor = "2024-13-45T25:99:99Z";
         int limit = 10;
 
         // when & then

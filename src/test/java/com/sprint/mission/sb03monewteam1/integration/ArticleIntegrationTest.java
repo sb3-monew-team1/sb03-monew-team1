@@ -195,11 +195,12 @@ class ArticleIntegrationTest {
         assertThat(firstPageResponse.nextAfter()).isNotNull();
         assertThat(firstPageResponse.size()).isEqualTo(2);
 
-        // 2. 두 번째 페이지 조회 (cursor 사용)
+        // 2. 두 번째 페이지 조회 (cursor, after 모두 사용)
         MvcResult secondPageResult = mockMvc.perform(get("/api/articles")
                 .param("orderBy", "publishDate")
                 .param("direction", "DESC")
                 .param("cursor", firstPageResponse.nextCursor())
+                .param("after", firstPageResponse.nextAfter().toString())
                 .param("limit", "2")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
