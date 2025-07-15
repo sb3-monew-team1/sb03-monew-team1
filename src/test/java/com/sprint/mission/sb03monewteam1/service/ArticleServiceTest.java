@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -12,11 +13,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
+import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
+import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
@@ -25,6 +29,7 @@ import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
+import com.sprint.mission.sb03monewteam1.repository.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
 import java.time.Instant;
@@ -54,6 +59,12 @@ class ArticleServiceTest {
 
     @Mock
     private ArticleViewMapper articleViewMapper;
+
+    @Mock
+    private ArticleInterestRepository articleInterestRepository;
+
+    @Mock
+    private NaverNewsCollector naverNewsCollector;
 
     @InjectMocks
     private ArticleServiceImpl articleService;
@@ -346,5 +357,30 @@ class ArticleServiceTest {
             null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_DATE.getMessage(), invalidCursor);
+    }
+
+    @Test
+    void 네이버_뉴스_수집시_ArticleInterest_저장_확인() {
+        // given
+        Interest interest = Interest.builder().name("IT").build();
+        String keyword = "테스트";
+        CollectedArticleDto dto = CollectedArticleDto.builder()
+            .source("네이버뉴스")
+            .sourceUrl("http://test.com/1")
+            .title("테스트 기사")
+            .publishDate(Instant.now())
+            .summary("요약")
+            .build();
+        List<CollectedArticleDto> collectedArticles = List.of(dto);
+
+        when(naverNewsCollector.collect(interest, keyword)).thenReturn(collectedArticles);
+        when(articleRepository.existsBySourceUrl(any())).thenReturn(false);
+
+        // when
+        articleService.collectAndSaveNaverArticles(interest, keyword);
+
+        // then
+        verify(articleRepository).saveAll(anyList());
+        verify(articleInterestRepository).saveAll(anyList());
     }
 }
