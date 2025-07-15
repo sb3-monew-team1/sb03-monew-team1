@@ -4,6 +4,7 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,22 +29,27 @@ public class InterestDataSeeder implements DataSeeder {
             return;
         }
 
-        List<Interest> interests = List.of(
-            createInterest("Football", 150),
-            createInterest("Soccer", 100),
-            createInterest("Basketball", 80),
-            createInterest("Baseball", 120),
-            createInterest("Tennis", 50)
-        );
+        List<Interest> interests = createInterests();
+        List<InterestKeyword> interestKeywords = createInterestKeywords(interests);
 
         interestRepository.saveAll(interests);
-
-        for (Interest interest : interests) {
-            createInterestKeywords(interest);
-        }
+        interestKeywordRepository.saveAll(interestKeywords);
 
         log.info("InterestDataSeeder: 총 {}개의 관심사와 관련된 키워드 시드 데이터가 추가되었습니다.", interests.size());
     }
+
+    private List<Interest> createInterests() {
+        List<String> names = List.of("Football", "Soccer", "Basketball", "Baseball", "Tennis", "Hockey", "Golf", "Cricket", "Rugby", "Badminton");
+        List<Interest> interests = new ArrayList<>();
+
+        for (int i = 6; i <= 70; i++) {
+            String name = names.get(i % names.size()) + " " + i;
+            int subscriberCount = 1 + (i % 10);
+            interests.add(createInterest(name, subscriberCount));
+        }
+        return interests;
+    }
+
 
     private Interest createInterest(String name, long subscriberCount) {
         return Interest.builder()
@@ -52,15 +58,18 @@ public class InterestDataSeeder implements DataSeeder {
             .build();
     }
 
-    private void createInterestKeywords(Interest interest) {
-        List<String> keywords = getKeywordsForInterest(interest.getName());
-        for (String keyword : keywords) {
-            InterestKeyword interestKeyword = InterestKeyword.builder()
-                .keyword(keyword)
-                .interest(interest)
-                .build();
-            interestKeywordRepository.save(interestKeyword);
+    private List<InterestKeyword> createInterestKeywords(List<Interest> interests) {
+        List<InterestKeyword> interestKeywords = new ArrayList<>();
+        for (Interest interest : interests) {
+            List<String> keywords = getKeywordsForInterest(interest.getName());
+            for (String keyword : keywords) {
+                interestKeywords.add(InterestKeyword.builder()
+                    .interest(interest)
+                    .keyword(keyword)
+                    .build());
+            }
         }
+        return interestKeywords;
     }
 
     private List<String> getKeywordsForInterest(String interestName) {
@@ -75,6 +84,8 @@ public class InterestDataSeeder implements DataSeeder {
                 return List.of("bat", "outdoor");
             case "Tennis":
                 return List.of("court", "racket");
+            case "Interest6":
+                return List.of("keyword1", "keyword2");
             default:
                 return List.of("sports");
         }

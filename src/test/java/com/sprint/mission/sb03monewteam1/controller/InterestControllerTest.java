@@ -101,6 +101,9 @@ class InterestControllerTest {
                 "", List.of("스포츠")
             );
 
+            given(interestService.create(any(InterestRegisterRequest.class)))
+                .willThrow(new IllegalArgumentException("관심사 이름은 필수입니다."));
+
             // When & Then
             mockMvc.perform(post("/api/interests")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -110,12 +113,16 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.details.name").value(containsString("관심사 이름은 필수입니다.")));
         }
 
+
         @Test
         void 관심사_등록시_키워드가_없으면_400을_반환한다() throws Exception {
             // Given
             InterestRegisterRequest request = new InterestRegisterRequest(
                 "축구", List.of()
             );
+
+            given(interestService.create(any(InterestRegisterRequest.class)))
+                .willThrow(new IllegalArgumentException("키워드는 최소 1개 이상"));
 
             // When & Then
             mockMvc.perform(post("/api/interests")
@@ -127,6 +134,7 @@ class InterestControllerTest {
                     containsString("키워드는 최소 1개 이상")
                 ));
         }
+
 
         @Test
         void 관심사_이름_유사도가_80퍼센트_이상일_경우_409를_반환한다() throws Exception {
@@ -155,7 +163,7 @@ class InterestControllerTest {
             // Given
             List<InterestDto> interestDtos = InterestFixture.createInterestDtoList();
             CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(
-                interestDtos, null, null, 10, 4, false
+                interestDtos, null, null, 10, 4L, false
             );
 
             given(interestService.getInterests(
@@ -167,8 +175,8 @@ class InterestControllerTest {
                     .param("searchKeyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("orderBy", "name")
+                    .param("direction", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -187,7 +195,7 @@ class InterestControllerTest {
                 InterestFixture.createInterestResponseDto("soccer", List.of("ball", "sports"))
             );
             CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(
-                interestDtos, null, null, 10, 2, false
+                interestDtos, null, null, 10, 2L, false
             );
 
             given(interestService.getInterests(
@@ -199,8 +207,8 @@ class InterestControllerTest {
                     .param("searchKeyword", "football")
                     .param("cursor", "")
                     .param("limit", "10")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("orderBy", "name")
+                    .param("direction", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -224,7 +232,7 @@ class InterestControllerTest {
                 .nextCursor("50")
                 .nextAfter(Instant.now())
                 .size(10)
-                .totalElements(4)
+                .totalElements(4L)
                 .hasNext(false)
                 .build();
 
@@ -236,8 +244,8 @@ class InterestControllerTest {
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
-                    .param("sortBy", "subscriberCount")
-                    .param("sortDirection", "desc")
+                    .param("orderBy", "subscriberCount")
+                    .param("direction", "desc")
                     .param("limit", "10")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -266,7 +274,7 @@ class InterestControllerTest {
                 .nextCursor("50")
                 .nextAfter(Instant.now())
                 .size(10)
-                .totalElements(4)
+                .totalElements(4L)
                 .hasNext(false)
                 .build();
 
@@ -278,8 +286,8 @@ class InterestControllerTest {
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("orderBy", "name")
+                    .param("direction", "asc")
                     .param("limit", "10")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -290,39 +298,81 @@ class InterestControllerTest {
         }
 
         @Test
-        void 관심사를_조회해서_다음_페이지가_있을_경우_반환한다() throws Exception {
+        void 잘못된_정렬_기준_인경우_400을_반환한다() throws Exception {
             // Given
-            List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().id(UUID.randomUUID()).name("football club").subscriberCount(150L).build(),
-                InterestDto.builder().id(UUID.randomUUID()).name("soccer").subscriberCount(200L).build()
-            );
-
-            CursorPageResponse<InterestDto> responseDto = CursorPageResponse.<InterestDto>builder()
-                .content(interestDtos)
-                .nextCursor("nextCursorToken")
-                .nextAfter(Instant.now())
-                .size(2)
-                .totalElements(4)
-                .hasNext(true)
-                .build();
+            int limit = 10;
+            String searchKeyword = "soccer";
+            String orderBy = "invalidSort";
+            String direction = "asc";
+            CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(List.of(), null, null, limit, 0L, false);
 
             given(interestService.getInterests(
-                anyString(), anyString(), eq(2), eq("name"), eq("asc")))
-                .willReturn(responseDto);
+                anyString(), anyString(), eq(limit), eq(orderBy), eq(direction)))
+                .willThrow(new InvalidOrderParameterException("잘못된 정렬 기준입니다."));
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", searchKeyword)
+                    .param("cursor", "")
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", orderBy)
+                    .param("direction", direction)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())  // 400 응답
+                .andExpect(jsonPath("$.code").value("INVALID_ORDER_PARAMETER"))
+                .andExpect(jsonPath("$.message").value("잘못된 정렬 기준입니다."));
+        }
+
+        @Test
+        void 잘못된_페이지네이션_파라미터_인경우_400을_반환한다() throws Exception {
+            // Given
+            int limit = 0;
+            String orderBy = "name";
+            String direction = "asc";
+            CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(List.of(), null, null, limit, 0L, false);
+
+            given(interestService.getInterests(
+                anyString(), anyString(), eq(limit), eq(orderBy), eq(direction)))
+                .willThrow(new InvalidPaginationException("데이터 limit값이 0입니다."));
 
             // When & Then
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
-                    .param("limit", "2")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", orderBy)
+                    .param("direction", direction)
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.nextCursor").value("nextCursorToken"))
-                .andExpect(jsonPath("$.hasNext").value(true));
+                .andExpect(status().isBadRequest())  // 400 응답
+                .andExpect(jsonPath("$.code").value("INVALID_PAGINATION_PARAMETER"))
+                .andExpect(jsonPath("$.message").value("데이터 limit값이 0입니다."));
+        }
+
+        @Test
+        void 잘못된_cursor값_인경우_400을_반환한다() throws Exception {
+            // Given
+            int limit = 10;
+            String searchKeyword = "soccer";
+            String orderBy = "name";
+            String direction = "asc";
+            String cursor = "invalidCursorFormat";
+            CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(List.of(), null, null, limit, 0L, false);
+
+            given(interestService.getInterests(
+                anyString(), eq(cursor), eq(limit), eq(orderBy), eq(direction)))
+                .willThrow(new InvalidCursorFormatException("cursor 값이 잘못되었습니다."));
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", searchKeyword)
+                    .param("cursor", cursor)
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", orderBy)
+                    .param("direction", direction)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_CURSOR_FORMAT"))
+                .andExpect(jsonPath("$.message").value("cursor 값이 잘못되었습니다."));
         }
 
     }

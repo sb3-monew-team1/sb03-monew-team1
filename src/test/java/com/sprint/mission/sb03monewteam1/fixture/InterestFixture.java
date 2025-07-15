@@ -72,19 +72,4 @@ public class InterestFixture {
             .subscribedByMe(false)
             .build();
     }
-
-    // Interest 엔티티 객체 생성
-    public static Interest createInterest(String name, List<String> keywords, long subscriberCount) {
-        Interest interest = new Interest();
-        interest.setName(name);
-        interest.setSubscriberCount(subscriberCount);
-
-        List<InterestKeyword> interestKeywords = new ArrayList<>();
-        for (String keyword : keywords) {
-            interestKeywords.add(new InterestKeyword(keyword, interest));
-        }
-        interest.setKeywords(interestKeywords);
-
-        return interest;
-    }
 }

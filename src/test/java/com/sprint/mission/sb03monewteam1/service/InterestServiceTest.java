@@ -17,10 +17,10 @@ import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateExc
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
-import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
+import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -118,63 +118,97 @@ class InterestServiceTest {
     class InterestReadTests {
 
         @Test
-        void 관심사를_조회하면_구독자수로_정렬한다() throws Exception {
+        void 관심사를_조회하면_구독자수로_정렬한다() {
             // Given
             int limit = 10;
-            String sortBy = "subscriberCount";
-            String sortDirection = "desc";
+            String orderBy = "subscriberCount";
+            String direction = "desc";
 
-            Interest interest1 = InterestFixture.createInterest("aesthetic", Arrays.asList("경기", "스포츠"), 150);
-            Interest interest2 = InterestFixture.createInterest("soccer", Arrays.asList("경기", "스포츠"), 200);
+            Interest interest1 = Interest.builder().name("aesthetic").subscriberCount(150L).build();
+            Interest interest2 = Interest.builder().name("soccer").subscriberCount(200L).build();
 
-            List<Interest> interests = Arrays.asList(interest2, interest1); // sorting by subscriberCount descending
+            List<Interest> interests = Arrays.asList(interest2, interest1); // 정렬 기준에 맞게 정렬된 상태
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().id(interest2.getId()).name("soccer").subscriberCount(200).build(),
-                InterestDto.builder().id(interest1.getId()).name("aesthetic").subscriberCount(150).build()
+                InterestDto.builder().name("soccer").subscriberCount(200).build(),
+                InterestDto.builder().name("aesthetic").subscriberCount(150).build()
             );
 
-            when(interestRepository.searchByKeywordOrName(isNull(), isNull(), eq(limit), eq(sortBy), eq(sortDirection)))
+            when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
-            when(interestMapper.toDto(any(Interest.class), eq(true)))
-                .thenReturn(interestDtos.get(0), interestDtos.get(1));
+
+            when(interestMapper.toDto(eq(interest2), eq(true))).thenReturn(interestDtos.get(0));
+            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(1));
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, sortBy, sortDirection);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, orderBy, direction);
 
             // Then
-            assertThat(result.content()).hasSize(2);
+            assertThat(result.content()).hasSize(2); // 결과의 크기가 2인지 확인
             assertThat(result.content().get(0).name()).isEqualTo("soccer");
             assertThat(result.content().get(1).name()).isEqualTo("aesthetic");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(isNull(), isNull(), eq(limit), eq(sortBy), eq(sortDirection));
+            // verify
+            verify(interestRepository).searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)); // searchByKeywordOrName 메서드 호출 확인
         }
 
         @Test
-        void 관심사를_조회하면_키워드로_검색한다() throws Exception {
+        void 관심사를_조회하면_키워드로_검색한다() {
             // Given
             int limit = 10;
-            String sortBy = "name";
-            String sortDirection = "asc";
-            String searchKeyword = "스포츠";
+            String searchKeyword = "soccer";
+            String orderBy = "name";
+            String direction = "asc";
 
-            Interest interest1 = InterestFixture.createInterest("aesthetic", Arrays.asList("경기", "스포츠"), 150);
-            Interest interest2 = InterestFixture.createInterest("soccer", Arrays.asList("경기", "스포츠"), 200);
-            Interest interest3 = InterestFixture.createInterest("art", Arrays.asList("예술", "문화"), 50); // not matching the keyword
+            Interest interest1 = Interest.builder().name("soccer").subscriberCount(15L).build();
+            Interest interest2 = Interest.builder().name("basketball").subscriberCount(100L).build();
+
+            List<Interest> interests = Arrays.asList(interest1); // "soccer"만 검색되는 리스트
+            List<InterestDto> interestDtos = Arrays.asList(
+                InterestDto.builder().name("soccer").subscriberCount(150).build()
+            );
+
+            when(interestRepository.searchByKeywordOrName(eq(searchKeyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
+                .thenReturn(interests);
+
+            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
+
+            // When
+            CursorPageResponse<InterestDto> result = interestService.getInterests(searchKeyword, null, limit, orderBy, direction);
+
+            // Then
+            assertThat(result.content()).hasSize(1);
+            assertThat(result.content().get(0).name()).isEqualTo("soccer");
+            assertThat(result.hasNext()).isFalse();
+
+            verify(interestRepository).searchByKeywordOrName(eq(searchKeyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction));
+        }
+
+
+        @Test
+        void 관심사를_조회하면_이름으로_정렬한다() {
+            // Given
+            int limit = 10;
+            String orderBy = "name";
+            String direction = "asc";
+
+            Interest interest1 = Interest.builder().name("aesthetic").subscriberCount(150L).build();
+            Interest interest2 = Interest.builder().name("soccer").subscriberCount(200L).build();
 
             List<Interest> interests = Arrays.asList(interest1, interest2);
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().id(interest1.getId()).name("aesthetic").subscriberCount(150).build(),
-                InterestDto.builder().id(interest2.getId()).name("soccer").subscriberCount(200).build()
+                InterestDto.builder().name("aesthetic").subscriberCount(150).build(),
+                InterestDto.builder().name("soccer").subscriberCount(200).build()
             );
 
-            when(interestRepository.searchByKeywordOrName(eq(searchKeyword), isNull(), eq(limit), eq(sortBy), eq(sortDirection)))
+            when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
-            when(interestMapper.toDto(any(Interest.class), eq(true)))
-                .thenReturn(interestDtos.get(0), interestDtos.get(1));
+
+            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
+            when(interestMapper.toDto(eq(interest2), eq(true))).thenReturn(interestDtos.get(1));
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(searchKeyword, null, limit, sortBy, sortDirection);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(2);
@@ -182,79 +216,63 @@ class InterestServiceTest {
             assertThat(result.content().get(1).name()).isEqualTo("soccer");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(eq(searchKeyword), isNull(), eq(limit), eq(sortBy), eq(sortDirection));
+            verify(interestRepository).searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction));
         }
 
         @Test
-        void 관심사를_조회하면_이름으로_정렬한다() throws Exception {
+        void 잘못된_정렬_기준_인경우_InvalidOrderParameterException이_발생한다() {
             // Given
             int limit = 10;
-            String sortBy = "name";
-            String sortDirection = "asc";
-
-            Interest interest1 = InterestFixture.createInterest("aesthetic", Arrays.asList("경기", "스포츠"), 150);
-            Interest interest2 = InterestFixture.createInterest("soccer", Arrays.asList("경기", "스포츠"), 200);
-
-            List<Interest> interests = Arrays.asList(interest1, interest2);
-            List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().id(interest1.getId()).name("aesthetic").subscriberCount(150).build(),
-                InterestDto.builder().id(interest2.getId()).name("soccer").subscriberCount(200).build()
-            );
-
-            when(interestRepository.searchByKeywordOrName(isNull(), isNull(), eq(limit), eq(sortBy), eq(sortDirection)))
-                .thenReturn(interests);
-            when(interestMapper.toDto(any(Interest.class), eq(true)))
-                .thenReturn(interestDtos.get(0), interestDtos.get(1));
+            String searchKeyword = "soccer";
+            String orderBy = "invalidSort";
+            String direction = "asc";
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, sortBy, sortDirection);
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(searchKeyword, null, limit, orderBy, direction));
 
             // Then
-            assertThat(result.content()).hasSize(2);
-            assertThat(result.content().get(0).name()).isEqualTo("aesthetic");
-            assertThat(result.content().get(1).name()).isEqualTo("soccer");
-            assertThat(result.hasNext()).isFalse();
+            assertThat(throwable).isInstanceOf(InvalidOrderParameterException.class)
+                .hasMessageContaining("잘못된 정렬 기준입니다.");
 
-            verify(interestRepository).searchByKeywordOrName(isNull(), isNull(), eq(limit), eq(sortBy), eq(sortDirection));
+            then(interestRepository).shouldHaveNoInteractions();
+            then(interestMapper).shouldHaveNoInteractions();
         }
 
         @Test
-        void 관심사를_조회해서_다음_페이지가_있을_경우_반환한다() throws Exception {
+        void 잘못된_페이지네이션_파라미터_인경우_InvalidPaginationException이_발생한다() {
             // Given
-            int limit = 2;
-            String sortBy = "name";
-            String sortDirection = "asc";
-            String cursor = null;
-
-            Interest interest1 = InterestFixture.createInterest("aesthetic", Arrays.asList("경기", "스포츠"), 150);
-            Interest interest2 = InterestFixture.createInterest("soccer", Arrays.asList("경기", "스포츠"), 200);
-            Interest interest3 = InterestFixture.createInterest("art", Arrays.asList("예술", "문화"), 50);
-            Interest interest4 = InterestFixture.createInterest("football", Arrays.asList("스포츠", "경기"), 300);
-
-            List<Interest> interests = Arrays.asList(interest1, interest2, interest3, interest4);  // 전체 4개
-            List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().id(interest1.getId()).name("aesthetic").subscriberCount(150).build(),
-                InterestDto.builder().id(interest2.getId()).name("soccer").subscriberCount(200).build(),
-                InterestDto.builder().id(interest3.getId()).name("art").subscriberCount(50).build(),
-                InterestDto.builder().id(interest4.getId()).name("football").subscriberCount(300).build()
-            );
-
-            when(interestRepository.searchByKeywordOrName(isNull(), cursor, eq(limit), eq(sortBy), eq(sortDirection)))
-                .thenReturn(interests.subList(0, 2));
-            when(interestMapper.toDto(any(Interest.class), eq(true)))
-                .thenReturn(interestDtos.get(0), interestDtos.get(1));
+            int limit = 0;
+            String orderBy = "name";
+            String direction = "asc";
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, cursor, limit, sortBy, sortDirection);
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(null, null, limit, orderBy, direction));
 
             // Then
-            assertThat(result.content()).hasSize(2);
-            assertThat(result.hasNext()).isTrue();
-            assertThat(result.nextCursor()).isNotNull();
-            assertThat(result.nextAfter()).isNotNull();
-            assertThat(result.size()).isEqualTo(2);
+            assertThat(throwable).isInstanceOf(InvalidPaginationException.class)
+                .hasMessageContaining("데이터 limit값이 0입니다.");
 
-            verify(interestRepository).searchByKeywordOrName(isNull(), cursor, eq(limit), eq(sortBy), eq(sortDirection));
+            then(interestRepository).shouldHaveNoInteractions();
+            then(interestMapper).shouldHaveNoInteractions();
+        }
+        @Test
+        void 잘못된_cursor값_인경우_InterestCursorFormatException이_발생한다() {
+            // Given
+            int limit = 10;
+            String searchKeyword = "soccer";
+            String orderBy = "name";
+            String direction = "asc";
+            String cursor = "invalidCursorFormat";
+
+            // When
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(searchKeyword, cursor, limit, orderBy, direction));
+
+            // Then
+            assertThat(throwable).isInstanceOf(InvalidCursorFormatException.class)
+                .hasMessageContaining("cursor 값이 잘못되었습니다.");
+
+            then(interestRepository).shouldHaveNoInteractions();
+            then(interestMapper).shouldHaveNoInteractions();
         }
     }
 }

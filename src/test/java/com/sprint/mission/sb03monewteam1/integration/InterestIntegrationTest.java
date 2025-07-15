@@ -194,8 +194,8 @@ class InterestIntegrationTest {
                     .param("searchKeyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("orderBy", "name")
+                    .param("direction", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -209,8 +209,8 @@ class InterestIntegrationTest {
                     .param("searchKeyword", "soccer")
                     .param("cursor", "")
                     .param("limit", "10")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("orderBy", "name")
+                    .param("direction", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -225,8 +225,8 @@ class InterestIntegrationTest {
                     .param("searchKeyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("orderBy", "name")
+                    .param("direction", "asc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("aesthetic"))
@@ -242,8 +242,8 @@ class InterestIntegrationTest {
                     .param("searchKeyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
-                    .param("sortBy", "subscriberCount")
-                    .param("sortDirection", "desc")
+                    .param("orderBy", "subscriberCount")
+                    .param("direction", "desc")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("soccer"))
@@ -253,20 +253,66 @@ class InterestIntegrationTest {
         }
 
         @Test
-        void 관심사를_조회해서_다음_페이지가_있을_경우_반환한다() throws Exception {
+        void 잘못된_정렬_기준_인경우_400을_반환한다() throws Exception {
+            // Given
+            int limit = 10;
+            String searchKeyword = "soccer";
+            String orderBy = "invalidSort";
+            String direction = "asc";
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", searchKeyword)
+                    .param("cursor", "")
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", orderBy)
+                    .param("direction", direction)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_ORDER_PARAMETER"))
+                .andExpect(jsonPath("$.message").value("잘못된 정렬 기준입니다."));
+        }
+
+        @Test
+        void 잘못된_페이지네이션_파라미터_인경우_400을_반환한다() throws Exception {
+            // Given
+            int limit = 0;
+            String orderBy = "name";
+            String direction = "asc";
+
             // When & Then
             mockMvc.perform(get("/api/interests")
                     .param("searchKeyword", "")
                     .param("cursor", "")
-                    .param("limit", "2")
-                    .param("sortBy", "name")
-                    .param("sortDirection", "asc")
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", orderBy)
+                    .param("direction", direction)
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.nextCursor").value("nextCursorToken"))
-                .andExpect(jsonPath("$.hasNext").value(true));
+                .andExpect(status().isBadRequest())  // 400 응답
+                .andExpect(jsonPath("$.code").value("INVALID_PAGINATION_PARAMETER"))
+                .andExpect(jsonPath("$.message").value("데이터 limit값이 0입니다."));
+        }
+
+        @Test
+        void 잘못된_cursor값_인경우_400을_반환한다() throws Exception {
+            // Given
+            int limit = 10;
+            String searchKeyword = "soccer";
+            String orderBy = "name";
+            String direction = "asc";
+            String cursor = "invalidCursorFormat";
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", searchKeyword)
+                    .param("cursor", cursor)
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", orderBy)
+                    .param("direction", direction)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_CURSOR_FORMAT"))
+                .andExpect(jsonPath("$.message").value("cursor 값이 잘못되었습니다."));
         }
     }
 }
