@@ -6,21 +6,31 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
+import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
+import com.sprint.mission.sb03monewteam1.fixture.SubscriptionFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +48,18 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
+    private InterestRepository interestRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private UserMapper userMapper;
@@ -282,7 +304,15 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
+            List<Subscription> subscriptions
+                = SubscriptionFixture.createSubscriptionList(existedUser);
+
+            List<CommentLike> commentLikes
+                = CommentLikeFixture.createCommentLikes(existedUser);
+
             given(userRepository.findById(userId)).willReturn(Optional.of(existedUser));
+            given(subscriptionRepository.findAllByUserId(userId)).willReturn(subscriptions);
+            given(commentLikeRepository.findAllByUserId(userId)).willReturn(commentLikes);
 
             // When
             userService.delete(requesterId, userId);
@@ -291,6 +321,12 @@ public class UserServiceTest {
             assertThat(existedUser.isDeleted()).isTrue();
 
             then(userRepository).should().findById(userId);
+            then(subscriptionRepository).should().findAllByUserId(userId);
+            then(commentLikeRepository).should().findAllByUserId(userId);
+            then(interestRepository).should(times(subscriptions.size()))
+                .decrementSubscriberCount(any());
+            then(commentRepository).should(times(commentLikes.size()))
+                .decreaseLikeCountAndDeleteById(any());
             then(userRepository).shouldHaveNoMoreInteractions();
             then(userMapper).shouldHaveNoInteractions();
         }
@@ -311,7 +347,6 @@ public class UserServiceTest {
         @Test
         void 존재하지_않는_사용자를_논리_삭제_시_예외가_발생한다() {
             // Given
-            User existedUser = UserFixture.createUser();
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
