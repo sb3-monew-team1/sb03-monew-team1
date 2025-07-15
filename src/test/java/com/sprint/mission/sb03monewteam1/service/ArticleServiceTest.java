@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +24,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
-import com.sprint.mission.sb03monewteam1.exception.article.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
@@ -294,7 +295,7 @@ class ArticleServiceTest {
         assertThatThrownBy(() -> articleService.getArticles(
                 null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
                 .isInstanceOf(InvalidCursorException.class)
-                .hasMessage("잘못된 조회수 커서 형식입니다: " + invalidCursor);
+                .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
 
     @Test
@@ -309,7 +310,7 @@ class ArticleServiceTest {
         assertThatThrownBy(() -> articleService.getArticles(
                 null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
                 .isInstanceOf(InvalidCursorException.class)
-                .hasMessage("잘못된 댓글수 커서 형식입니다: " + invalidCursor);
+                .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
 
     @Test
@@ -324,6 +325,6 @@ class ArticleServiceTest {
         assertThatThrownBy(() -> articleService.getArticles(
                 null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
                 .isInstanceOf(InvalidCursorException.class)
-                .hasMessage("잘못된 날짜 커서 형식입니다: " + invalidCursor);
+                .hasMessage(ErrorCode.INVALID_CURSOR_DATE.getMessage(), invalidCursor);
     }
 }
