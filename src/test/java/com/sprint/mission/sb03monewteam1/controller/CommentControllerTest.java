@@ -4,12 +4,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
@@ -30,7 +29,6 @@ import com.sprint.mission.sb03monewteam1.service.CommentService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
@@ -366,10 +364,10 @@ public class CommentControllerTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .header("Monew-Request-User-ID", userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(commentId))
-                .andExpect(jsonPath("$.articleId").value(article.getId()))
-                .andExpect(jsonPath("$.userId").value(userId))
-                .andExpect(jsonPath("$.userNickName").value(user.getNickname()))
+                .andExpect(jsonPath("$.id").value(commentId.toString()))
+                .andExpect(jsonPath("$.articleId").value(article.getId().toString()))
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.userNickname").value(user.getNickname()))
                 .andExpect(jsonPath("$.content").value(updateContent));
         }
 
@@ -463,7 +461,7 @@ public class CommentControllerTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .header("Monew-Request-User-ID", userId))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("잘못된 입력값입니다."));
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()));
         }
     }
 }
