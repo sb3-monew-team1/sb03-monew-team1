@@ -95,7 +95,6 @@ public class InterestServiceImpl implements InterestService {
 
         List<InterestDto> content = interests.stream()
             .map(interest -> interestMapper.toDto(interest, true))
-            .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
         String nextCursor = calculateNextCursor(interests, orderBy, limit);

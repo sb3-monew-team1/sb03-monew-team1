@@ -42,7 +42,7 @@ public class InterestDataSeeder implements DataSeeder {
         List<String> names = List.of("Football", "Soccer", "Basketball", "Baseball", "Tennis", "Hockey", "Golf", "Cricket", "Rugby", "Badminton");
         List<Interest> interests = new ArrayList<>();
 
-        for (int i = 6; i <= 70; i++) {
+        for (int i = 0; i <= 70; i++) {
             String name = names.get(i % names.size()) + " " + i;
             int subscriberCount = 1 + (i % 10);
             interests.add(createInterest(name, subscriberCount));

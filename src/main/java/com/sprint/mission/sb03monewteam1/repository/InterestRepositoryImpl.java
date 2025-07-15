@@ -110,8 +110,12 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom {
             orderBySpecifier = new OrderSpecifier<>(direction.equals(Order.DESC) ? Order.DESC : Order.ASC, qInterest.subscriberCount);
         } else if ("name".equalsIgnoreCase(orderBy)) {
             orderBySpecifier = new OrderSpecifier<>(direction.equals(Order.DESC) ? Order.DESC : Order.ASC, qInterest.name);
+        } else if ("createdAt".equalsIgnoreCase(orderBy)) {
+            orderBySpecifier = new OrderSpecifier<>(direction.equals(Order.DESC) ? Order.DESC : Order.ASC, qInterest.createdAt);
+        } else if ("updatedAt".equalsIgnoreCase(orderBy)) {
+            orderBySpecifier = new OrderSpecifier<>(direction.equals(Order.DESC) ? Order.DESC : Order.ASC, qInterest.updatedAt);
         } else {
-            orderBySpecifier = new OrderSpecifier<>(Order.ASC, qInterest.updatedAt);
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy", orderBy);
         }
 
         return orderBySpecifier;
