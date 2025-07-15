@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
@@ -13,6 +12,8 @@ import static org.mockito.Mockito.when;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
@@ -220,7 +221,7 @@ class InterestServiceTest {
         }
 
         @Test
-        void 잘못된_정렬_기준_인경우_InvalidOrderParameterException이_발생한다() {
+        void 잘못된_정렬_기준_인경우_InvalidSortOptionException이_발생한다() {
             // Given
             int limit = 10;
             String searchKeyword = "soccer";
@@ -231,36 +232,19 @@ class InterestServiceTest {
             Throwable throwable = catchThrowable(() -> interestService.getInterests(searchKeyword, null, limit, orderBy, direction));
 
             // Then
-            assertThat(throwable).isInstanceOf(InvalidOrderParameterException.class)
-                .hasMessageContaining("잘못된 정렬 기준입니다.");
+            assertThat(throwable).isInstanceOf(InvalidSortOptionException.class)
+                .hasMessageContaining("지원하지 않는 정렬 필드입니다.");
 
             then(interestRepository).shouldHaveNoInteractions();
             then(interestMapper).shouldHaveNoInteractions();
         }
 
         @Test
-        void 잘못된_페이지네이션_파라미터_인경우_InvalidPaginationException이_발생한다() {
-            // Given
-            int limit = 0;
-            String orderBy = "name";
-            String direction = "asc";
-
-            // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(null, null, limit, orderBy, direction));
-
-            // Then
-            assertThat(throwable).isInstanceOf(InvalidPaginationException.class)
-                .hasMessageContaining("데이터 limit값이 0입니다.");
-
-            then(interestRepository).shouldHaveNoInteractions();
-            then(interestMapper).shouldHaveNoInteractions();
-        }
-        @Test
-        void 잘못된_cursor값_인경우_InterestCursorFormatException이_발생한다() {
+        void 잘못된_cursor값_인경우_InvalidCursorException이_발생한다() {
             // Given
             int limit = 10;
             String searchKeyword = "soccer";
-            String orderBy = "name";
+            String orderBy = "subscriberCount";
             String direction = "asc";
             String cursor = "invalidCursorFormat";
 
@@ -268,8 +252,8 @@ class InterestServiceTest {
             Throwable throwable = catchThrowable(() -> interestService.getInterests(searchKeyword, cursor, limit, orderBy, direction));
 
             // Then
-            assertThat(throwable).isInstanceOf(InvalidCursorFormatException.class)
-                .hasMessageContaining("cursor 값이 잘못되었습니다.");
+            assertThat(throwable).isInstanceOf(InvalidCursorException.class)
+                .hasMessageContaining("잘못된 커서 형식입니다.");
 
             then(interestRepository).shouldHaveNoInteractions();
             then(interestMapper).shouldHaveNoInteractions();

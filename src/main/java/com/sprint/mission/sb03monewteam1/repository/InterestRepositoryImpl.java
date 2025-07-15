@@ -1,112 +1,146 @@
 package com.sprint.mission.sb03monewteam1.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.QInterest;
-import java.time.format.DateTimeParseException;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
-import java.util.List;
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class InterestRepositoryImpl implements InterestRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
-    private final QInterest interest = QInterest.interest;
+    private final QInterest qInterest = QInterest.interest;
 
     @Override
     public List<Interest> searchByKeywordOrName(
         String searchKeyword,
         String cursor,
         int limit,
-        String sortBy,
-        String sortDirection) {
+        String orderBy,
+        String direction) {
+
+        Order directionEnum = "ASC".equalsIgnoreCase(direction) ? Order.ASC : Order.DESC;
+
+        if (!isValidSortOption(orderBy)) {
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderBy);
+        }
 
         BooleanBuilder builder = new BooleanBuilder();
         addSearchConditions(builder, searchKeyword);
-        addCursorCondition(builder, cursor, sortBy, sortDirection);
 
-        OrderSpecifier<?> orderBy = getOrderSpecifier(sortBy, sortDirection);
+        if (cursor != null && !cursor.isBlank()) {
+            if (!isValidCursor(cursor, orderBy)) {
+                throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_FORMAT, cursor);
+            }
+            builder.and(createCursorCondition(orderBy, directionEnum, cursor));
+        }
 
-        return jpaQueryFactory
-            .selectFrom(interest)
+        OrderSpecifier<?> orderSpecifier = createOrderSpecifier(orderBy, directionEnum);
+        OrderSpecifier<?> idOrderSpecifier = directionEnum == Order.ASC ? qInterest.id.asc() : qInterest.id.desc();
+
+        List<Interest> result = jpaQueryFactory
+            .selectFrom(qInterest)
             .where(builder)
-            .orderBy(orderBy)
+            .orderBy(orderSpecifier, idOrderSpecifier)
             .limit(limit + 1)
             .fetch();
+
+        if (result.size() > limit) {
+            result = result.subList(0, limit);
+        }
+
+        return result;
     }
 
     private void addSearchConditions(BooleanBuilder builder, String searchKeyword) {
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
             builder.and(
-                interest.name.containsIgnoreCase(searchKeyword)
-                    .or(interest.keywords.any().keyword.containsIgnoreCase(searchKeyword))
+                qInterest.name.containsIgnoreCase(searchKeyword)
+                    .or(qInterest.keywords.any().keyword.containsIgnoreCase(searchKeyword))
             );
         }
     }
 
-    private void addCursorCondition(BooleanBuilder builder, String cursor, String sortBy, String sortDirection) {
-        if (cursor != null) {
-            try {
-                if ("subscriberCount".equalsIgnoreCase(sortBy)) {
-                    Long cursorSubscriberCount = Long.parseLong(cursor);
-                    handleSubscriberCountCursor(builder, cursorSubscriberCount, sortDirection);
-                } else if ("name".equalsIgnoreCase(sortBy)) {
-                    handleNameCursor(builder, cursor, sortDirection);
-                } else {
-                    Instant cursorTime = Instant.parse(cursor);
-                    handleUpdatedAtCursor(builder, cursorTime, sortDirection);
-                }
-            } catch (DateTimeParseException | NumberFormatException e) {
+    private BooleanBuilder createCursorCondition(String orderBy, Order direction, String cursor) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if ("subscriberCount".equalsIgnoreCase(orderBy)) {
+            Long cursorSubscriberCount = Long.parseLong(cursor);
+            handleSubscriberCountCursor(builder, cursorSubscriberCount, direction);
+        } else if ("name".equalsIgnoreCase(orderBy)) {
+            handleNameCursor(builder, cursor, direction);
+        } else {
+            throw new InvalidSortOptionException(orderBy);
+        }
+
+        return builder;
+    }
+
+    private void handleSubscriberCountCursor(BooleanBuilder builder, Long cursorSubscriberCount, Order direction) {
+        if ("desc".equalsIgnoreCase(direction.name())) {
+            builder.and(qInterest.subscriberCount.lt(cursorSubscriberCount));
+        } else {
+            builder.and(qInterest.subscriberCount.gt(cursorSubscriberCount));
+        }
+    }
+
+    private void handleNameCursor(BooleanBuilder builder, String cursor, Order direction) {
+        if ("desc".equalsIgnoreCase(direction.name())) {
+            builder.and(qInterest.name.lt(cursor));
+        } else {
+            builder.and(qInterest.name.gt(cursor));
+        }
+    }
+
+    private OrderSpecifier<?> createOrderSpecifier(String orderBy, Order direction) {
+        OrderSpecifier<?> orderBySpecifier;
+
+        if ("subscriberCount".equalsIgnoreCase(orderBy)) {
+            orderBySpecifier = new OrderSpecifier<>(direction.equals(Order.DESC) ? Order.DESC : Order.ASC, qInterest.subscriberCount);
+        } else if ("name".equalsIgnoreCase(orderBy)) {
+            orderBySpecifier = new OrderSpecifier<>(direction.equals(Order.DESC) ? Order.DESC : Order.ASC, qInterest.name);
+        } else {
+            orderBySpecifier = new OrderSpecifier<>(Order.ASC, qInterest.updatedAt);
+        }
+
+        return orderBySpecifier;
+    }
+
+    private boolean isValidCursor(String cursor, String orderBy) {
+        try {
+            switch (orderBy) {
+                case "subscriberCount":
+                    Long.parseLong(cursor);
+                    break;
+                case "name":
+                    if (cursor == null || cursor.trim().isEmpty()) {
+                        return false;
+                    }
+                    break;
+                default:
+                    throw new InvalidSortOptionException(orderBy);
             }
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 
-    private void handleSubscriberCountCursor(BooleanBuilder builder, Long cursorSubscriberCount, String sortDirection) {
-        if ("desc".equalsIgnoreCase(sortDirection)) {
-            builder.and(interest.subscriberCount.lt(cursorSubscriberCount));
-        } else {
-            builder.and(interest.subscriberCount.gt(cursorSubscriberCount));
-        }
-    }
-
-    private void handleNameCursor(BooleanBuilder builder, String cursor, String sortDirection) {
-        if ("desc".equalsIgnoreCase(sortDirection)) {
-            builder.and(interest.name.lt(cursor));
-        } else {
-            builder.and(interest.name.gt(cursor));
-        }
-    }
-
-    private void handleUpdatedAtCursor(BooleanBuilder builder, Instant cursorTime, String sortDirection) {
-        if ("desc".equalsIgnoreCase(sortDirection)) {
-            builder.and(interest.updatedAt.lt(cursorTime));
-        } else {
-            builder.and(interest.updatedAt.gt(cursorTime));
-        }
-    }
-
-    private OrderSpecifier<?> getOrderSpecifier(String sortBy, String sortDirection) {
-        OrderSpecifier<?> orderBy;
-
-        if ("subscriberCount".equalsIgnoreCase(sortBy)) {
-            orderBy = new OrderSpecifier<>(
-                sortDirection.equalsIgnoreCase("desc") ? com.querydsl.core.types.Order.DESC : com.querydsl.core.types.Order.ASC,
-                interest.subscriberCount
-            );
-        } else if ("name".equalsIgnoreCase(sortBy)) {
-            orderBy = new OrderSpecifier<>(
-                sortDirection.equalsIgnoreCase("desc") ? com.querydsl.core.types.Order.DESC : com.querydsl.core.types.Order.ASC,
-                interest.name
-            );
-        } else {
-            orderBy = new OrderSpecifier<>(com.querydsl.core.types.Order.ASC, interest.updatedAt);
-        }
-
-        return orderBy;
+    private boolean isValidSortOption(String orderBy) {
+        List<String> validFields = List.of("subscriberCount", "name", "createdAt", "updatedAt");
+        return validFields.contains(orderBy);
     }
 }

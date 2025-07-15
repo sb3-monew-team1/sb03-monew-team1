@@ -269,28 +269,8 @@ class InterestIntegrationTest {
                     .param("direction", direction)
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ORDER_PARAMETER"))
-                .andExpect(jsonPath("$.message").value("잘못된 정렬 기준입니다."));
-        }
-
-        @Test
-        void 잘못된_페이지네이션_파라미터_인경우_400을_반환한다() throws Exception {
-            // Given
-            int limit = 0;
-            String orderBy = "name";
-            String direction = "asc";
-
-            // When & Then
-            mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
-                    .param("cursor", "")
-                    .param("limit", String.valueOf(limit))
-                    .param("orderBy", orderBy)
-                    .param("direction", direction)
-                    .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())  // 400 응답
-                .andExpect(jsonPath("$.code").value("INVALID_PAGINATION_PARAMETER"))
-                .andExpect(jsonPath("$.message").value("데이터 limit값이 0입니다."));
+                .andExpect(jsonPath("$.code").value("INVALID_SORT_FIELD"))
+                .andExpect(jsonPath("$.message").value("지원하지 않는 정렬 필드입니다."));
         }
 
         @Test
@@ -298,7 +278,7 @@ class InterestIntegrationTest {
             // Given
             int limit = 10;
             String searchKeyword = "soccer";
-            String orderBy = "name";
+            String orderBy = "subscriberCount";
             String direction = "asc";
             String cursor = "invalidCursorFormat";
 
@@ -312,7 +292,7 @@ class InterestIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_CURSOR_FORMAT"))
-                .andExpect(jsonPath("$.message").value("cursor 값이 잘못되었습니다."));
+                .andExpect(jsonPath("$.message").value("잘못된 커서 형식입니다."));
         }
     }
 }

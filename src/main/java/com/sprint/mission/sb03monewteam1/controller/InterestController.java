@@ -25,10 +25,10 @@ public class InterestController implements InterestApi {
     public ResponseEntity<InterestDto> create(
         @Valid @RequestBody InterestRegisterRequest request
     ) {
-        log.info("받은 요청: {}", request);
+        log.info("관심사 등록 요청: {}", request);
 
         InterestDto response = interestService.create(request);
-        log.info("응답: {}", response);
+        log.info("관심사 등록 완료: {}", response);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -38,16 +38,16 @@ public class InterestController implements InterestApi {
         @RequestParam(defaultValue = "") String searchKeyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
-        @RequestParam String sortBy,
-        @RequestParam String sortDirection) {
+        @RequestParam String orderBy,
+        @RequestParam String direction) {
 
-        log.info("요청 받은 파라미터 - searchKeyword: {}, cursor: {}, limit: {}, sortBy: {}, sortDirection: {}",
-            searchKeyword, cursor, limit, sortBy, sortDirection);
+        log.info("관심사 조회 요청: searchKeyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
+            searchKeyword, cursor, limit, orderBy, direction);
 
         CursorPageResponse response = interestService.getInterests(
-            searchKeyword, cursor, limit, sortBy, sortDirection);
+            searchKeyword, cursor, limit, orderBy, direction);
 
-        log.info("응답: {}", response);
+        log.info("관심사 조회 완료: {}", response);
 
         return ResponseEntity.ok(response);
     }
