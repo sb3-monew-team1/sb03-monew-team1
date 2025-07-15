@@ -3,6 +3,8 @@ package com.sprint.mission.sb03monewteam1.batch.job;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
+import com.sprint.mission.sb03monewteam1.config.TestConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,10 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 @Slf4j
+@ActiveProfiles("test")
 @SpringBootTest
-@Import(ArticleCollectJobTest.BatchTestConfig.class)
+@LoadTestEnv
+@Import({TestConfig.class})
 class ArticleCollectJobTest {
 
     @TestConfiguration

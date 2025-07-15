@@ -16,7 +16,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 @SpringBootTest
 @LoadTestEnv
 @Import({TestConfig.class, ArticleBackupJobTest.S3MockConfig.class})
@@ -39,9 +41,6 @@ class ArticleBackupJobTest {
 
     @Autowired
     private JobLauncher jobLauncher;
-
-    @Autowired
-    private S3Util s3Util;
 
     @TestConfiguration
     static class S3MockConfig {

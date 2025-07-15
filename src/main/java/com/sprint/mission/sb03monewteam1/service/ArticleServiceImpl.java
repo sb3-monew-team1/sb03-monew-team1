@@ -49,11 +49,11 @@ public class ArticleServiceImpl implements ArticleService {
 
         long updated = articleRepository.incrementViewCount(articleId);
         if (updated == 0) {
-            throw new ArticleNotFoundException("기사를 찾을 수 없습니다.");
+            throw new ArticleNotFoundException(articleId.toString());
         }
 
         Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
-            .orElseThrow(() -> new ArticleNotFoundException("기사를 찾을 수 없습니다."));
+            .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));
 
         ArticleView articleView = ArticleView.createArticleView(userId, article);
         ArticleView savedArticleView = articleViewRepository.save(articleView);
