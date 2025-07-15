@@ -73,6 +73,20 @@ public class ArticleFixture {
                 .build();
     }
 
+    // 댓글수가 있는 Article 생성
+    public static Article createArticleWithCommentCount(Long commentCount) {
+        return Article.builder()
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(commentCount)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
+    }
+
     // 삭제된 Article 생성
     public static Article createDeletedArticle() {
         return Article.builder()

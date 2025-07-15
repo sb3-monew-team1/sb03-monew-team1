@@ -175,6 +175,11 @@ public class CommentServiceImpl implements CommentService {
         return commentMapper.toDto(comment);
     }
 
+    @Override
+    public Comment delete(UUID commentId) {
+        return null;
+    }
+
     private Instant parseInstant(String cursorValue) {
         try {
             return Instant.parse(cursorValue);

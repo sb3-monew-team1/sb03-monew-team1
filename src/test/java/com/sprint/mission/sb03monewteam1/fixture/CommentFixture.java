@@ -38,6 +38,14 @@ public class CommentFixture {
             .build();
     }
 
+    public static Comment createCommentWithIsDeleted(String content, User user, Article article) {
+        return Comment.builder()
+            .content(content)
+            .author(user)
+            .article(article)
+            .isDeleted(true)
+            .build();
+    }
 
     public static CommentRegisterRequest createCommentRegisterRequest(String content, UUID userId, UUID articleId) {
         return CommentRegisterRequest.builder()
