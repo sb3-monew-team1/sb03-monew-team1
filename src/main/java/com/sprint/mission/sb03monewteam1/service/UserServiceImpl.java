@@ -130,6 +130,12 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundException(userId));
 
+        if (user.isDeleted()) {
+            log.warn("논리 삭제 실패 (이미 삭제된 사용자): requestUserId={}, userId={}", requestHeaderUserId,
+                userId);
+            throw new UserNotFoundException(userId);
+        }
+
         user.setDeleted();
 
         List<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId);
