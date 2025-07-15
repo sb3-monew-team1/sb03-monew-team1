@@ -353,5 +353,21 @@ public class UserControllerTest {
                     .requestAttr("userId", requestHeaderUserId))
                 .andExpect(status().isNotFound());
         }
+
+        @Test
+        void 논리_삭제된_사용자를_논리_삭제_시_404를_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new UserNotFoundException(userId))
+                .given(userService)
+                .delete(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isNotFound());
+        }
     }
 }
