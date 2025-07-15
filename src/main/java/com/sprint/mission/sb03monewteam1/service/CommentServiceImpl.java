@@ -9,6 +9,8 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
@@ -148,9 +150,27 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto update(UUID commentId, UUID userId,
+    public CommentDto update(
+        UUID commentId,
+        UUID userId,
         CommentUpdateRequest commentUpdateRequest) {
-        return null;
+
+        log.info("댓글 수정 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        Comment comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedCommentAccessException();
+        }
+
+        String newContent = commentUpdateRequest.content();
+
+        comment.updateContent(newContent);
+
+        log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        return commentMapper.toDto(comment);
     }
 
     private Instant parseInstant(String cursorValue) {

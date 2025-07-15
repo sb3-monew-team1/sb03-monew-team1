@@ -15,6 +15,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
@@ -600,7 +601,7 @@ public class CommentServiceTest {
             // when & then
             assertThatThrownBy(() ->
                 commentService.update(commentId, otherUserId, commentUpdateRequest
-                )).isInstanceOf(ForbiddenAccessException.class)
+                )).isInstanceOf(UnauthorizedCommentAccessException.class)
                 .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
         }
     }
