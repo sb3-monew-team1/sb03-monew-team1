@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
@@ -16,7 +15,6 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
-import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyDeletedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;

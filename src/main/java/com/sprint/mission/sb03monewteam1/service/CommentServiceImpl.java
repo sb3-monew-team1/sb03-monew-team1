@@ -8,7 +8,6 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
-import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyDeletedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
