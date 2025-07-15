@@ -7,6 +7,7 @@ import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
@@ -15,6 +16,7 @@ import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewE
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
+import com.sprint.mission.sb03monewteam1.repository.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
 import java.time.Instant;
@@ -43,6 +45,7 @@ public class ArticleServiceImpl implements ArticleService {
     private final ArticleViewMapper articleViewMapper;
     private final NaverNewsCollector naverNewsCollector;
     private final HankyungNewsCollector hankyungNewsCollector;
+    private final ArticleInterestRepository articleInterestRepository;
 
     @Override
     @Transactional
@@ -248,6 +251,7 @@ public class ArticleServiceImpl implements ArticleService {
         Interest interest,
         String keyword) {
         List<Article> filtered = new ArrayList<>();
+        List<ArticleInterest> articleInterests = new ArrayList<>();
         for (CollectedArticleDto dto : collectedArticles) {
             if (!shouldIncludeArticle(dto, keyword)) {
                 continue;
@@ -264,6 +268,16 @@ public class ArticleServiceImpl implements ArticleService {
 
         if (!filtered.isEmpty()) {
             articleRepository.saveAll(filtered);
+
+            for (Article article : filtered) {
+                ArticleInterest articleInterest = ArticleInterest.builder()
+                    .article(article)
+                    .interest(interest)
+                    .build();
+                articleInterests.add(articleInterest);
+            }
+            articleInterestRepository.saveAll(articleInterests);
+
             log.info("기사 배치 저장 완료: {}개", filtered.size());
             filtered.forEach(article -> log.debug("저장된 기사: {}", article.getTitle()));
         }
