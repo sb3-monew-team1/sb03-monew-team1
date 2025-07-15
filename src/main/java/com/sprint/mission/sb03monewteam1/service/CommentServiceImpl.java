@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
@@ -144,6 +145,12 @@ public class CommentServiceImpl implements CommentService {
             totalElements,
             hasNext
         );
+    }
+
+    @Override
+    public CommentDto update(UUID commentId, UUID userId,
+        CommentUpdateRequest commentUpdateRequest) {
+        return null;
     }
 
     private Instant parseInstant(String cursorValue) {
