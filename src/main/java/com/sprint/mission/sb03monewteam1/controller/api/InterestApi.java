@@ -89,10 +89,10 @@ public interface InterestApi {
         )
     })
     ResponseEntity<CursorPageResponse> getInterests(
-        @RequestParam(defaultValue = "") String searchKeyword,
+        @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
-        @RequestParam String orderBy,
-        @RequestParam String direction
+        @RequestParam(defaultValue = "subscriberCount") String orderBy,
+        @RequestParam(defaultValue = "DESC") String direction
     );
 }

@@ -38,8 +38,8 @@ public class InterestController implements InterestApi {
         @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
-        @RequestParam String orderBy,
-        @RequestParam String direction) {
+        @RequestParam(defaultValue = "subscriberCount") String orderBy,
+        @RequestParam(defaultValue = "DESC") String direction) {
 
         log.info("관심사 조회 요청: keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
             keyword, cursor, limit, orderBy, direction);
