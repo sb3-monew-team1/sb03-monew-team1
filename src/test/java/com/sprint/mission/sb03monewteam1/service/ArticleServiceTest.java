@@ -23,7 +23,6 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
-import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
@@ -83,8 +82,8 @@ class ArticleServiceTest {
             .createdAt(articleView.getCreatedAt())
             .build();
 
-        when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
-            .thenReturn(false);
+        when(articleViewRepository.findByUserIdAndArticleId(userId, articleId))
+            .thenReturn(List.of());
         when(articleRepository.incrementViewCount(articleId))
             .thenReturn(1L);
         when(articleRepository.findByIdAndIsDeletedFalse(articleId))
@@ -102,7 +101,7 @@ class ArticleServiceTest {
         assertThat(result.userId()).isEqualTo(userId);
         assertThat(result.articleId()).isEqualTo(articleId);
 
-        verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
+        verify(articleViewRepository).findByUserIdAndArticleId(userId, articleId);
         verify(articleRepository).incrementViewCount(articleId);
         verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
         verify(articleViewRepository).save(any(ArticleView.class));
@@ -114,8 +113,8 @@ class ArticleServiceTest {
         UUID userId = UUID.randomUUID();
         UUID articleId = UUID.randomUUID();
 
-        when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
-            .thenReturn(false);
+        when(articleViewRepository.findByUserIdAndArticleId(userId, articleId))
+            .thenReturn(List.of());
         when(articleRepository.incrementViewCount(articleId))
             .thenReturn(0L);
 
@@ -124,27 +123,42 @@ class ArticleServiceTest {
             .isInstanceOf(ArticleNotFoundException.class)
             .hasMessage("기사를 찾을 수 없습니다.");
 
-        verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
+        verify(articleViewRepository).findByUserIdAndArticleId(userId, articleId);
         verify(articleRepository).incrementViewCount(articleId);
         verify(articleRepository, never()).findByIdAndIsDeletedFalse(any());
         verify(articleViewRepository, never()).save(any());
     }
 
     @Test
-    void 기사_뷰_등록_실패_중복_조회() {
+    void 기사_뷰_등록_중복_조회시_기존_뷰_반환() {
         // given
         UUID userId = UUID.randomUUID();
         UUID articleId = UUID.randomUUID();
+        Article article = ArticleFixture.createArticleWithId(articleId);
+        ArticleView articleView = ArticleViewFixture.createArticleView(userId, article);
+        ArticleViewDto expectedDto = ArticleViewDto.builder()
+            .id(articleView.getId())
+            .userId(userId)
+            .articleId(articleId)
+            .createdAt(articleView.getCreatedAt())
+            .build();
 
-        when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
-            .thenReturn(true);
+        when(articleViewRepository.findByUserIdAndArticleId(userId, articleId))
+            .thenReturn(List.of(articleView));
+        when(articleViewMapper.toDto(articleView))
+            .thenReturn(expectedDto);
 
-        // when & then
-        assertThatThrownBy(() -> articleService.createArticleView(userId, articleId))
-            .isInstanceOf(DuplicateArticleViewException.class);
+        // when
+        ArticleViewDto result = articleService.createArticleView(userId, articleId);
 
-        verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
-        verify(articleRepository, never()).findById(any());
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.userId()).isEqualTo(userId);
+        assertThat(result.articleId()).isEqualTo(articleId);
+
+        verify(articleViewRepository).findByUserIdAndArticleId(userId, articleId);
+        verify(articleRepository, never()).incrementViewCount(any());
+        verify(articleRepository, never()).findByIdAndIsDeletedFalse(any());
         verify(articleViewRepository, never()).save(any());
     }
 

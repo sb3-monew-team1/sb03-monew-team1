@@ -12,7 +12,6 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
-import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
@@ -50,8 +49,10 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public ArticleViewDto createArticleView(UUID userId, UUID articleId) {
-        if (articleViewRepository.existsByUserIdAndArticleId(userId, articleId)) {
-            throw new DuplicateArticleViewException();
+        List<ArticleView> existingList = articleViewRepository.findByUserIdAndArticleId(userId,
+            articleId);
+        if (!existingList.isEmpty()) {
+            return articleViewMapper.toDto(existingList.get(0));
         }
 
         long updated = articleRepository.incrementViewCount(articleId);
