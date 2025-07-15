@@ -18,6 +18,9 @@ import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,28 +68,39 @@ public class ArticleServiceImpl implements ArticleService {
         return result;
     }
 
+    private Instant parseToKstInstant(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        DateTimeFormatter formatter = value.contains(".")
+            ? DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            : DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        LocalDateTime ldt = LocalDateTime.parse(value, formatter);
+        return ldt.atZone(ZoneId.of("Asia/Seoul")).toInstant();
+    }
+
     @Override
     public CursorPageResponse<ArticleDto> getArticles(
         String keyword,
         List<String> sourceIn,
         List<String> interests,
-        Instant publishDateFrom,
-        Instant publishDateTo,
+        String publishDateFrom,
+        String publishDateTo,
         String orderBy,
         String direction,
         String cursor,
         Instant after,
         int limit) {
 
-        log.info(
-            "기사 목록 조회 시작 - keyword: {}, sourceIn: {}, orderBy: {}, direction: {}, cursor: {}, limit: {}",
-            keyword, sourceIn, orderBy, direction, cursor, limit);
+        Instant from = parseToKstInstant(publishDateFrom);
+        Instant to = parseToKstInstant(publishDateTo);
 
         String sortBy = orderBy != null ? orderBy : "publishDate";
         boolean isAscending = "ASC".equalsIgnoreCase(direction);
 
         List<Article> articles = getArticlesBySortType(
-            keyword, sourceIn, publishDateFrom, publishDateTo,
+            keyword, sourceIn, from, to,
             sortBy, isAscending, cursor, limit);
 
         boolean hasNext = articles.size() > limit;
