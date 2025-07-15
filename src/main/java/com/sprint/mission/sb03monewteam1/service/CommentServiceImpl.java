@@ -58,6 +58,8 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+        // 기사 댓글 수 증가
+        article.increaseCommentCount();
 
         return commentMapper.toDto(savedComment);
     }
