@@ -17,4 +17,6 @@ public record InterestRegisterRequest(
     @Size(min = 1, max = 10, message = "키워드는 최소 1개 이상, 최대 10개까지 입력할 수 있습니다.")
     List<@NotBlank(message = "키워드는 빈 문자열일 수 없습니다.") String> keywords
 
-) {}
+) {
+
+}
