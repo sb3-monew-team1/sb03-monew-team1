@@ -176,6 +176,14 @@ public class InterestServiceImpl implements InterestService {
                         return false;
                     }
                     break;
+                case "createdAt":
+                case "updatedAt":
+                    try {
+                        Instant.parse(cursor);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                    break;
                 default:
                     return false;
             }
