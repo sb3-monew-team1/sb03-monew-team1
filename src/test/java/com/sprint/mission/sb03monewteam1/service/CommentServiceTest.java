@@ -16,6 +16,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyDeletedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
@@ -651,6 +652,30 @@ public class CommentServiceTest {
                 }).isInstanceOf(CommentNotFoundException.class);
 
             then(commentRepository).should().findById(commentId);
+        }
+
+        @Test
+        void 이미_삭제된_댓글_삭제_요청시_예외를_던진다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            Comment deletedComment = CommentFixture.createCommentWithIsDeleted("삭제 테스트", user, article);
+            ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
+            UUID deletedCommentId = deletedComment.getId();
+
+            given(commentRepository.findById(deletedCommentId)).willReturn(Optional.of(deletedComment));
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.delete(deletedCommentId);
+            }).isInstanceOf(CommentAlreadyDeletedException.class);
+
+            then(commentRepository).should().findById(deletedCommentId);
         }
     }
 

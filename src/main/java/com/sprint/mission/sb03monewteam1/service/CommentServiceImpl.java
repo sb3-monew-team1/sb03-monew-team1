@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyDeletedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
@@ -177,7 +178,23 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Comment delete(UUID commentId) {
-        return null;
+
+        log.info("댓글 논리 삭제 시작 : 댓글 ID = {}", commentId);
+
+        Comment comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        if (comment.getIsDeleted()) {
+            log.warn("이미 논리 삭제된 댓글입니다: 댓글 ID = {}", commentId);
+            throw new CommentAlreadyDeletedException(commentId);
+        }
+
+        comment.delete();
+        comment.getArticle().decreaseCommentCount();
+
+        log.info("댓글 논리 삭제 완료 : 댓글 ID = {}", commentId);
+
+        return comment;
     }
 
     private Instant parseInstant(String cursorValue) {

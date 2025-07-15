@@ -31,6 +31,7 @@ public enum ErrorCode {
 
     // 댓글 관련 예외
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+    COMMENT_ALREADY_DELETED(HttpStatus.CONFLICT, "이미 삭제된 댓글입니다."),
 
     // 커서 기반 페이지네이션 관련 예외
     INVALID_CURSOR_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 커서 형식입니다."),
