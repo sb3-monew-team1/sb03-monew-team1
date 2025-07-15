@@ -72,4 +72,17 @@ public class CommentFixture {
             .likedByMe(false)
             .build();
     }
+
+    public static CommentDto createCommentDtoWithContent(Comment comment, String newContent) {
+        return CommentDto.builder()
+            .id(comment.getId())
+            .createdAt(comment.getCreatedAt())
+            .articleId(comment.getArticle().getId())
+            .userId(comment.getAuthor().getId())
+            .content(newContent)
+            .userNickname(comment.getAuthor().getNickname())
+            .likeCount(0L)
+            .likedByMe(false)
+            .build();
+    }
 }
