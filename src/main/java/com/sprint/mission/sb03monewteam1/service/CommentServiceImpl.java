@@ -184,11 +184,6 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new CommentNotFoundException(commentId));
 
-        if (comment.getIsDeleted()) {
-            log.warn("이미 논리 삭제된 댓글입니다: 댓글 ID = {}", commentId);
-            throw new CommentAlreadyDeletedException(commentId);
-        }
-
         comment.delete();
         comment.getArticle().decreaseCommentCount();
 

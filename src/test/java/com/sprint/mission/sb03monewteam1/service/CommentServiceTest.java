@@ -668,12 +668,12 @@ public class CommentServiceTest {
             ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
             UUID deletedCommentId = deletedComment.getId();
 
-            given(commentRepository.findById(deletedCommentId)).willReturn(Optional.of(deletedComment));
+            given(commentRepository.findById(deletedCommentId)).willReturn(Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
                 commentService.delete(deletedCommentId);
-            }).isInstanceOf(CommentAlreadyDeletedException.class);
+            }).isInstanceOf(CommentNotFoundException.class);
 
             then(commentRepository).should().findById(deletedCommentId);
         }
