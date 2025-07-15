@@ -472,6 +472,7 @@ public class CommentControllerTest {
 
             // given
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
             Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
             String content = "논리 삭제 테스트";
             Comment comment = CommentFixture.createComment(content, user, article);
@@ -479,10 +480,11 @@ public class CommentControllerTest {
             UUID commentId = comment.getId();
 
             // 컨트롤러 테스트이므로, 반환되는 comment 객체의 삭제 상태는 신경쓰지 않음
-            given(commentService.delete(commentId)).willReturn(comment);
+            given(commentService.delete(commentId, user.getId())).willReturn(comment);
 
             // when & then
-            mockMvc.perform(delete("/api/comments/" + commentId.toString()))
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", user.getId()))
                 .andExpect(status().isNoContent());
         }
 
@@ -491,12 +493,14 @@ public class CommentControllerTest {
 
             // given
             UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
 
-            given(commentService.delete(commentId))
+            given(commentService.delete(commentId, userId))
                 .willThrow(new CommentNotFoundException(commentId));
 
             // when & then
-            mockMvc.perform(delete("/api/comments/" + commentId.toString()))
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", userId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
                 .andExpect(jsonPath("$.message").exists());
@@ -507,19 +511,45 @@ public class CommentControllerTest {
 
             // given
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
             Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
             String content = "이미 삭제된 댓글";
             Comment deletedComment = CommentFixture.createCommentWithIsDeleted(content, user, article);
             ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
             UUID deletedCommentId = deletedComment.getId();
 
-            given(commentService.delete(deletedCommentId))
+            given(commentService.delete(deletedCommentId, user.getId()))
                 .willThrow(new CommentNotFoundException(deletedCommentId));
 
             // when & then
-            mockMvc.perform(delete("/api/comments/" + deletedCommentId.toString()))
+            mockMvc.perform(delete("/api/comments/" + deletedCommentId.toString())
+                    .header("Monew-Request-User-ID", user.getId()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_작성자가_아니라면_403가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+            UUID otherUserId = UUID.randomUUID();
+
+            given(commentService.delete(
+                eq(commentId), eq(otherUserId))
+            ).willThrow(new UnauthorizedCommentAccessException());
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", otherUserId))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
                 .andExpect(jsonPath("$.message").exists());
         }
     }

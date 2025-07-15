@@ -91,13 +91,16 @@ public class CommentController implements CommentApi {
 
     @Override
     @DeleteMapping(path = "/{commentId}")
-    public ResponseEntity<Void> delete(@PathVariable UUID commentId) {
+    public ResponseEntity<Void> delete(
+        @PathVariable UUID commentId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId
+    ) {
 
-        log.info("댓글 삭제 요청: commentId = {}", commentId);
+        log.info("댓글 삭제 요청: commentId = {}, userId = {}", commentId, userId);
 
-        commentService.delete(commentId);
+        commentService.delete(commentId, userId);
 
-        log.info("댓글 삭제 성공 - commentId: {}", commentId);
+        log.info("댓글 삭제 완료: commentId = {}, userId = {}", commentId, userId);
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
             .build();

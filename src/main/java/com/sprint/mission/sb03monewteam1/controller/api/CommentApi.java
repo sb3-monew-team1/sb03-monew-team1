@@ -154,6 +154,14 @@ public interface CommentApi {
             )
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "작성자 아님",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
             responseCode = "500",
             description = "서버 내부 오류",
             content = @Content(
@@ -163,6 +171,7 @@ public interface CommentApi {
         )
     })
     ResponseEntity<Void> delete(
-        @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId
+        @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId
     );
 }

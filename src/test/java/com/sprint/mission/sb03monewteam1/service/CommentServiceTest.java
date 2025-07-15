@@ -628,7 +628,7 @@ public class CommentServiceTest {
             given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
 
             // when
-            Comment result = commentService.delete(commentId);
+            Comment result = commentService.delete(commentId, user.getId());
 
             // then
             assertThat(result).isNotNull();
@@ -641,12 +641,13 @@ public class CommentServiceTest {
 
             // given
             UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
 
             given(commentRepository.findById(commentId)).willReturn(Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                commentService.delete(commentId);
+                commentService.delete(commentId, userId);
                 }).isInstanceOf(CommentNotFoundException.class);
 
             then(commentRepository).should().findById(commentId);
@@ -670,7 +671,7 @@ public class CommentServiceTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                commentService.delete(deletedCommentId);
+                commentService.delete(deletedCommentId, user.getId());
             }).isInstanceOf(CommentNotFoundException.class);
 
             then(commentRepository).should().findById(deletedCommentId);
