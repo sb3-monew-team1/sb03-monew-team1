@@ -9,11 +9,9 @@ import java.util.UUID;
 
 public class SubscriptionFixture {
 
-    private static final UUID DEFAULT_SUBSCRIPTION_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+    private static final UUID DEFAULT_SUBSCRIPTION_ID = UUID.fromString(
+        "550e8400-e29b-41d4-a716-446655440001");
 
-    public static Subscription createSubscription() {
-        return createSubscription(UserFixture.createUser(), InterestFixture.createInterest());
-    }
 
     public static Subscription createSubscription(User user, Interest interest) {
         return Subscription.builder()
@@ -30,7 +28,7 @@ public class SubscriptionFixture {
         return subscriptions;
     }
 
-    public static List<Subscription> createSubscriptionList(User user) {
+    public static List<Subscription> createSubscriptions(User user) {
         List<Interest> interests = List.of(
             InterestFixture.createInterest("기술", 10L),
             InterestFixture.createInterest("스포츠", 20L),

@@ -11,19 +11,6 @@ public class CommentLikeFixture {
 
     private static final UUID DEFAULT_COMMENT_LIKE_ID = UUID.fromString(
         "550e8400-e29b-41d4-a716-446655440003");
-    private static final String DEFAULT_COMMENT_CONTENT = "테스트용 댓글입니다";
-
-    public static CommentLike createCommentLike() {
-
-        User user = UserFixture.createUser();
-
-        return createCommentLike(user,
-            CommentFixture.createComment(
-                DEFAULT_COMMENT_CONTENT,
-                user,
-                ArticleFixture.createArticle()
-            ));
-    }
 
     public static CommentLike createCommentLike(User user, Comment comment) {
         return CommentLike.builder()

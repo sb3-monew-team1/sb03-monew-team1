@@ -71,6 +71,10 @@ public class UserServiceTest {
     @DisplayName("테스트 환경 설정 확인")
     public void setup() {
         assertNotNull(userRepository);
+        assertNotNull(subscriptionRepository);
+        assertNotNull(interestRepository);
+        assertNotNull(commentLikeRepository);
+        assertNotNull(commentRepository);
         assertNotNull(userMapper);
         assertNotNull(userService);
     }
@@ -305,7 +309,7 @@ public class UserServiceTest {
             UUID requesterId = UserFixture.getDefaultId();
 
             List<Subscription> subscriptions
-                = SubscriptionFixture.createSubscriptionList(existedUser);
+                = SubscriptionFixture.createSubscriptions(existedUser);
 
             List<CommentLike> commentLikes
                 = CommentLikeFixture.createCommentLikes(existedUser);
@@ -317,7 +321,7 @@ public class UserServiceTest {
             // When
             userService.delete(requesterId, userId);
 
-            // then
+            // Then
             assertThat(existedUser.isDeleted()).isTrue();
 
             then(userRepository).should().findById(userId);
@@ -346,6 +350,23 @@ public class UserServiceTest {
 
         @Test
         void 존재하지_않는_사용자를_논리_삭제_시_예외가_발생한다() {
+            // Given
+            UUID userId = UserFixture.getDefaultId();
+            UUID requesterId = UserFixture.getDefaultId();
+
+            given(userRepository.findById(userId)).willThrow(UserNotFoundException.class);
+
+            // When & Then
+            assertThatThrownBy(() -> userService.delete(requesterId, userId))
+                .isInstanceOf(UserNotFoundException.class);
+
+            then(userRepository).should().findById(userId);
+            then(userRepository).shouldHaveNoMoreInteractions();
+            then(userMapper).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 삭제된_사용자를_논리_삭제_시_예외가_발생한다() {
             // Given
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
