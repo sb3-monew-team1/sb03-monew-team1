@@ -29,6 +29,9 @@ public enum ErrorCode {
     ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "기사를 찾을 수 없습니다."),
     DUPLICATE_ARTICLE_VIEW(HttpStatus.CONFLICT, "이미 조회한 기사입니다."),
 
+    // 댓글 관련 예외
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+
     // 커서 기반 페이지네이션 관련 예외
     INVALID_CURSOR_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 커서 형식입니다."),
     INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST,"잘못된 ID 커서 형식입니다."),

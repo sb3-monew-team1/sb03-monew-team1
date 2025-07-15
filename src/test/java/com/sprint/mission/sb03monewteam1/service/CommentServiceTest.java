@@ -8,14 +8,18 @@ import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
+import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
@@ -23,6 +27,7 @@ import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import java.sql.Ref;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -509,6 +514,95 @@ public class CommentServiceTest {
             )
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_DIRECTION.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 수정 테스트")
+    class CommentUpdateTest {
+
+        @Test
+        void 댓글을_수정하면_수정된_CommentDTO를_반환해야_한다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID userId = user.getId();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String originalContent = "기존 댓글";
+            String updateContent = "댓글 수정 테스트";
+            Comment comment = CommentFixture.createComment(originalContent, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+            CommentDto expectedCommentDto = CommentFixture.createCommentDtoWithContent(comment, updateContent);
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            given(commentMapper.toDto(any(Comment.class))).willReturn(expectedCommentDto);
+
+            // when
+            CommentDto result = commentService.update(commentId, userId, commentUpdateRequest);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.id()).isEqualTo(commentId);
+            assertThat(result.content()).isEqualTo(updateContent);
+        }
+
+        @Test
+        void 댓글을_수정할_때_존재하지_않는_댓글이라면_예외가_발생한다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID userId = user.getId();
+            String updateContent = "댓글 수정 테스트";
+            UUID invalidCommentId = UUID.randomUUID();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+
+            given(commentRepository.findById(invalidCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() ->
+                commentService.update(invalidCommentId, userId, commentUpdateRequest
+                )).isInstanceOf(CommentNotFoundException.class)
+                .hasMessageContaining(ErrorCode.COMMENT_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        void 댓글을_수정할_때_작성자가_아니라면_예외가_발생한다() {
+
+            // given
+            User author = UserFixture.createUser();
+            ReflectionTestUtils.setField(author, "id", UUID.randomUUID());
+            User otherUser = UserFixture.createUser();
+            ReflectionTestUtils.setField(otherUser, "id", UUID.randomUUID());
+            UUID otherUserId = otherUser.getId();
+
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String originalContent = "기존 댓글";
+            String updateContent = "댓글 수정 테스트";
+            Comment comment = CommentFixture.createComment(originalContent, author, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+            // when & then
+            assertThatThrownBy(() ->
+                commentService.update(commentId, otherUserId, commentUpdateRequest
+                )).isInstanceOf(UnauthorizedCommentAccessException.class)
+                .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
         }
     }
 
