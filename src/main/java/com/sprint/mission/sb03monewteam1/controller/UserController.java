@@ -80,6 +80,7 @@ public class UserController implements UserApi {
         return ResponseEntity.status(HttpStatus.OK).body(userDto);
     }
 
+    @Override
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> delete(
         @PathVariable UUID userId,
