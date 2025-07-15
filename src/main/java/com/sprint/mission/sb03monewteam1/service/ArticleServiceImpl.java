@@ -1,5 +1,12 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
@@ -11,7 +18,7 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
-import com.sprint.mission.sb03monewteam1.exception.article.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
@@ -124,7 +131,7 @@ public class ArticleServiceImpl implements ArticleService {
                     try {
                         viewCountCursor = Long.valueOf(cursor);
                     } catch (NumberFormatException e) {
-                        throw new InvalidCursorException("잘못된 조회수 커서 형식입니다: " + cursor);
+                        throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_COUNT, cursor);
                     }
                 }
                 Instant viewCountPublishDate = Instant.now();
@@ -138,7 +145,7 @@ public class ArticleServiceImpl implements ArticleService {
                     try {
                         commentCountCursor = Long.valueOf(cursor);
                     } catch (NumberFormatException e) {
-                        throw new InvalidCursorException("잘못된 댓글수 커서 형식입니다: " + cursor);
+                        throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_COUNT, cursor);
                     }
                 }
                 Instant commentCountPublishDate = Instant.now();
@@ -153,7 +160,7 @@ public class ArticleServiceImpl implements ArticleService {
                     try {
                         dateCursor = Instant.parse(cursor);
                     } catch (DateTimeParseException e) {
-                        throw new InvalidCursorException("잘못된 날짜 커서 형식입니다: " + cursor);
+                        throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_DATE, cursor);
                     }
                 }
                 return articleRepository.findArticlesWithCursorByDate(
