@@ -273,10 +273,8 @@ public class UserIntegrationTest {
             .getLikeCount();
 
         assertThat(afterSubscriberCount).isEqualTo(beforeSubscriberCount - 1);
-        System.out.println("afterSubscriberCount = " + afterSubscriberCount);
 
         assertThat(afterCommentLikeCount).isEqualTo(beforeCommentLikeCount - 1);
-        System.out.println("afterCommentLikeCount = " + afterCommentLikeCount);
 
         User deletedUser = userRepository.findById(userId).orElseThrow();
         assertThat(deletedUser.isDeleted()).isTrue();

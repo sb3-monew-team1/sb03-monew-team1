@@ -368,10 +368,13 @@ public class UserServiceTest {
         @Test
         void 삭제된_사용자를_논리_삭제_시_예외가_발생한다() {
             // Given
+            User deletedUser = UserFixture.createUser();
+            deletedUser.setDeleted();
+
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
-            given(userRepository.findById(userId)).willThrow(UserNotFoundException.class);
+            given(userRepository.findById(userId)).willReturn(Optional.of(deletedUser));
 
             // When & Then
             assertThatThrownBy(() -> userService.delete(requesterId, userId))

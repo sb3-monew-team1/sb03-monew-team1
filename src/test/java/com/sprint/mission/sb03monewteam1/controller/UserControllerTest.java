@@ -318,7 +318,8 @@ public class UserControllerTest {
             willDoNothing().given(userService).delete(requestHeaderUserId, userId);
 
             // When & Then
-            mockMvc.perform(delete("/api/users/{userId}", userId))
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                    .requestAttr("userId", requestHeaderUserId))
                 .andExpect(status().isNoContent());
         }
 
