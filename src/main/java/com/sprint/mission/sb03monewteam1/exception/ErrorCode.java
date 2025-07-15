@@ -33,6 +33,15 @@ public enum ErrorCode {
     ARTICLE_COLLECTION_VALIDATION_ERROR(HttpStatus.UNPROCESSABLE_ENTITY, "수집 데이터 검증에 실패했습니다."),
     ARTICLE_COLLECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "기사 수집에 실패했습니다."),
 
+    // 커서 기반 페이지네이션 관련 예외
+    INVALID_CURSOR_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 커서 형식입니다."),
+    INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST,"잘못된 ID 커서 형식입니다."),
+    INVALID_CURSOR_DATE(HttpStatus.BAD_REQUEST,"잘못된 날짜 커서 형식입니다."),
+    INVALID_CURSOR_COUNT(HttpStatus.BAD_REQUEST,"잘못된 숫자 커서 형식입니다."),
+
+    INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST,"지원하지 않는 정렬 필드입니다."),
+    INVALID_SORT_DIRECTION(HttpStatus.BAD_REQUEST,"지원하지 않는 정렬 방향입니다."),
+
     // S3 관련 예외
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 파일 업로드에 실패했습니다."),
     S3_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 파일 다운로드에 실패했습니다."),

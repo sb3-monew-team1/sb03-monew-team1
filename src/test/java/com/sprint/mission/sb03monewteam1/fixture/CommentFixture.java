@@ -5,20 +5,39 @@ import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.test.util.ReflectionTestUtils;
 
 public class CommentFixture {
 
+    private static final UUID DEFAULT_COMMENT_ID = UUID.randomUUID();
+
     public static Comment createComment(String content, User user, Article article) {
-        Comment comment = Comment.builder()
+        return Comment.builder()
                 .content(content)
                 .author(user)
                 .article(article)
                 .build();
-        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-        return comment;
     }
+
+    public static Comment createCommentWithLikeCount(String content, User user, Article article, Long count) {
+        return Comment.builder()
+                .content(content)
+                .author(user)
+                .article(article)
+                .likeCount(count)
+                .build();
+    }
+
+    public static Comment createCommentWithCreatedAt(String content, User user, Article article, Instant createdAt) {
+        return Comment.builder()
+            .content(content)
+            .author(user)
+            .article(article)
+            .build();
+    }
+
 
     public static CommentRegisterRequest createCommentRegisterRequest(String content, UUID userId, UUID articleId) {
         return CommentRegisterRequest.builder()
