@@ -1,21 +1,15 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -72,7 +66,7 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public CursorPageResponseArticleDto getArticles(
+    public CursorPageResponse<ArticleDto> getArticles(
         String keyword,
         List<String> sourceIn,
         List<String> interests,
@@ -107,7 +101,7 @@ public class ArticleServiceImpl implements ArticleService {
         String nextCursor = generateNextCursor(articles, sortBy, hasNext);
         Instant nextAfter = generateNextAfter(articles, hasNext);
 
-        CursorPageResponseArticleDto result = CursorPageResponseArticleDto.builder()
+        CursorPageResponse<ArticleDto> result = CursorPageResponse.<ArticleDto>builder()
             .content(articleDtos)
             .nextCursor(nextCursor)
             .nextAfter(nextAfter)

@@ -6,9 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import java.time.Instant;
@@ -182,9 +184,10 @@ class ArticleIntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        CursorPageResponseArticleDto firstPageResponse = objectMapper.readValue(
+        CursorPageResponse<ArticleDto> firstPageResponse = objectMapper.readValue(
             firstPageResult.getResponse().getContentAsString(),
-            CursorPageResponseArticleDto.class);
+            new TypeReference<CursorPageResponse<ArticleDto>>() {
+            });
 
         assertThat(firstPageResponse.content()).hasSize(2);
         assertThat(firstPageResponse.hasNext()).isTrue();
@@ -202,9 +205,10 @@ class ArticleIntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        CursorPageResponseArticleDto secondPageResponse = objectMapper.readValue(
+        CursorPageResponse<ArticleDto> secondPageResponse = objectMapper.readValue(
             secondPageResult.getResponse().getContentAsString(),
-            CursorPageResponseArticleDto.class);
+            new TypeReference<CursorPageResponse<ArticleDto>>() {
+            });
 
         assertThat(secondPageResponse.content()).hasSize(2);
         assertThat(secondPageResponse.hasNext()).isFalse();
@@ -224,9 +228,10 @@ class ArticleIntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        CursorPageResponseArticleDto searchResponse = objectMapper.readValue(
+        CursorPageResponse<ArticleDto> searchResponse = objectMapper.readValue(
             searchResult.getResponse().getContentAsString(),
-            CursorPageResponseArticleDto.class);
+            new TypeReference<CursorPageResponse<ArticleDto>>() {
+            });
 
         assertThat(searchResponse.content()).hasSize(2);
 
@@ -240,9 +245,10 @@ class ArticleIntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        CursorPageResponseArticleDto sourceResponse = objectMapper.readValue(
+        CursorPageResponse<ArticleDto> sourceResponse = objectMapper.readValue(
             sourceResult.getResponse().getContentAsString(),
-            CursorPageResponseArticleDto.class);
+            new TypeReference<CursorPageResponse<ArticleDto>>() {
+            });
 
         assertThat(sourceResponse.content()).hasSize(2);
     }

@@ -1,7 +1,8 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import java.time.Instant;
 import java.util.List;
@@ -11,7 +12,7 @@ public interface ArticleService {
 
     ArticleViewDto createArticleView(UUID userId, UUID articleId);
 
-    CursorPageResponseArticleDto getArticles(
+    CursorPageResponse<ArticleDto> getArticles(
         String keyword,
         List<String> sourceIn,
         List<String> interests,

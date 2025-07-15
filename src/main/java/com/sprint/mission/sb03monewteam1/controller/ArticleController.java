@@ -1,19 +1,17 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
+import com.sprint.mission.sb03monewteam1.controller.api.ArticleApi;
+import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
+import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.sprint.mission.sb03monewteam1.controller.api.ArticleApi;
-import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
-import com.sprint.mission.sb03monewteam1.service.ArticleService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
@@ -30,21 +28,21 @@ public class ArticleController implements ArticleApi {
     }
 
     @Override
-    public ResponseEntity<CursorPageResponseArticleDto> getArticles(
-            String keyword,
-            List<String> sourceIn,
-            List<String> interests,
-            Instant publishDateFrom,
-            Instant publishDateTo,
-            String orderBy,
-            String direction,
-            String cursor,
-            Instant after,
-            int limit) {
+    public ResponseEntity<CursorPageResponse<ArticleDto>> getArticles(
+        String keyword,
+        List<String> sourceIn,
+        List<String> interests,
+        Instant publishDateFrom,
+        Instant publishDateTo,
+        String orderBy,
+        String direction,
+        String cursor,
+        Instant after,
+        int limit) {
 
-        CursorPageResponseArticleDto result = articleService.getArticles(
-                keyword, sourceIn, interests, publishDateFrom, publishDateTo,
-                orderBy, direction, cursor, after, limit);
+        CursorPageResponse<ArticleDto> result = articleService.getArticles(
+            keyword, sourceIn, interests, publishDateFrom, publishDateTo,
+            orderBy, direction, cursor, after, limit);
 
         return ResponseEntity.ok(result);
     }

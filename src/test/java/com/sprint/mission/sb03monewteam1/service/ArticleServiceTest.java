@@ -1,27 +1,20 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -31,6 +24,16 @@ import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ArticleServiceTest {
@@ -58,22 +61,22 @@ class ArticleServiceTest {
         Article article = ArticleFixture.createArticleWithId(articleId);
         ArticleView articleView = ArticleViewFixture.createArticleView(userId, article);
         ArticleViewDto expectedDto = ArticleViewDto.builder()
-                .id(articleView.getId())
-                .userId(userId)
-                .articleId(articleId)
-                .createdAt(articleView.getCreatedAt())
-                .build();
+            .id(articleView.getId())
+            .userId(userId)
+            .articleId(articleId)
+            .createdAt(articleView.getCreatedAt())
+            .build();
 
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
-                .thenReturn(false);
+            .thenReturn(false);
         when(articleRepository.incrementViewCount(articleId))
-                .thenReturn(1L); // 성공적으로 업데이트됨
+            .thenReturn(1L); // 성공적으로 업데이트됨
         when(articleRepository.findByIdAndIsDeletedFalse(articleId))
-                .thenReturn(Optional.of(article));
+            .thenReturn(Optional.of(article));
         when(articleViewRepository.save(any(ArticleView.class)))
-                .thenReturn(articleView);
+            .thenReturn(articleView);
         when(articleViewMapper.toDto(articleView))
-                .thenReturn(expectedDto);
+            .thenReturn(expectedDto);
 
         // when
         ArticleViewDto result = articleService.createArticleView(userId, articleId);
@@ -96,14 +99,14 @@ class ArticleServiceTest {
         UUID articleId = UUID.randomUUID();
 
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
-                .thenReturn(false);
+            .thenReturn(false);
         when(articleRepository.incrementViewCount(articleId))
-                .thenReturn(0L); // 업데이트 실패 (기사가 없음)
+            .thenReturn(0L); // 업데이트 실패 (기사가 없음)
 
         // when & then
         assertThatThrownBy(() -> articleService.createArticleView(userId, articleId))
-                .isInstanceOf(ArticleNotFoundException.class)
-                .hasMessage("기사를 찾을 수 없습니다.");
+            .isInstanceOf(ArticleNotFoundException.class)
+            .hasMessage("기사를 찾을 수 없습니다.");
 
         verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
         verify(articleRepository).incrementViewCount(articleId);
@@ -118,11 +121,11 @@ class ArticleServiceTest {
         UUID articleId = UUID.randomUUID();
 
         when(articleViewRepository.existsByUserIdAndArticleId(userId, articleId))
-                .thenReturn(true);
+            .thenReturn(true);
 
         // when & then
         assertThatThrownBy(() -> articleService.createArticleView(userId, articleId))
-                .isInstanceOf(DuplicateArticleViewException.class);
+            .isInstanceOf(DuplicateArticleViewException.class);
 
         verify(articleViewRepository).existsByUserIdAndArticleId(userId, articleId);
         verify(articleRepository, never()).findById(any());
@@ -143,24 +146,24 @@ class ArticleServiceTest {
         int limit = 10;
 
         List<Article> articles = Arrays.asList(
-                ArticleFixture.createArticle(),
-                ArticleFixture.createArticle());
+            ArticleFixture.createArticle(),
+            ArticleFixture.createArticle());
 
         List<ArticleDto> articleDtos = Arrays.asList(
-                ArticleDto.builder().id(UUID.randomUUID()).title("제목1").build(),
-                ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
+            ArticleDto.builder().id(UUID.randomUUID()).title("제목1").build(),
+            ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByDate(
-                eq(keyword), eq(sourceIn), eq(publishDateFrom), eq(publishDateTo),
-                eq(Instant.parse(cursor)), eq(limit + 1), eq(false)))
-                .thenReturn(articles);
+            eq(keyword), eq(sourceIn), eq(publishDateFrom), eq(publishDateTo),
+            eq(Instant.parse(cursor)), eq(limit + 1), eq(false)))
+            .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
-                .thenReturn(articleDtos.get(0), articleDtos.get(1));
+            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
-        CursorPageResponseArticleDto result = articleService.getArticles(
-                keyword, sourceIn, interests, publishDateFrom, publishDateTo,
-                orderBy, direction, cursor, null, limit);
+        CursorPageResponse<ArticleDto> result = articleService.getArticles(
+            keyword, sourceIn, interests, publishDateFrom, publishDateTo,
+            orderBy, direction, cursor, null, limit);
 
         // then
         assertThat(result).isNotNull();
@@ -169,8 +172,8 @@ class ArticleServiceTest {
         assertThat(result.size()).isEqualTo(2);
 
         verify(articleRepository).findArticlesWithCursorByDate(
-                eq(keyword), eq(sourceIn), eq(publishDateFrom), eq(publishDateTo),
-                eq(Instant.parse(cursor)), eq(limit + 1), eq(false));
+            eq(keyword), eq(sourceIn), eq(publishDateFrom), eq(publishDateTo),
+            eq(Instant.parse(cursor)), eq(limit + 1), eq(false));
     }
 
     @Test
@@ -182,29 +185,31 @@ class ArticleServiceTest {
         int limit = 10;
 
         List<Article> articles = Arrays.asList(
-                ArticleFixture.createArticle(),
-                ArticleFixture.createArticle());
+            ArticleFixture.createArticle(),
+            ArticleFixture.createArticle());
 
         List<ArticleDto> articleDtos = Arrays.asList(
-                ArticleDto.builder().id(UUID.randomUUID()).title("제목1").build(),
-                ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
+            ArticleDto.builder().id(UUID.randomUUID()).title("제목1").build(),
+            ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByViewCount(
-                isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1), eq(true)))
-                .thenReturn(articles);
+            isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1),
+            eq(true)))
+            .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
-                .thenReturn(articleDtos.get(0), articleDtos.get(1));
+            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
-        CursorPageResponseArticleDto result = articleService.getArticles(
-                null, null, null, null, null, orderBy, direction, cursor, null, limit);
+        CursorPageResponse<ArticleDto> result = articleService.getArticles(
+            null, null, null, null, null, orderBy, direction, cursor, null, limit);
 
         // then
         assertThat(result.content()).hasSize(2);
         assertThat(result.hasNext()).isFalse();
 
         verify(articleRepository).findArticlesWithCursorByViewCount(
-                isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1), eq(true));
+            isNull(), isNull(), isNull(), isNull(), eq(100L), any(Instant.class), eq(limit + 1),
+            eq(true));
     }
 
     @Test
@@ -216,48 +221,50 @@ class ArticleServiceTest {
         int limit = 10;
 
         List<Article> articles = Arrays.asList(
-                ArticleFixture.createArticle(),
-                ArticleFixture.createArticle());
+            ArticleFixture.createArticle(),
+            ArticleFixture.createArticle());
 
         List<ArticleDto> articleDtos = Arrays.asList(
-                ArticleDto.builder().id(UUID.randomUUID()).title("제목1").build(),
-                ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
+            ArticleDto.builder().id(UUID.randomUUID()).title("제목1").build(),
+            ArticleDto.builder().id(UUID.randomUUID()).title("제목2").build());
 
         when(articleRepository.findArticlesWithCursorByCommentCount(
-                isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1), eq(false)))
-                .thenReturn(articles);
+            isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1),
+            eq(false)))
+            .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
-                .thenReturn(articleDtos.get(0), articleDtos.get(1));
+            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
-        CursorPageResponseArticleDto result = articleService.getArticles(
-                null, null, null, null, null, orderBy, direction, cursor, null, limit);
+        CursorPageResponse<ArticleDto> result = articleService.getArticles(
+            null, null, null, null, null, orderBy, direction, cursor, null, limit);
 
         // then
         assertThat(result.content()).hasSize(2);
         assertThat(result.hasNext()).isFalse();
 
         verify(articleRepository).findArticlesWithCursorByCommentCount(
-                isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1), eq(false));
+            isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1),
+            eq(false));
     }
 
     @Test
     void 기사_목록_조회_성공_다음_페이지_있음() {
         // given
         List<Article> articles = Arrays.asList(
-                ArticleFixture.createArticle(),
-                ArticleFixture.createArticle(),
-                ArticleFixture.createArticle());
+            ArticleFixture.createArticle(),
+            ArticleFixture.createArticle(),
+            ArticleFixture.createArticle());
 
         when(articleRepository.findArticlesWithCursorByDate(
-                isNull(), isNull(), isNull(), isNull(), isNull(), eq(3), eq(false)))
-                .thenReturn(articles);
+            isNull(), isNull(), isNull(), isNull(), isNull(), eq(3), eq(false)))
+            .thenReturn(articles);
         when(articleMapper.toDto(any(Article.class)))
-                .thenReturn(ArticleDto.builder().id(UUID.randomUUID()).title("제목").build());
+            .thenReturn(ArticleDto.builder().id(UUID.randomUUID()).title("제목").build());
 
         // when
-        CursorPageResponseArticleDto result = articleService.getArticles(
-                null, null, null, null, null, "publishDate", "DESC", null, null, 2);
+        CursorPageResponse<ArticleDto> result = articleService.getArticles(
+            null, null, null, null, null, "publishDate", "DESC", null, null, 2);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -293,9 +300,9 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-                null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
-                .isInstanceOf(InvalidCursorException.class)
-                .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            .isInstanceOf(InvalidCursorException.class)
+            .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
 
     @Test
@@ -308,9 +315,9 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-                null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
-                .isInstanceOf(InvalidCursorException.class)
-                .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            .isInstanceOf(InvalidCursorException.class)
+            .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
 
     @Test
@@ -323,8 +330,8 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-                null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
-                .isInstanceOf(InvalidCursorException.class)
-                .hasMessage(ErrorCode.INVALID_CURSOR_DATE.getMessage(), invalidCursor);
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            .isInstanceOf(InvalidCursorException.class)
+            .hasMessage(ErrorCode.INVALID_CURSOR_DATE.getMessage(), invalidCursor);
     }
 }

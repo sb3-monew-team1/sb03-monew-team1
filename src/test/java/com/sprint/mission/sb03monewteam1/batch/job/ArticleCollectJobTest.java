@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 @Slf4j
@@ -24,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @LoadTestEnv
 @Import({TestConfig.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ArticleCollectJobTest {
 
     @TestConfiguration
