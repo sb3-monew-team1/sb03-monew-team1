@@ -6,6 +6,7 @@ import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -61,7 +62,7 @@ public class InterestDataSeeder implements DataSeeder {
     private List<InterestKeyword> createInterestKeywords(List<Interest> interests) {
         List<InterestKeyword> interestKeywords = new ArrayList<>();
         for (Interest interest : interests) {
-            List<String> keywords = getKeywordsForInterest(interest.getName());
+            List<String> keywords = generateRandomKeywords(interest.getName(), 3);
             for (String keyword : keywords) {
                 interestKeywords.add(InterestKeyword.builder()
                     .interest(interest)
@@ -72,22 +73,22 @@ public class InterestDataSeeder implements DataSeeder {
         return interestKeywords;
     }
 
-    private List<String> getKeywordsForInterest(String interestName) {
-        switch (interestName) {
-            case "Football":
-                return List.of("club", "sport", "ball");
-            case "Soccer":
-                return List.of("ball", "outdoor");
-            case "Basketball":
-                return List.of("court", "game");
-            case "Baseball":
-                return List.of("bat", "outdoor");
-            case "Tennis":
-                return List.of("court", "racket");
-            case "Interest6":
-                return List.of("keyword1", "keyword2");
-            default:
-                return List.of("sports");
+    private List<String> generateRandomKeywords(String interestName, int count) {
+        List<String> adjectives = List.of("popular", "exciting", "challenging", "relaxing", "creative", "social", "active", "peaceful");
+        List<String> descriptors = List.of("community", "beginner", "advanced", "fun", "serious", "casual", "professional");
+
+        List<String> keywords = new ArrayList<>();
+        keywords.add(interestName.toLowerCase());
+
+        Random random = new Random();
+        while (keywords.size() < count) {
+            if (random.nextBoolean()) {
+                keywords.add(adjectives.get(random.nextInt(adjectives.size())));
+            } else {
+                keywords.add(descriptors.get(random.nextInt(descriptors.size())));
+            }
         }
+
+        return keywords;
     }
 }
