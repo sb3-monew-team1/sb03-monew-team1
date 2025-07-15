@@ -303,7 +303,7 @@ class InterestControllerTest {
         void 잘못된_커서_형식인_경우_400을_반환한다() throws Exception {
             // Given
             String invalidCursor = "invalidCursor";
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             int limit = 10;
 
             given(interestService.getInterests(any(), any(), anyInt(), any(), any()))
@@ -311,7 +311,7 @@ class InterestControllerTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", searchKeyword)
+                    .param("keyword", keyword)
                     .param("cursor", invalidCursor)
                     .param("limit", String.valueOf(limit))
                     .param("orderBy", "name")
@@ -325,7 +325,7 @@ class InterestControllerTest {
         void 잘못된_정렬_기준인_경우_400을_반환한다() throws Exception {
             // Given
             String invalidOrderBy = "invalidOrder";
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             int limit = 10;
 
             given(interestService.getInterests(any(), any(), anyInt(), any(), any()))
@@ -333,7 +333,7 @@ class InterestControllerTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", searchKeyword)
+                    .param("keyword", keyword)
                     .param("cursor", "")
                     .param("limit", String.valueOf(limit))
                     .param("orderBy", invalidOrderBy)
