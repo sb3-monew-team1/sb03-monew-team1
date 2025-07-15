@@ -451,9 +451,6 @@ public class CommentControllerTest {
             CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
                 .content(updateContent)
                 .build();
-            CommentDto expectedCommentDto = CommentFixture.createCommentDtoWithContent(comment, updateContent);
-
-            given(commentService.update(commentId, userId, commentUpdateRequest)).willReturn(expectedCommentDto);
 
             // When & Then
             mockMvc.perform(patch("/api/comments/" + commentId.toString())
