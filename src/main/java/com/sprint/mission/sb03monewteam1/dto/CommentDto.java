@@ -6,14 +6,14 @@ import lombok.Builder;
 
 @Builder
 public record CommentDto(
-        UUID id,
-        Instant createdAt,
-        UUID articleId,
-        UUID userId,
-        String userNickname,
-        String content,
-        Long likeCount,
-        Boolean likedByMe
+    UUID id,
+    Instant createdAt,
+    UUID articleId,
+    UUID userId,
+    String userNickname,
+    String content,
+    Long likeCount,
+    Boolean likedByMe
 ) {
 
 }
