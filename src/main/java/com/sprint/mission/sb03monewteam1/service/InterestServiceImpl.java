@@ -14,7 +14,6 @@ import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,7 +105,7 @@ public class InterestServiceImpl implements InterestService {
             content = content.subList(0, limit);
         }
 
-        long totalElements = interestRepository.count();
+        long totalElements = interestRepository.countByKeywordOrName(keyword);
 
         return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements, hasNext);
     }
@@ -129,9 +128,11 @@ public class InterestServiceImpl implements InterestService {
             case "createdAt":
                 cursorValue = lastInterest.getCreatedAt().toString();
                 break;
-            default:
+            case "updatedAt":
                 cursorValue = lastInterest.getUpdatedAt().toString();
                 break;
+            default:
+                throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy", orderBy);
         }
         return cursorValue;
     }

@@ -11,6 +11,8 @@ public interface InterestRepository extends JpaRepository<Interest, UUID>, Inter
 
     boolean existsByName(String name);
 
+    long countByKeywordOrName(String keyword);
+
     @Query("SELECT DISTINCT i FROM Interest i LEFT JOIN FETCH i.keywords")
     List<Interest> findAllWithKeywords();
 }

@@ -63,6 +63,19 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom {
         return result;
     }
 
+    @Override
+    public long countByKeywordOrName(String keyword) {
+        QInterest qInterest = QInterest.interest;
+
+        BooleanBuilder builder = new BooleanBuilder();
+        addSearchConditions(builder, keyword);
+
+        return jpaQueryFactory
+            .selectFrom(qInterest)
+            .where(builder)
+            .fetchCount();
+    }
+
     private void addSearchConditions(BooleanBuilder builder, String keyword) {
         if (keyword != null && !keyword.trim().isEmpty()) {
             builder.and(

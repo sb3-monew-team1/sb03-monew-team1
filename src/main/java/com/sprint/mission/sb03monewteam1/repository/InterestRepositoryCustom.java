@@ -12,4 +12,6 @@ public interface InterestRepositoryCustom {
         String sortBy,
         String sortDirection
     );
+
+    long countByKeywordOrName(String keyword);
 }
