@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
+import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
@@ -172,7 +174,7 @@ class InterestControllerTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
+                    .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
                     .param("orderBy", "name")
@@ -204,7 +206,7 @@ class InterestControllerTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "football")
+                    .param("keyword", "football")
                     .param("cursor", "")
                     .param("limit", "10")
                     .param("orderBy", "name")
@@ -242,7 +244,7 @@ class InterestControllerTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
+                    .param("keyword", "")
                     .param("cursor", "")
                     .param("orderBy", "subscriberCount")
                     .param("direction", "desc")
@@ -284,7 +286,7 @@ class InterestControllerTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
+                    .param("keyword", "")
                     .param("cursor", "")
                     .param("orderBy", "name")
                     .param("direction", "asc")
@@ -295,6 +297,50 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.content[1].name").value("beauty"))
                 .andExpect(jsonPath("$.content[2].name").value("football club"))
                 .andExpect(jsonPath("$.content[3].name").value("soccer"));
+        }
+
+        @Test
+        void 잘못된_커서_형식인_경우_400을_반환한다() throws Exception {
+            // Given
+            String invalidCursor = "invalidCursor";
+            String searchKeyword = "soccer";
+            int limit = 10;
+
+            given(interestService.getInterests(any(), any(), anyInt(), any(), any()))
+                .willThrow(new InvalidCursorException("잘못된 커서 형식입니다."));
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", searchKeyword)
+                    .param("cursor", invalidCursor)
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", "name")
+                    .param("direction", "asc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_CURSOR_FORMAT"))
+                .andExpect(jsonPath("$.message").value("잘못된 커서 형식입니다."));
+        }
+
+        @Test
+        void 잘못된_정렬_기준인_경우_400을_반환한다() throws Exception {
+            // Given
+            String invalidOrderBy = "invalidOrder";
+            String searchKeyword = "soccer";
+            int limit = 10;
+
+            given(interestService.getInterests(any(), any(), anyInt(), any(), any()))
+                .willThrow(new InvalidSortOptionException("지원하지 않는 정렬 필드입니다."));
+
+            // When & Then
+            mockMvc.perform(get("/api/interests")
+                    .param("searchKeyword", searchKeyword)
+                    .param("cursor", "")
+                    .param("limit", String.valueOf(limit))
+                    .param("orderBy", invalidOrderBy)
+                    .param("direction", "asc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_SORT_FIELD"))
+                .andExpect(jsonPath("$.message").value("지원하지 않는 정렬 필드입니다."));
         }
     }
 }

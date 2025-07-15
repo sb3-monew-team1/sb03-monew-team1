@@ -24,7 +24,7 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom {
 
     @Override
     public List<Interest> searchByKeywordOrName(
-        String searchKeyword,
+        String keyword,
         String cursor,
         int limit,
         String orderBy,
@@ -37,7 +37,7 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom {
         }
 
         BooleanBuilder builder = new BooleanBuilder();
-        addSearchConditions(builder, searchKeyword);
+        addSearchConditions(builder, keyword);
 
         if (cursor != null && !cursor.isBlank()) {
             if (!isValidCursor(cursor, orderBy)) {
@@ -63,11 +63,11 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom {
         return result;
     }
 
-    private void addSearchConditions(BooleanBuilder builder, String searchKeyword) {
-        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+    private void addSearchConditions(BooleanBuilder builder, String keyword) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
             builder.and(
-                qInterest.name.containsIgnoreCase(searchKeyword)
-                    .or(qInterest.keywords.any().keyword.containsIgnoreCase(searchKeyword))
+                qInterest.name.containsIgnoreCase(keyword)
+                    .or(qInterest.keywords.any().keyword.containsIgnoreCase(keyword))
             );
         }
     }

@@ -35,17 +35,17 @@ public class InterestController implements InterestApi {
 
     @GetMapping
     public ResponseEntity<CursorPageResponse> getInterests(
-        @RequestParam(defaultValue = "") String searchKeyword,
+        @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
         @RequestParam String orderBy,
         @RequestParam String direction) {
 
-        log.info("관심사 조회 요청: searchKeyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
-            searchKeyword, cursor, limit, orderBy, direction);
+        log.info("관심사 조회 요청: keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
+            keyword, cursor, limit, orderBy, direction);
 
         CursorPageResponse response = interestService.getInterests(
-            searchKeyword, cursor, limit, orderBy, direction);
+            keyword, cursor, limit, orderBy, direction);
 
         log.info("관심사 조회 완료: {}", response);
 

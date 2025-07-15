@@ -191,7 +191,7 @@ class InterestIntegrationTest {
         void 관심사_목록을_조회하면_관심사_목록을_반환한다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
+                    .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
                     .param("orderBy", "name")
@@ -206,7 +206,7 @@ class InterestIntegrationTest {
         void 관심사_이름으로_검색하면_부분일치하는_관심사만_조회된다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "soccer")
+                    .param("keyword", "soccer")
                     .param("cursor", "")
                     .param("limit", "10")
                     .param("orderBy", "name")
@@ -222,7 +222,7 @@ class InterestIntegrationTest {
         void 관심사_이름순으로_정렬하면_이름순으로_정렬된_목록을_반환한다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
+                    .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
                     .param("orderBy", "name")
@@ -239,7 +239,7 @@ class InterestIntegrationTest {
         void 관심사_구독자순으로_내림차순으로_정렬하면_구독자순으로_내림차순으로_정렬된_목록을_반환한다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", "")
+                    .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
                     .param("orderBy", "subscriberCount")
@@ -253,16 +253,16 @@ class InterestIntegrationTest {
         }
 
         @Test
-        void 잘못된_정렬_기준_인경우_400을_반환한다() throws Exception {
+        void 잘못된_정렬_기준인_경우_400을_반환한다() throws Exception {
             // Given
             int limit = 10;
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             String orderBy = "invalidSort";
             String direction = "asc";
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", searchKeyword)
+                    .param("keyword", keyword)
                     .param("cursor", "")
                     .param("limit", String.valueOf(limit))
                     .param("orderBy", orderBy)
@@ -274,17 +274,17 @@ class InterestIntegrationTest {
         }
 
         @Test
-        void 잘못된_cursor값_인경우_400을_반환한다() throws Exception {
+        void 잘못된_커서_형식인_경우_400을_반환한다() throws Exception {
             // Given
             int limit = 10;
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             String orderBy = "subscriberCount";
             String direction = "asc";
             String cursor = "invalidCursorFormat";
 
             // When & Then
             mockMvc.perform(get("/api/interests")
-                    .param("searchKeyword", searchKeyword)
+                    .param("keyword", keyword)
                     .param("cursor", cursor)
                     .param("limit", String.valueOf(limit))
                     .param("orderBy", orderBy)

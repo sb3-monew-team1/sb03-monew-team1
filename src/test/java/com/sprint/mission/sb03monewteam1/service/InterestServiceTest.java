@@ -157,7 +157,7 @@ class InterestServiceTest {
         void 관심사를_조회하면_키워드로_검색한다() {
             // Given
             int limit = 10;
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             String orderBy = "name";
             String direction = "asc";
 
@@ -169,20 +169,20 @@ class InterestServiceTest {
                 InterestDto.builder().name("soccer").subscriberCount(150).build()
             );
 
-            when(interestRepository.searchByKeywordOrName(eq(searchKeyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
+            when(interestRepository.searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
             when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(searchKeyword, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(keyword, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(1);
             assertThat(result.content().get(0).name()).isEqualTo("soccer");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(eq(searchKeyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction));
+            verify(interestRepository).searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction));
         }
 
 
@@ -224,12 +224,12 @@ class InterestServiceTest {
         void 잘못된_정렬_기준_인경우_InvalidSortOptionException이_발생한다() {
             // Given
             int limit = 10;
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             String orderBy = "invalidSort";
             String direction = "asc";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(searchKeyword, null, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(keyword, null, limit, orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidSortOptionException.class)
@@ -243,13 +243,13 @@ class InterestServiceTest {
         void 잘못된_cursor값_인경우_InvalidCursorException이_발생한다() {
             // Given
             int limit = 10;
-            String searchKeyword = "soccer";
+            String keyword = "soccer";
             String orderBy = "subscriberCount";
             String direction = "asc";
             String cursor = "invalidCursorFormat";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(searchKeyword, cursor, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(keyword, cursor, limit, orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidCursorException.class)
