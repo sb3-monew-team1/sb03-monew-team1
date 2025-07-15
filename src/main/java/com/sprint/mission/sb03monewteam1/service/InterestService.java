@@ -8,7 +8,7 @@ public interface InterestService {
 
     InterestDto create(InterestRegisterRequest request);
 
-    CursorPageResponse getInterests(
+    CursorPageResponse<InterestDto> getInterests(
         String searchKeyword,
         String cursor,
         int limit,

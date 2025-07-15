@@ -88,7 +88,7 @@ public interface InterestApi {
             )
         )
     })
-    ResponseEntity<CursorPageResponse> getInterests(
+    ResponseEntity<CursorPageResponse<InterestDto>> getInterests(
         @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
