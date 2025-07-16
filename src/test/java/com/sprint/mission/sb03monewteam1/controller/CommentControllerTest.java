@@ -3,6 +3,9 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -550,6 +553,42 @@ public class CommentControllerTest {
                     .header("Monew-Request-User-ID", otherUserId))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 물리 삭제 테스트")
+    class CommentDeleteHardTest {
+
+        @Test
+        void 댓글을_물리삭제하면_204가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+
+            willDoNothing().given(commentService).deleteHard(commentId);
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId + "/hard"))
+                .andExpect(status().isNoContent());
+
+            then(commentService).should().deleteHard(commentId);
+        }
+
+        @Test
+        void 댓글을_물리삭제할_때_존재하지_않는_댓글이면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+
+            willThrow(new CommentNotFoundException(commentId))
+                .given(commentService).deleteHard(commentId);
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId + "/hard"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
                 .andExpect(jsonPath("$.message").exists());
         }
     }

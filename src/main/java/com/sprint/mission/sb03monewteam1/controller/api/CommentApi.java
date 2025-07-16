@@ -174,4 +174,30 @@ public interface CommentApi {
         @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId,
         @RequestHeader("Monew-Request-User-ID") UUID userId
     );
+
+    @Operation(summary = "댓글 물리 삭제")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204", description = "삭제 성공"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "댓글 정보 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<Void> deleteHard(
+        @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId
+    );
 }

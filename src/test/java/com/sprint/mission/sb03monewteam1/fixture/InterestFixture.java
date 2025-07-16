@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.fixture;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import java.util.List;
 import java.util.UUID;

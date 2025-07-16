@@ -1,19 +1,30 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
+import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
+import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionDuplicateException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
+import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +39,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class InterestServiceImpl implements InterestService {
 
     private final InterestRepository interestRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository;
     private final InterestMapper interestMapper;
+    private final SubscriptionMapper subscriptionMapper;
 
     @Override
     public InterestDto create(InterestRegisterRequest request) {
@@ -108,6 +122,34 @@ public class InterestServiceImpl implements InterestService {
         long totalElements = interestRepository.countByKeywordOrName(keyword);
 
         return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements, hasNext);
+    }
+
+    @Transactional
+    public SubscriptionDto createSubscription(UUID userId, UUID interestId) {
+        log.info("구독 생성 요청: userId={}, interestId={}", userId, interestId);
+
+        Interest interest = interestRepository.findById(interestId)
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        log.info("현재 관심사 구독자 수: {}", interest.getSubscriberCount());
+
+        interest.setSubscriberCount(interest.getSubscriberCount() + 1);
+        log.info("구독자 수 증가 후: {}", interest.getSubscriberCount());
+
+        Subscription subscription = Subscription.builder()
+            .user(user)
+            .interest(interest)
+            .build();
+
+        Subscription savedSubscription = subscriptionRepository.save(subscription);
+
+        log.info("구독 생성 완료: subscriptionId={}, userId={}, interestId={}",
+            savedSubscription.getId(), user.getId(), interest.getId());
+
+        return subscriptionMapper.toDto(savedSubscription);
     }
 
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
