@@ -378,10 +378,10 @@ public class UserIntegrationTest {
         assertThat(afterCommentLikeCount).isEqualTo(beforeCommentLikeCount - 1);
 
         boolean userExists = userRepository.existsById(userId);
-        assertThat(userExists).isEqualTo(false);
+        assertThat(userExists).isFalse();
 
         boolean commentExists = commentRepository.existsById(savedComment.getId());
-        assertThat(commentExists).isEqualTo(false);
+        assertThat(commentExists).isFalse();
 
     }
 
@@ -440,10 +440,10 @@ public class UserIntegrationTest {
         assertThat(afterOtherCommentLikeCount).isEqualTo(beforeOtherCommentLikeCount);
 
         boolean userExists = userRepository.existsById(userId);
-        assertThat(userExists).isEqualTo(false);
+        assertThat(userExists).isFalse();
 
         boolean commentExists = commentRepository.existsById(savedComment.getId());
-        assertThat(commentExists).isEqualTo(false);
+        assertThat(commentExists).isFalse();
 
     }
 

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> {
@@ -14,6 +15,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
     @Query("SELECT c FROM CommentLike c LEFT JOIN FETCH c.comment WHERE c.user.id = :userId")
     List<CommentLike> findAllByUserId(@Param("userId") UUID userId);
 
+    @Transactional
     void deleteByUserId(UUID userId);
 
     void deleteByCommentId(UUID commentId);

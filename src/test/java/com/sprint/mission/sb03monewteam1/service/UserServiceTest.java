@@ -457,7 +457,7 @@ public class UserServiceTest {
         }
 
         @Test
-        void 존재하지_않는_사용자를_뭃리_삭제_시_예외가_발생한다() {
+        void 존재하지_않는_사용자를_물리_삭제_시_예외가_발생한다() {
             // Given
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
