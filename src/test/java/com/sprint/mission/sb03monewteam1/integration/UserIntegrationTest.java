@@ -389,35 +389,6 @@ public class UserIntegrationTest {
     }
 
     @Test
-    void 다른_사용자를_물리_삭제_시_403을_반환해야_한다() throws Exception {
-        // Given
-        User user = UserFixture.createUser();
-        User savedUser = userRepository.save(user);
-        UUID requestHeaderUserId = UUID.randomUUID();
-        UUID userId = savedUser.getId();
-
-        // When & Then
-        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
-                .requestAttr("userId", requestHeaderUserId))
-            .andExpect(status().isForbidden());
-
-        User result = userRepository.findById(userId).orElseThrow();
-        assertThat(result.isDeleted()).isFalse();
-    }
-
-    @Test
-    void 존재하지_않는_사용자를_물리_삭제할_시_404를_반환해야_한다() throws Exception {
-        // Given
-        UUID requestHeaderUserId = UserFixture.getDefaultId();
-        UUID userId = UserFixture.getDefaultId();
-
-        // When & Then
-        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
-                .requestAttr("userId", requestHeaderUserId))
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
     void 논리_삭제된_사용자를_물리_삭제할_시_정상적으로_연관된_객체를_삭제해야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
@@ -479,5 +450,34 @@ public class UserIntegrationTest {
 
     }
 
+
+    @Test
+    void 다른_사용자를_물리_삭제_시_403을_반환해야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        User savedUser = userRepository.save(user);
+        UUID requestHeaderUserId = UUID.randomUUID();
+        UUID userId = savedUser.getId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isForbidden());
+
+        User result = userRepository.findById(userId).orElseThrow();
+        assertThat(result.isDeleted()).isFalse();
+    }
+
+    @Test
+    void 존재하지_않는_사용자를_물리_삭제할_시_404를_반환해야_한다() throws Exception {
+        // Given
+        UUID requestHeaderUserId = UserFixture.getDefaultId();
+        UUID userId = UserFixture.getDefaultId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNotFound());
+    }
 
 }
