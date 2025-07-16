@@ -181,8 +181,14 @@ public class UserServiceImpl implements UserService {
 
 
         subscriptionRepository.deleteByUserId(userId);
+        log.debug("구독 객체 삭제 완료");
         commentLikeRepository.deleteByUserId(userId);
+        log.debug("댓글 좋아요 객체 삭제 완료");
+        commentRepository.deleteByAuthorId(userId);
+        log.debug("댓글 객체 삭제 완료");
         userRepository.deleteById(userId);
+        log.debug("사용자 삭제 완료");
+
 
         log.info("사용자 물리 삭제 완료: userId={}", userId);
 
