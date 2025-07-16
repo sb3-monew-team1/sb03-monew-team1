@@ -37,6 +37,7 @@ public class InterestController implements InterestApi {
 
     @GetMapping
     public ResponseEntity<CursorPageResponse<InterestDto>> getInterests(
+        @RequestHeader("Monew-Request-User-ID") UUID userId,
         @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
@@ -44,11 +45,11 @@ public class InterestController implements InterestApi {
         @RequestParam(defaultValue = "DESC") String direction)
     {
 
-        log.info("관심사 조회 요청: keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
-            keyword, cursor, limit, orderBy, direction);
+        log.info("관심사 조회 요청: userId: {}. keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
+            userId, keyword, cursor, limit, orderBy, direction);
 
         CursorPageResponse<InterestDto> response = interestService.getInterests(
-            keyword, cursor, limit, orderBy, direction);
+            userId, keyword, cursor, limit, orderBy, direction);
 
         log.info("관심사 조회 완료: {}", response);
 

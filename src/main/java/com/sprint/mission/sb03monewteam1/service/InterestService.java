@@ -11,6 +11,7 @@ public interface InterestService {
     InterestDto create(InterestRegisterRequest request);
 
     CursorPageResponse<InterestDto> getInterests(
+        UUID userId,
         String searchKeyword,
         String cursor,
         int limit,

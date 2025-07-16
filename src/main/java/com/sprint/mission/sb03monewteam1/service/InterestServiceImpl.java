@@ -14,7 +14,6 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
-import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
@@ -22,8 +21,8 @@ import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -81,7 +80,7 @@ public class InterestServiceImpl implements InterestService {
 
     @Transactional(readOnly = true)
     public CursorPageResponse<InterestDto> getInterests(
-        String keyword, String cursor, int limit, String orderBy, String direction) {
+        UUID userId, String keyword, String cursor, int limit, String orderBy, String direction) {
 
         log.info("관심사 조회 요청: keyword={}, cursor={}, limit={}, orderBy={}, direction={}",
             keyword, cursor, limit, orderBy, direction);
@@ -107,7 +106,24 @@ public class InterestServiceImpl implements InterestService {
             keyword, cursorValue, limit + 1, orderBy, direction);
 
         List<InterestDto> content = interests.stream()
-            .map(interest -> interestMapper.toDto(interest, true))
+            .map(interest -> {
+                boolean isSubscribed = subscriptionRepository.existsByUserIdAndInterestId(userId, interest.getId());
+
+                InterestDto interestDto = InterestDto.builder()
+                    .id(interest.getId())
+                    .name(interest.getName())
+                    .keywords(
+                        interest.getKeywords() != null
+                            ? interest.getKeywords().stream()
+                            .map(InterestKeyword::getKeyword)
+                            .collect(Collectors.toList())
+                            : Collections.emptyList()
+                    )
+                    .subscriberCount(interest.getSubscriberCount())
+                    .subscribedByMe(isSubscribed)
+                    .build();
+                return interestDto;
+            })
             .collect(Collectors.toList());
 
         String nextCursor = calculateNextCursor(interests, orderBy, limit);

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,7 +15,6 @@ import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
-import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -23,7 +23,6 @@ import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateExc
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
-import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -46,7 +44,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -149,33 +146,41 @@ class InterestServiceTest {
             String orderBy = "subscriberCount";
             String direction = "desc";
 
+            User user = User.builder()
+                .nickname("testUser")
+                .build();
+
             Interest interest1 = Interest.builder().name("aesthetic").subscriberCount(150L).build();
             Interest interest2 = Interest.builder().name("soccer").subscriberCount(200L).build();
 
-            List<Interest> interests = Arrays.asList(interest2, interest1); // 정렬 기준에 맞게 정렬된 상태
+            List<Interest> interests = Arrays.asList(interest2, interest1);
             List<InterestDto> interestDtos = Arrays.asList(
                 InterestDto.builder().name("soccer").subscriberCount(200L).build(),
                 InterestDto.builder().name("aesthetic").subscriberCount(150L).build()
             );
 
-            when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
+            when(interestRepository.searchByKeywordOrName(null, null, limit + 1, orderBy, direction))
                 .thenReturn(interests);
 
-            when(interestMapper.toDto(eq(interest2), eq(true))).thenReturn(interestDtos.get(0));
-            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(1));
+            when(subscriptionRepository.existsByUserIdAndInterestId(user.getId(), interest1.getId())).thenReturn(true);
+            when(subscriptionRepository.existsByUserIdAndInterestId(user.getId(), interest2.getId())).thenReturn(false);
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(user.getId(), null, null, limit, orderBy, direction);
 
             // Then
-            assertThat(result.content()).hasSize(2); // 결과의 크기가 2인지 확인
+            assertThat(result.content()).hasSize(2);
             assertThat(result.content().get(0).name()).isEqualTo("soccer");
             assertThat(result.content().get(1).name()).isEqualTo("aesthetic");
             assertThat(result.hasNext()).isFalse();
 
-            // verify
-            verify(interestRepository).searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)); // searchByKeywordOrName 메서드 호출 확인
+            verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction); // searchByKeywordOrName 메서드 호출 확인
+            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest1.getId());  // 구독 체크 2번 호출 확인
+            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest2.getId());  // 구독 체크 2번 호출 확인
         }
+
+
+
 
         @Test
         void 관심사를_조회하면_키워드로_검색한다() {
@@ -196,10 +201,8 @@ class InterestServiceTest {
             when(interestRepository.searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
-            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
-
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(keyword, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),keyword, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(1);
@@ -229,11 +232,8 @@ class InterestServiceTest {
             when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
-            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
-            when(interestMapper.toDto(eq(interest2), eq(true))).thenReturn(interestDtos.get(1));
-
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),null, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(2);
@@ -253,7 +253,7 @@ class InterestServiceTest {
             String direction = "asc";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(keyword, null, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(UUID.randomUUID(), keyword, null, limit, orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidSortOptionException.class)
@@ -273,7 +273,7 @@ class InterestServiceTest {
             String cursor = "invalidCursorFormat";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(keyword, cursor, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(UUID.randomUUID(), keyword, cursor, limit, orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidCursorException.class)
