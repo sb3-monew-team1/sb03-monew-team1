@@ -765,7 +765,7 @@ public class CommentServiceTest {
             Article article = ArticleFixture.createArticleWithCommentCount(1L);
 
             Comment deletedComment = CommentFixture.createComment("삭제된 댓글", user, article);
-            deletedComment.delete(); // isDeleted = true
+            deletedComment.delete();
             ReflectionTestUtils.setField(deletedComment, "id", commentId);
 
             given(commentRepository.findById(commentId)).willReturn(Optional.of(deletedComment));
