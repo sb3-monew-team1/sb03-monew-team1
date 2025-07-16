@@ -252,4 +252,27 @@ class ArticleControllerTest {
             .andExpect(jsonPath("$.code").value(ErrorCode.ARTICLE_NOT_FOUND.name()))
             .andExpect(jsonPath("$.message").exists());
     }
+
+    @Test
+    void 기사_물리_삭제_성공() throws Exception {
+        UUID articleId = UUID.randomUUID();
+        willDoNothing().given(articleService).deleteHard(articleId);
+
+        mockMvc.perform(delete("/api/articles/" + articleId + "/hard"))
+            .andExpect(status().isNoContent());
+
+        then(articleService).should().deleteHard(articleId);
+    }
+
+    @Test
+    void 기사_물리_삭제_실패_기사없음() throws Exception {
+        UUID articleId = UUID.randomUUID();
+        willThrow(new ArticleNotFoundException(articleId.toString()))
+            .given(articleService).deleteHard(articleId);
+
+        mockMvc.perform(delete("/api/articles/" + articleId + "/hard"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ErrorCode.ARTICLE_NOT_FOUND.name()))
+            .andExpect(jsonPath("$.message").exists());
+    }
 }
