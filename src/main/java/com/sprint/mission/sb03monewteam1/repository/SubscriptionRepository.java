@@ -11,8 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
 
-    boolean existsByUserIdAndInterestId(UUID userId, UUID interestId);
-
     @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.interest WHERE s.user.id = :userId")
     List<Subscription> findAllByUserId(@Param("userId") UUID userId);
 }

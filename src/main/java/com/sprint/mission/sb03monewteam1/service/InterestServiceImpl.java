@@ -22,7 +22,9 @@ import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -105,11 +107,15 @@ public class InterestServiceImpl implements InterestService {
         List<Interest> interests = interestRepository.searchByKeywordOrName(
             keyword, cursorValue, limit + 1, orderBy, direction);
 
+        Set<UUID> subscribedInterestIds = new HashSet<>();
+        subscriptionRepository.findAllByUserId(userId)
+            .forEach(subscription -> subscribedInterestIds.add(subscription.getInterest().getId()));
+
         List<InterestDto> content = interests.stream()
             .map(interest -> {
-                boolean isSubscribed = subscriptionRepository.existsByUserIdAndInterestId(userId, interest.getId());
+                boolean isSubscribed = subscribedInterestIds.contains(interest.getId());
 
-                InterestDto interestDto = InterestDto.builder()
+                return InterestDto.builder()
                     .id(interest.getId())
                     .name(interest.getName())
                     .keywords(
@@ -122,7 +128,6 @@ public class InterestServiceImpl implements InterestService {
                     .subscriberCount(interest.getSubscriberCount())
                     .subscribedByMe(isSubscribed)
                     .build();
-                return interestDto;
             })
             .collect(Collectors.toList());
 

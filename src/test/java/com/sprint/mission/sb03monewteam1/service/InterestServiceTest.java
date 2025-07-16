@@ -154,16 +154,22 @@ class InterestServiceTest {
             Interest interest2 = Interest.builder().name("soccer").subscriberCount(200L).build();
 
             List<Interest> interests = Arrays.asList(interest2, interest1);
-            List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("soccer").subscriberCount(200L).build(),
-                InterestDto.builder().name("aesthetic").subscriberCount(150L).build()
-            );
 
             when(interestRepository.searchByKeywordOrName(null, null, limit + 1, orderBy, direction))
                 .thenReturn(interests);
 
-            when(subscriptionRepository.existsByUserIdAndInterestId(user.getId(), interest1.getId())).thenReturn(true);
-            when(subscriptionRepository.existsByUserIdAndInterestId(user.getId(), interest2.getId())).thenReturn(false);
+            Subscription subscription1 = Subscription.builder()
+                .user(user)
+                .interest(interest1)
+                .build();
+
+            Subscription subscription2 = Subscription.builder()
+                .user(user)
+                .interest(interest2)
+                .build();
+
+            when(subscriptionRepository.findAllByUserId(user.getId()))
+                .thenReturn(Arrays.asList(subscription1, subscription2));
 
             // When
             CursorPageResponse<InterestDto> result = interestService.getInterests(user.getId(), null, null, limit, orderBy, direction);
@@ -175,12 +181,8 @@ class InterestServiceTest {
             assertThat(result.hasNext()).isFalse();
 
             verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction);
-            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest1.getId());
-            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest2.getId());
+            verify(subscriptionRepository).findAllByUserId(user.getId());
         }
-
-
-
 
         @Test
         void 관심사를_조회하면_키워드로_검색한다() {
