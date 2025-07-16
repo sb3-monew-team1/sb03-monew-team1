@@ -149,4 +149,42 @@ public class UserServiceImpl implements UserService {
         log.info("사용자 논리 삭제 완료: userId={}", userId);
 
     }
+
+    @Override
+    public void deleteHard(UUID requestHeaderUserId, UUID userId) {
+
+        log.info("사용자 물리 삭제 요청: userId={}", userId);
+        if (!requestHeaderUserId.equals(userId)) {
+            log.warn("물리 삭제 실패 (다른 사용자 물리 삭제 요청): requestUserId={}, userId={}", requestHeaderUserId,
+                userId);
+            throw new ForbiddenAccessException("다른 사용자는 삭제 할 수 없습니다");
+        }
+
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        user.setDeleted();
+
+        List<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId);
+        log.debug("사용자 관심사 구독자 수 감소 시작: userId={}", userId);
+        subscriptions.forEach(subscription -> {
+            interestRepository.decrementSubscriberCount(subscription.getInterest().getId());
+        });
+        log.debug("사용자 관심사 구독자 수 감소 완료: userId={}", userId);
+
+        List<CommentLike> commentLikes = commentLikeRepository.findAllByUserId(userId);
+        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 시작: userId={}", userId);
+        commentLikes.forEach(commentLike -> {
+            commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId());
+        });
+        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 처리 완료: userId={}", userId);
+
+
+        subscriptionRepository.deleteByUserId(userId);
+        commentLikeRepository.deleteByUserId(userId);
+        userRepository.deleteById(userId);
+
+        log.info("사용자 물리 삭제 완료: userId={}", userId);
+
+    }
 }

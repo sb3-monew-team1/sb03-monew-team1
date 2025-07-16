@@ -13,4 +13,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.interest WHERE s.user.id = :userId")
     List<Subscription> findAllByUserId(@Param("userId") UUID userId);
+
+    void deleteByUserId(UUID userId);
 }
