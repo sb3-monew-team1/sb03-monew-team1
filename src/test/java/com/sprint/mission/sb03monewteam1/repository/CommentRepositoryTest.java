@@ -240,7 +240,7 @@ public class CommentRepositoryTest {
         UUID id = deletedComment.getId();
 
         // when
-        Optional<Comment> result = commentRepository.findById(id);
+        Optional<Comment> result = commentRepository.findByIdAndIsDeletedFalse(id);
 
         // then
         assertThat(result).isEmpty();
@@ -257,7 +257,7 @@ public class CommentRepositoryTest {
         UUID id = comment.getId();
 
         // when
-        Optional<Comment> result = commentRepository.findById(id);
+        Optional<Comment> result = commentRepository.findByIdAndIsDeletedFalse(id);
 
         // then
         assertThat(result).isPresent();

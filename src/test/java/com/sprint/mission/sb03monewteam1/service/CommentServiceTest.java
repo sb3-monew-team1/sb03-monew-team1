@@ -91,8 +91,8 @@ public class CommentServiceTest {
             Comment savedComment = CommentFixture.createComment(content,user, article);
             CommentDto expectedCommentDto = CommentFixture.createCommentDto(savedComment);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.save(any(Comment.class))).willReturn(savedComment);
             given(commentMapper.toDto(any(Comment.class))).willReturn(expectedCommentDto);
 
@@ -120,7 +120,7 @@ public class CommentServiceTest {
 
             CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, invalidUserId, articleId);
 
-            given(userRepository.findById(invalidUserId)).willReturn(Optional.empty());
+            given(userRepository.findByIdAndIsDeletedFalse(invalidUserId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> commentService.create(commentRegisterRequest))
@@ -142,8 +142,8 @@ public class CommentServiceTest {
 
             CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, userId, invalidArticleId);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(articleRepository.findById(invalidArticleId)).willReturn(Optional.empty());
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
+            given(articleRepository.findByIdAndIsDeletedFalse(invalidArticleId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> commentService.create(commentRegisterRequest))
@@ -177,7 +177,7 @@ public class CommentServiceTest {
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
@@ -232,7 +232,7 @@ public class CommentServiceTest {
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
@@ -282,7 +282,7 @@ public class CommentServiceTest {
             Instant cursor = lastOfFirstPage.getCreatedAt();
             Instant after = lastOfFirstPage.getCreatedAt();
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(secondPage);
@@ -337,7 +337,7 @@ public class CommentServiceTest {
 
             List<Comment> lastPage = sorted.subList(pageSize, sorted.size());
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(nextCursor.toString()), eq(nextAfter), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(lastPage);
@@ -382,7 +382,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(Collections.emptyList());
@@ -416,7 +416,7 @@ public class CommentServiceTest {
 
             List<Comment> commentList = createCommentsWithCreatedAt(pageSize, article, user);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(commentList.subList(0, pageSize));
@@ -448,7 +448,7 @@ public class CommentServiceTest {
 
             List<Comment> comments = createCommentsWithCreatedAt(pageSize, article, user);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -467,7 +467,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -486,7 +486,7 @@ public class CommentServiceTest {
             int pageSize = 5;
             String sortDirection = "DESC";
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -506,7 +506,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String invalidSortDirection = "unknownDirection";  // 허용되지 않은 정렬 방향
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -540,7 +540,7 @@ public class CommentServiceTest {
                 .build();
             CommentDto expectedCommentDto = CommentFixture.createCommentDtoWithContent(comment, updateContent);
 
-            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
             given(commentMapper.toDto(any(Comment.class))).willReturn(expectedCommentDto);
 
             // when
@@ -566,7 +566,7 @@ public class CommentServiceTest {
                 .content(updateContent)
                 .build();
 
-            given(commentRepository.findById(invalidCommentId)).willReturn(Optional.empty());
+            given(commentRepository.findByIdAndIsDeletedFalse(invalidCommentId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() ->
@@ -596,7 +596,7 @@ public class CommentServiceTest {
                 .content(updateContent)
                 .build();
 
-            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
 
             // when & then
             assertThatThrownBy(() ->
@@ -625,7 +625,7 @@ public class CommentServiceTest {
             ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
             UUID commentId = comment.getId();
 
-            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
 
             // when
             Comment result = commentService.delete(commentId, user.getId());
@@ -643,14 +643,14 @@ public class CommentServiceTest {
             UUID commentId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
 
-            given(commentRepository.findById(commentId)).willReturn(Optional.empty());
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
                 commentService.delete(commentId, userId);
                 }).isInstanceOf(CommentNotFoundException.class);
 
-            then(commentRepository).should().findById(commentId);
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
         }
 
         @Test
@@ -667,14 +667,14 @@ public class CommentServiceTest {
             ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
             UUID deletedCommentId = deletedComment.getId();
 
-            given(commentRepository.findById(deletedCommentId)).willReturn(Optional.empty());
+            given(commentRepository.findByIdAndIsDeletedFalse(deletedCommentId)).willReturn(Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
                 commentService.delete(deletedCommentId, user.getId());
             }).isInstanceOf(CommentNotFoundException.class);
 
-            then(commentRepository).should().findById(deletedCommentId);
+            then(commentRepository).should().findByIdAndIsDeletedFalse(deletedCommentId);
         }
     }
 

@@ -46,9 +46,9 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 등록 시작: 기사 = {}, 작성자 = {}, 내용 = {}", articleId, userId, content);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new CommentException(ErrorCode.USER_NOT_FOUND));
-        Article article = articleRepository.findById(articleId)
+        Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
         Comment comment = Comment.builder()
@@ -75,7 +75,7 @@ public class CommentServiceImpl implements CommentService {
             , articleId, cursor, nextAfter, size, sortBy, sortDirection);
 
         if (articleId != null) {
-            articleRepository.findById(articleId)
+            articleRepository.findByIdAndIsDeletedFalse(articleId)
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
         }
 
@@ -159,7 +159,7 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 수정 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
             .orElseThrow(() -> new CommentNotFoundException(commentId));
 
         validateAuthor(comment, userId);
@@ -177,7 +177,7 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 논리 삭제 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
             .orElseThrow(() -> new CommentNotFoundException(commentId));
 
         validateAuthor(comment, userId);
