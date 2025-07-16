@@ -33,6 +33,9 @@ public enum ErrorCode {
     ARTICLE_COLLECTION_VALIDATION_ERROR(HttpStatus.UNPROCESSABLE_ENTITY, "수집 데이터 검증에 실패했습니다."),
     ARTICLE_COLLECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "기사 수집에 실패했습니다."),
 
+    // 댓글 관련 예외
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+
     // 커서 기반 페이지네이션 관련 예외
     INVALID_CURSOR_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 커서 형식입니다."),
     INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST,"잘못된 ID 커서 형식입니다."),

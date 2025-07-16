@@ -3,7 +3,9 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,12 +13,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
@@ -326,6 +331,226 @@ public class CommentControllerTest {
                     .header("Monew-Request-User-ID", userId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_SORT_DIRECTION.name()));
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 수정 테스트")
+    class CommentUpdateTest {
+
+        @Test
+        void 댓글을_수정하면_200과_수정된_댓글이_반환된다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID userId = user.getId();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String originalContent = "기존 댓글";
+            String updateContent = "댓글 수정 테스트";
+            Comment comment = CommentFixture.createComment(originalContent, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+            CommentDto expectedCommentDto = CommentFixture.createCommentDtoWithContent(comment, updateContent);
+
+            given(commentService.update(commentId, userId, commentUpdateRequest)).willReturn(expectedCommentDto);
+
+            // When & Then
+            mockMvc.perform(patch("/api/comments/" + commentId.toString())
+                    .content(objectMapper.writeValueAsBytes(commentUpdateRequest))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .header("Monew-Request-User-ID", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(commentId.toString()))
+                .andExpect(jsonPath("$.articleId").value(article.getId().toString()))
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.userNickname").value(user.getNickname()))
+                .andExpect(jsonPath("$.content").value(updateContent));
+        }
+
+        @Test
+        void 댓글을_수정할_때_존재하지_않는_댓글이라면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID userId = user.getId();
+            String updateContent = "댓글 수정 테스트";
+            UUID invalidCommentId = UUID.randomUUID();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+
+            given(commentService.update(
+                eq(invalidCommentId), eq(userId), eq(commentUpdateRequest))
+            ).willThrow(new CommentNotFoundException(invalidCommentId));
+
+            // When & Then
+            mockMvc.perform(patch("/api/comments/" + invalidCommentId.toString())
+                    .content(objectMapper.writeValueAsBytes(commentUpdateRequest))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .header("Monew-Request-User-ID", userId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_수정할_때_작성자가_아니라면_403가_반환되어야_한다() throws Exception {
+
+            // given
+            User author = UserFixture.createUser();
+            ReflectionTestUtils.setField(author, "id", UUID.randomUUID());
+            User otherUser = UserFixture.createUser();
+            ReflectionTestUtils.setField(otherUser, "id", UUID.randomUUID());
+            UUID otherUserId = otherUser.getId();
+
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String originalContent = "기존 댓글";
+            String updateContent = "댓글 수정 테스트";
+            Comment comment = CommentFixture.createComment(originalContent, author, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+
+            given(commentService.update(
+                eq(commentId), eq(otherUserId), eq(commentUpdateRequest))
+            ).willThrow(new UnauthorizedCommentAccessException());
+
+            // When & Then
+            mockMvc.perform(patch("/api/comments/" + commentId.toString())
+                    .content(objectMapper.writeValueAsBytes(commentUpdateRequest))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .header("Monew-Request-User-ID", otherUserId))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_수정할_때_댓글내용이_빈값이면_400가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID userId = user.getId();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String originalContent = "기존 댓글";
+            String updateContent = "";
+            Comment comment = CommentFixture.createComment(originalContent, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+
+            // When & Then
+            mockMvc.perform(patch("/api/comments/" + commentId.toString())
+                    .content(objectMapper.writeValueAsBytes(commentUpdateRequest))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .header("Monew-Request-User-ID", userId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()));
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 논리 삭제 테스트")
+    class CommentDeleteTest {
+
+        @Test
+        void 댓글을_논리삭제하면_204가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            // 컨트롤러 테스트이므로, 반환되는 comment 객체의 삭제 상태는 신경쓰지 않음
+            given(commentService.delete(commentId, user.getId())).willReturn(comment);
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", user.getId()))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_존재하지_않는_댓글이면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentService.delete(commentId, userId))
+                .willThrow(new CommentNotFoundException(commentId));
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", userId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_이미_삭제된_댓글이면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "이미 삭제된 댓글";
+            Comment deletedComment = CommentFixture.createCommentWithIsDeleted(content, user, article);
+            ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
+            UUID deletedCommentId = deletedComment.getId();
+
+            given(commentService.delete(deletedCommentId, user.getId()))
+                .willThrow(new CommentNotFoundException(deletedCommentId));
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + deletedCommentId.toString())
+                    .header("Monew-Request-User-ID", user.getId()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_작성자가_아니라면_403가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+            UUID otherUserId = UUID.randomUUID();
+
+            given(commentService.delete(
+                eq(commentId), eq(otherUserId))
+            ).willThrow(new UnauthorizedCommentAccessException());
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", otherUserId))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
+                .andExpect(jsonPath("$.message").exists());
         }
     }
 }

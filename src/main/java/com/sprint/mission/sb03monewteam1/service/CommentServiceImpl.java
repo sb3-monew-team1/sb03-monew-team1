@@ -2,12 +2,15 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
@@ -43,9 +46,9 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 등록 시작: 기사 = {}, 작성자 = {}, 내용 = {}", articleId, userId, content);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new CommentException(ErrorCode.USER_NOT_FOUND));
-        Article article = articleRepository.findById(articleId)
+        Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
         Comment comment = Comment.builder()
@@ -55,6 +58,8 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+        // 기사 댓글 수 증가
+        article.increaseCommentCount();
 
         return commentMapper.toDto(savedComment);
     }
@@ -70,7 +75,7 @@ public class CommentServiceImpl implements CommentService {
             , articleId, cursor, nextAfter, size, sortBy, sortDirection);
 
         if (articleId != null) {
-            articleRepository.findById(articleId)
+            articleRepository.findByIdAndIsDeletedFalse(articleId)
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
         }
 
@@ -144,6 +149,51 @@ public class CommentServiceImpl implements CommentService {
             totalElements,
             hasNext
         );
+    }
+
+    @Override
+    public CommentDto update(
+        UUID commentId,
+        UUID userId,
+        CommentUpdateRequest commentUpdateRequest) {
+
+        log.info("댓글 수정 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        validateAuthor(comment, userId);
+
+        String newContent = commentUpdateRequest.content();
+        comment.updateContent(newContent);
+
+        log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        return commentMapper.toDto(comment);
+    }
+
+    @Override
+    public Comment delete(UUID commentId, UUID userId) {
+
+        log.info("댓글 논리 삭제 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        validateAuthor(comment, userId);
+
+        comment.delete();
+        comment.getArticle().decreaseCommentCount();
+
+        log.info("댓글 논리 삭제 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        return comment;
+    }
+
+    private void validateAuthor(Comment comment, UUID userId) {
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedCommentAccessException();
+        }
     }
 
     private Instant parseInstant(String cursorValue) {

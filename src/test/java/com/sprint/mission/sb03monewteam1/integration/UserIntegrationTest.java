@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,8 +13,23 @@ import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
+import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
+import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
+import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
+import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.fixture.SubscriptionFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +58,21 @@ public class UserIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private CommentLikeRepository commentLikeRepository;
+
+    @Autowired
+    private ArticleRepository articleRepository;
+
+    @Autowired
+    private InterestRepository interestRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Test
     void 사용자_생성_시_Repository까지_반영되어야_한다() throws Exception {
@@ -199,6 +230,103 @@ public class UserIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(userUpdateRequest)))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 사용자_삭제_시_구독자수_좋아요수_감소_및_논리삭제_적용되어야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        User savedUser = userRepository.save(user);
+        UUID requestHeaderUserId = savedUser.getId();
+        UUID userId = savedUser.getId();
+
+        Interest interest = InterestFixture.createInterest();
+        Interest savedInterest = interestRepository.save(interest);
+
+        Subscription subscription = SubscriptionFixture.createSubscription(savedUser,
+            savedInterest);
+        subscriptionRepository.save(subscription);
+
+        Article article = ArticleFixture.createArticle();
+        articleRepository.save(article);
+
+        Comment comment = CommentFixture.createComment(user, article);
+        Comment savedComment = commentRepository.save(comment);
+
+        CommentLike commentLike = CommentLikeFixture.createCommentLike(savedUser, savedComment);
+        commentLikeRepository.save(commentLike);
+
+        Long beforeSubscriberCount
+            = interestRepository.findById(savedInterest.getId()).get().getSubscriberCount();
+
+        Long beforeCommentLikeCount
+            = commentRepository.findById(savedComment.getId()).get().getLikeCount();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNoContent());
+
+        Long afterSubscriberCount = interestRepository.findById(savedInterest.getId()).get()
+            .getSubscriberCount();
+        Long afterCommentLikeCount = commentRepository.findById(savedComment.getId()).get()
+            .getLikeCount();
+
+        assertThat(afterSubscriberCount).isEqualTo(beforeSubscriberCount - 1);
+
+        assertThat(afterCommentLikeCount).isEqualTo(beforeCommentLikeCount - 1);
+
+        User deletedUser = userRepository.findById(userId).orElseThrow();
+        assertThat(deletedUser.isDeleted()).isTrue();
+
+        Comment deletedComment = commentRepository.findById(savedComment.getId()).orElseThrow();
+        assertThat(deletedComment.getIsDeleted()).isTrue();
+
+    }
+
+    @Test
+    void 다른_사용자를_논리_삭제_시_403을_반환해야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        User savedUser = userRepository.save(user);
+        UUID requestHeaderUserId = UUID.randomUUID();
+        UUID userId = savedUser.getId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isForbidden());
+
+        User result = userRepository.findById(userId).orElseThrow();
+        assertThat(result.isDeleted()).isFalse();
+    }
+
+    @Test
+    void 존재하지_않는_사용자를_삭제할_시_404를_반환해야_한다() throws Exception {
+        // Given
+        UUID requestHeaderUserId = UserFixture.getDefaultId();
+        UUID userId = UserFixture.getDefaultId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 논리_삭제된_사용자를_삭제할_시_404를_반환해야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        user.setDeleted();
+        User savedUser = userRepository.save(user);
+        UUID requestHeaderUserId = savedUser.getId();
+        UUID userId = savedUser.getId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNotFound());
+
     }
 
 

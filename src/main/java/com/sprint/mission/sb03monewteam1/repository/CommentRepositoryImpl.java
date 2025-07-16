@@ -35,6 +35,10 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom{
 
         // where 조건 생성을 위한 빌더
         BooleanBuilder where = new BooleanBuilder();
+
+        // 논리 삭제 제외 조건 추가
+        where.and(qComment.isDeleted.isFalse());
+
         if (articleId != null) {
             where.and(qComment.article.id.eq(articleId));
         }

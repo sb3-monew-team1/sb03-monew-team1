@@ -17,6 +17,7 @@ import com.sprint.mission.sb03monewteam1.mapper.ArticleMapperImpl;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -225,5 +226,40 @@ public class CommentRepositoryTest {
         )
             .isInstanceOf(InvalidSortOptionException.class)
             .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
+    }
+
+    @Test
+    void isDeleted_가_true인_댓글은_findById로_조회되지_않는다() {
+
+        // given
+        Comment deletedComment = CommentFixture.createComment("삭제 테스트", user, article);
+        deletedComment.delete(); // isDeleted = true
+        em.persist(deletedComment);
+        em.flush();
+        em.clear();
+        UUID id = deletedComment.getId();
+
+        // when
+        Optional<Comment> result = commentRepository.findByIdAndIsDeletedFalse(id);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void isDeleted_가_false인_댓글은_findById로_조회된다() {
+
+        // given
+        Comment comment = CommentFixture.createComment("삭제 테스트", user, article);
+        em.persist(comment);
+        em.flush();
+        em.clear();
+        UUID id = comment.getId();
+
+        // when
+        Optional<Comment> result = commentRepository.findByIdAndIsDeletedFalse(id);
+
+        // then
+        assertThat(result).isPresent();
     }
 }

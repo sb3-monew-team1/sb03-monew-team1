@@ -3,7 +3,9 @@ package com.sprint.mission.sb03monewteam1.controller;
 import com.sprint.mission.sb03monewteam1.controller.api.CommentApi;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.service.CommentService;
 import jakarta.validation.Valid;
 import java.time.Instant;
@@ -12,7 +14,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -63,5 +68,41 @@ public class CommentController implements CommentApi {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(result);
+    }
+
+    @Override
+    @PatchMapping(path = "/{commentId}")
+    public ResponseEntity<CommentDto> update(
+        @PathVariable UUID commentId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId,
+        @Valid @RequestBody CommentUpdateRequest commentUpdateRequest
+    ) {
+        String updateContent = commentUpdateRequest.content();
+        log.info("댓글 수정 요청: commentId = {}, userId = {}, 수정 내용 = {}", commentId, userId, updateContent);
+
+        CommentDto result = commentService.update(commentId, userId, commentUpdateRequest);
+
+        log.info("댓글 수정 완료");
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(result);
+    }
+
+    @Override
+    @DeleteMapping(path = "/{commentId}")
+    public ResponseEntity<Void> delete(
+        @PathVariable UUID commentId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId
+    ) {
+
+        log.info("댓글 삭제 요청: commentId = {}, userId = {}", commentId, userId);
+
+        commentService.delete(commentId, userId);
+
+        log.info("댓글 삭제 완료: commentId = {}, userId = {}", commentId, userId);
+        return ResponseEntity
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 }

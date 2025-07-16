@@ -19,71 +19,85 @@ public class ArticleFixture {
     // 기본 Article 생성
     public static Article createArticle() {
         return Article.builder()
-                .source(DEFAULT_SOURCE)
-                .sourceUrl(DEFAULT_SOURCE_URL)
-                .title(DEFAULT_TITLE)
-                .publishDate(DEFAULT_PUBLISH_DATE)
-                .summary(DEFAULT_SUMMARY)
-                .viewCount(DEFAULT_VIEW_COUNT)
-                .commentCount(DEFAULT_COMMENT_COUNT)
-                .isDeleted(DEFAULT_IS_DELETED)
-                .build();
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
     }
 
     // 커스텀 Article 생성
     public static Article createArticle(String source, String sourceUrl, String title) {
         return Article.builder()
-                .source(source)
-                .sourceUrl(sourceUrl)
-                .title(title)
-                .publishDate(DEFAULT_PUBLISH_DATE)
-                .summary(DEFAULT_SUMMARY)
-                .viewCount(DEFAULT_VIEW_COUNT)
-                .commentCount(DEFAULT_COMMENT_COUNT)
-                .isDeleted(DEFAULT_IS_DELETED)
-                .build();
+            .source(source)
+            .sourceUrl(sourceUrl)
+            .title(title)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
     }
 
     // ID가 있는 Article 생성
     public static Article createArticleWithId(UUID id) {
         return Article.builder()
-                .id(id)
-                .source(DEFAULT_SOURCE)
-                .sourceUrl(DEFAULT_SOURCE_URL + "/" + id)
-                .title(DEFAULT_TITLE)
-                .publishDate(DEFAULT_PUBLISH_DATE)
-                .summary(DEFAULT_SUMMARY)
-                .viewCount(DEFAULT_VIEW_COUNT)
-                .commentCount(DEFAULT_COMMENT_COUNT)
-                .isDeleted(DEFAULT_IS_DELETED)
-                .build();
+            .id(id)
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL + "/" + id)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
     }
 
     // 조회수가 있는 Article 생성
     public static Article createArticleWithViewCount(Long viewCount) {
         return Article.builder()
-                .source(DEFAULT_SOURCE)
-                .sourceUrl(DEFAULT_SOURCE_URL)
-                .title(DEFAULT_TITLE)
-                .publishDate(DEFAULT_PUBLISH_DATE)
-                .summary(DEFAULT_SUMMARY)
-                .viewCount(viewCount)
-                .commentCount(DEFAULT_COMMENT_COUNT)
-                .isDeleted(DEFAULT_IS_DELETED)
-                .build();
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(viewCount)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
+    }
+
+    // 댓글수가 있는 Article 생성
+    public static Article createArticleWithCommentCount(Long commentCount) {
+        return Article.builder()
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(commentCount)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
     }
 
     // 삭제된 Article 생성
     public static Article createDeletedArticle() {
         return Article.builder()
-                .source(DEFAULT_SOURCE)
-                .sourceUrl(DEFAULT_SOURCE_URL)
-                .title(DEFAULT_TITLE)
-                .publishDate(DEFAULT_PUBLISH_DATE)
-                .summary(DEFAULT_SUMMARY)
-                .viewCount(DEFAULT_VIEW_COUNT)
-                .commentCount(DEFAULT_COMMENT_COUNT)
-                .isDeleted(true)
-                .build();
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .isDeleted(true)
+            .build();
     }
 }
