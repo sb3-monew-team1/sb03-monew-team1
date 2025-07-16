@@ -5,6 +5,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
@@ -14,20 +16,19 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
-import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
-import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
-import java.sql.Ref;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,6 +60,9 @@ public class CommentServiceTest {
 
     @Mock
     private ArticleRepository articleRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
 
     @Mock
     private CommentMapper commentMapper;
@@ -91,8 +96,8 @@ public class CommentServiceTest {
             Comment savedComment = CommentFixture.createComment(content,user, article);
             CommentDto expectedCommentDto = CommentFixture.createCommentDto(savedComment);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.save(any(Comment.class))).willReturn(savedComment);
             given(commentMapper.toDto(any(Comment.class))).willReturn(expectedCommentDto);
 
@@ -120,7 +125,7 @@ public class CommentServiceTest {
 
             CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, invalidUserId, articleId);
 
-            given(userRepository.findById(invalidUserId)).willReturn(Optional.empty());
+            given(userRepository.findByIdAndIsDeletedFalse(invalidUserId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> commentService.create(commentRegisterRequest))
@@ -142,8 +147,8 @@ public class CommentServiceTest {
 
             CommentRegisterRequest commentRegisterRequest = CommentFixture.createCommentRegisterRequest(content, userId, invalidArticleId);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(articleRepository.findById(invalidArticleId)).willReturn(Optional.empty());
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
+            given(articleRepository.findByIdAndIsDeletedFalse(invalidArticleId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> commentService.create(commentRegisterRequest))
@@ -177,7 +182,7 @@ public class CommentServiceTest {
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
@@ -232,7 +237,7 @@ public class CommentServiceTest {
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
@@ -282,7 +287,7 @@ public class CommentServiceTest {
             Instant cursor = lastOfFirstPage.getCreatedAt();
             Instant after = lastOfFirstPage.getCreatedAt();
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(secondPage);
@@ -337,7 +342,7 @@ public class CommentServiceTest {
 
             List<Comment> lastPage = sorted.subList(pageSize, sorted.size());
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(nextCursor.toString()), eq(nextAfter), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(lastPage);
@@ -382,7 +387,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(Collections.emptyList());
@@ -416,7 +421,7 @@ public class CommentServiceTest {
 
             List<Comment> commentList = createCommentsWithCreatedAt(pageSize, article, user);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(commentList.subList(0, pageSize));
@@ -448,7 +453,7 @@ public class CommentServiceTest {
 
             List<Comment> comments = createCommentsWithCreatedAt(pageSize, article, user);
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -467,7 +472,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -486,7 +491,7 @@ public class CommentServiceTest {
             int pageSize = 5;
             String sortDirection = "DESC";
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -506,7 +511,7 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String invalidSortDirection = "unknownDirection";  // 허용되지 않은 정렬 방향
 
-            given(articleRepository.findById(articleId)).willReturn(Optional.of(article));
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
@@ -540,7 +545,7 @@ public class CommentServiceTest {
                 .build();
             CommentDto expectedCommentDto = CommentFixture.createCommentDtoWithContent(comment, updateContent);
 
-            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
             given(commentMapper.toDto(any(Comment.class))).willReturn(expectedCommentDto);
 
             // when
@@ -566,7 +571,7 @@ public class CommentServiceTest {
                 .content(updateContent)
                 .build();
 
-            given(commentRepository.findById(invalidCommentId)).willReturn(Optional.empty());
+            given(commentRepository.findByIdAndIsDeletedFalse(invalidCommentId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() ->
@@ -596,13 +601,185 @@ public class CommentServiceTest {
                 .content(updateContent)
                 .build();
 
-            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
 
             // when & then
             assertThatThrownBy(() ->
                 commentService.update(commentId, otherUserId, commentUpdateRequest
                 )).isInstanceOf(UnauthorizedCommentAccessException.class)
                 .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 논리 삭제 테스트")
+    class CommentDeleteTest {
+
+        @Test
+        void 댓글을_논리삭제하면_isDeleted가_true가_된다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            String content = "댓글 논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+
+            // when
+            Comment result = commentService.delete(commentId, user.getId());
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getIsDeleted()).isTrue();
+            assertThat(article.getCommentCount()).isEqualTo(0L);
+        }
+
+        @Test
+        void 존재하지_않는_댓글_삭제_요청시_예외를_던진다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.delete(commentId, userId);
+                }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+        }
+
+        @Test
+        void 이미_삭제된_댓글_삭제_요청시_예외를_던진다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            Comment deletedComment = CommentFixture.createCommentWithIsDeleted("삭제 테스트", user, article);
+            ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
+            UUID deletedCommentId = deletedComment.getId();
+
+            given(commentRepository.findByIdAndIsDeletedFalse(deletedCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.delete(deletedCommentId, user.getId());
+            }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(deletedCommentId);
+        }
+
+        @Test
+        void 다른_사용자가_댓글_논리삭제_요청시_권한_예외를_던진다() {
+
+            // given
+            UUID authorId = UUID.randomUUID();
+            UUID otherUserId = UUID.randomUUID();
+            UUID commentId = UUID.randomUUID();
+
+            User author = UserFixture.createUser();
+            ReflectionTestUtils.setField(author, "id", authorId);
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            Comment comment = CommentFixture.createComment("댓글", author, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                    commentService.delete(commentId, otherUserId);
+                }).isInstanceOf(UnauthorizedCommentAccessException.class)
+                .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 물리 삭제 테스트")
+    class CommentHardDeleteTest {
+
+        @Test
+        void 댓글을_물리삭제하면_좋아요와_댓글이_함께_삭제되고_기사_댓글수가_1감소한다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+            Comment comment = CommentFixture.createComment("댓글 물리 삭제 테스트", user, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            willDoNothing().given(commentLikeRepository).deleteByCommentId(commentId);
+            willDoNothing().given(commentRepository).deleteById(commentId);
+
+            // when
+            commentService.deleteHard(commentId);
+
+            // then
+            assertThat(article.getCommentCount()).isEqualTo(0L);
+            then(commentRepository).should().findById(commentId);
+            then(commentLikeRepository).should().deleteByCommentId(commentId);
+            then(commentRepository).should().deleteById(commentId);
+        }
+
+        @Test
+        void 존재하지_않는_댓글_물리삭제_요청시_예외를_던진다() {
+
+            // given
+            UUID invalidCommentId = UUID.randomUUID();
+
+            given(commentRepository.findById(invalidCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.deleteHard(invalidCommentId);
+            }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findById(invalidCommentId);
+        }
+
+        @Test
+        void 논리삭제된_댓글은_물리삭제시_기사_댓글수가_감소하지_않는다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+
+            Comment deletedComment = CommentFixture.createComment("삭제된 댓글", user, article);
+            deletedComment.delete();
+            ReflectionTestUtils.setField(deletedComment, "id", commentId);
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(deletedComment));
+            willDoNothing().given(commentLikeRepository).deleteByCommentId(commentId);
+            willDoNothing().given(commentRepository).deleteById(commentId);
+
+            // when & then
+            commentService.deleteHard(commentId);
+
+            // then
+            assertThat(article.getCommentCount()).isEqualTo(1L);
+            then(commentRepository).should().findById(commentId);
+            then(commentLikeRepository).should().deleteByCommentId(commentId);
+            then(commentRepository).should().deleteById(commentId);
         }
     }
 

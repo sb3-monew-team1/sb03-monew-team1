@@ -15,6 +15,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
@@ -35,6 +36,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final ArticleRepository articleRepository;
+    private final CommentLikeRepository commentLikeRepository;
     private final CommentMapper commentMapper;
 
     @Override
@@ -46,9 +48,9 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 등록 시작: 기사 = {}, 작성자 = {}, 내용 = {}", articleId, userId, content);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new CommentException(ErrorCode.USER_NOT_FOUND));
-        Article article = articleRepository.findById(articleId)
+        Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
         Comment comment = Comment.builder()
@@ -75,7 +77,7 @@ public class CommentServiceImpl implements CommentService {
             , articleId, cursor, nextAfter, size, sortBy, sortDirection);
 
         if (articleId != null) {
-            articleRepository.findById(articleId)
+            articleRepository.findByIdAndIsDeletedFalse(articleId)
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
         }
 
@@ -159,20 +161,60 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 수정 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
             .orElseThrow(() -> new CommentNotFoundException(commentId));
 
-        if (!comment.getAuthor().getId().equals(userId)) {
-            throw new UnauthorizedCommentAccessException();
-        }
+        validateAuthor(comment, userId);
 
         String newContent = commentUpdateRequest.content();
-
         comment.updateContent(newContent);
 
         log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
         return commentMapper.toDto(comment);
+    }
+
+    @Override
+    public Comment delete(UUID commentId, UUID userId) {
+
+        log.info("댓글 논리 삭제 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        validateAuthor(comment, userId);
+
+        comment.delete();
+        comment.getArticle().decreaseCommentCount();
+
+        log.info("댓글 논리 삭제 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        return comment;
+    }
+
+    @Override
+    public void deleteHard(UUID commentId) {
+
+        log.info("댓글 물리 삭제 시작 : 댓글 ID = {}", commentId);
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        // 논리 삭제 되지 않은 댓글이면 기사의 댓글수 감소
+        if (!comment.getIsDeleted()) {
+            comment.getArticle().decreaseCommentCount();
+        }
+
+        commentLikeRepository.deleteByCommentId(commentId);
+        commentRepository.deleteById(commentId);
+
+        log.info("댓글 물리 삭제 완료 : 댓글 ID = {}", commentId);
+    }
+
+    private void validateAuthor(Comment comment, UUID userId) {
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedCommentAccessException();
+        }
     }
 
     private Instant parseInstant(String cursorValue) {

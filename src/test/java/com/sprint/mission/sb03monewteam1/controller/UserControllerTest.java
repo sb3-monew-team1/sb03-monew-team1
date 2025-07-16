@@ -2,6 +2,9 @@ package com.sprint.mission.sb03monewteam1.controller;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -288,7 +291,6 @@ public class UserControllerTest {
             UUID requestHeaderUserId = UserFixture.getDefaultId();
             UUID userId = UserFixture.getDefaultId();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
-            UserDto userDto = UserFixture.createUserDto();
 
             given(userService.update(requestHeaderUserId, userId, userUpdateRequest))
                 .willThrow(new UserNotFoundException(userId));
@@ -298,6 +300,73 @@ public class UserControllerTest {
                     .requestAttr("userId", requestHeaderUserId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsBytes(userUpdateRequest)))
+                .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 논리 삭제 테스트")
+    class UserDeleteTests {
+
+        @Test
+        void 사용자를_논리_삭제시_204를_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UserFixture.getDefaultId();
+
+            willDoNothing().given(userService).delete(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 다른_사용자를_논리_삭제_시_403을_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new ForbiddenAccessException("다른 사용자는 삭제할 수 없습니다"))
+                .given(userService)
+                .delete(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void 존재하지_않는_사용자를_논리_삭제_시_404를_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new UserNotFoundException(userId))
+                .given(userService)
+                .delete(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void 논리_삭제된_사용자를_논리_삭제_시_404를_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new UserNotFoundException(userId))
+                .given(userService)
+                .delete(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                    .requestAttr("userId", requestHeaderUserId))
                 .andExpect(status().isNotFound());
         }
     }

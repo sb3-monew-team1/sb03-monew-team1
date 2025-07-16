@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,6 +37,7 @@ public class HankyungNewsCollector {
                 .uri(hankyungRssUrl)
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(30))
                 .block();
 
             String cleanedXml = rawXml.replaceAll("<!DOCTYPE[^>]*>", "");

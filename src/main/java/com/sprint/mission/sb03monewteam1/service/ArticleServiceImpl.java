@@ -1,29 +1,27 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponseArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
-import com.sprint.mission.sb03monewteam1.exception.article.DuplicateArticleViewException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
+import com.sprint.mission.sb03monewteam1.repository.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,21 +44,24 @@ public class ArticleServiceImpl implements ArticleService {
     private final ArticleViewMapper articleViewMapper;
     private final NaverNewsCollector naverNewsCollector;
     private final HankyungNewsCollector hankyungNewsCollector;
+    private final ArticleInterestRepository articleInterestRepository;
 
     @Override
     @Transactional
     public ArticleViewDto createArticleView(UUID userId, UUID articleId) {
-        if (articleViewRepository.existsByUserIdAndArticleId(userId, articleId)) {
-            throw new DuplicateArticleViewException();
+        List<ArticleView> existingList = articleViewRepository.findByUserIdAndArticleId(userId,
+            articleId);
+        if (!existingList.isEmpty()) {
+            return articleViewMapper.toDto(existingList.get(0));
         }
 
         long updated = articleRepository.incrementViewCount(articleId);
         if (updated == 0) {
-            throw new ArticleNotFoundException("기사를 찾을 수 없습니다.");
+            throw new ArticleNotFoundException(articleId.toString());
         }
 
         Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
-            .orElseThrow(() -> new ArticleNotFoundException("기사를 찾을 수 없습니다."));
+            .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));
 
         ArticleView articleView = ArticleView.createArticleView(userId, article);
         ArticleView savedArticleView = articleViewRepository.save(articleView);
@@ -71,29 +72,40 @@ public class ArticleServiceImpl implements ArticleService {
         return result;
     }
 
+    private Instant parseToKstInstant(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        DateTimeFormatter formatter = value.contains(".")
+            ? DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            : DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        LocalDateTime ldt = LocalDateTime.parse(value, formatter);
+        return ldt.atZone(ZoneId.of("Asia/Seoul")).toInstant();
+    }
+
     @Override
-    public CursorPageResponseArticleDto getArticles(
+    public CursorPageResponse<ArticleDto> getArticles(
         String keyword,
         List<String> sourceIn,
         List<String> interests,
-        Instant publishDateFrom,
-        Instant publishDateTo,
+        String publishDateFrom,
+        String publishDateTo,
         String orderBy,
         String direction,
         String cursor,
         Instant after,
         int limit) {
 
-        log.info(
-            "기사 목록 조회 시작 - keyword: {}, sourceIn: {}, orderBy: {}, direction: {}, cursor: {}, limit: {}",
-            keyword, sourceIn, orderBy, direction, cursor, limit);
+        Instant from = parseToKstInstant(publishDateFrom);
+        Instant to = parseToKstInstant(publishDateTo);
 
         String sortBy = orderBy != null ? orderBy : "publishDate";
         boolean isAscending = "ASC".equalsIgnoreCase(direction);
 
         List<Article> articles = getArticlesBySortType(
-            keyword, sourceIn, publishDateFrom, publishDateTo,
-            sortBy, isAscending, cursor, limit);
+            keyword, sourceIn, from, to,
+            sortBy, isAscending, cursor, after, limit);
 
         boolean hasNext = articles.size() > limit;
         if (hasNext) {
@@ -107,7 +119,7 @@ public class ArticleServiceImpl implements ArticleService {
         String nextCursor = generateNextCursor(articles, sortBy, hasNext);
         Instant nextAfter = generateNextAfter(articles, hasNext);
 
-        CursorPageResponseArticleDto result = CursorPageResponseArticleDto.builder()
+        CursorPageResponse<ArticleDto> result = CursorPageResponse.<ArticleDto>builder()
             .content(articleDtos)
             .nextCursor(nextCursor)
             .nextAfter(nextAfter)
@@ -122,7 +134,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     private List<Article> getArticlesBySortType(
         String keyword, List<String> sourceIn, Instant publishDateFrom, Instant publishDateTo,
-        String sortBy, boolean isAscending, String cursor, int limit) {
+        String sortBy, boolean isAscending, String cursor, Instant after, int limit) {
 
         switch (sortBy) {
             case "viewCount":
@@ -134,10 +146,9 @@ public class ArticleServiceImpl implements ArticleService {
                         throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_COUNT, cursor);
                     }
                 }
-                Instant viewCountPublishDate = Instant.now();
                 return articleRepository.findArticlesWithCursorByViewCount(
                     keyword, sourceIn, publishDateFrom, publishDateTo,
-                    viewCountCursor, viewCountPublishDate, limit + 1, isAscending);
+                    viewCountCursor, after, limit + 1, isAscending);
 
             case "commentCount":
                 Long commentCountCursor = null;
@@ -148,10 +159,9 @@ public class ArticleServiceImpl implements ArticleService {
                         throw new InvalidCursorException(ErrorCode.INVALID_CURSOR_COUNT, cursor);
                     }
                 }
-                Instant commentCountPublishDate = Instant.now();
                 return articleRepository.findArticlesWithCursorByCommentCount(
                     keyword, sourceIn, publishDateFrom, publishDateTo,
-                    commentCountCursor, commentCountPublishDate, limit + 1, isAscending);
+                    commentCountCursor, after, limit + 1, isAscending);
 
             case "publishDate":
             default:
@@ -178,10 +188,9 @@ public class ArticleServiceImpl implements ArticleService {
 
         switch (sortBy) {
             case "viewCount":
-                return lastArticle.getViewCount() + ":" + lastArticle.getPublishDate().toString();
+                return String.valueOf(lastArticle.getViewCount());
             case "commentCount":
-                return lastArticle.getCommentCount() + ":" + lastArticle.getPublishDate()
-                    .toString();
+                return String.valueOf(lastArticle.getCommentCount());
             case "publishDate":
             default:
                 return lastArticle.getPublishDate().toString();
@@ -243,6 +252,7 @@ public class ArticleServiceImpl implements ArticleService {
         Interest interest,
         String keyword) {
         List<Article> filtered = new ArrayList<>();
+        List<ArticleInterest> articleInterests = new ArrayList<>();
         for (CollectedArticleDto dto : collectedArticles) {
             if (!shouldIncludeArticle(dto, keyword)) {
                 continue;
@@ -259,6 +269,16 @@ public class ArticleServiceImpl implements ArticleService {
 
         if (!filtered.isEmpty()) {
             articleRepository.saveAll(filtered);
+
+            for (Article article : filtered) {
+                ArticleInterest articleInterest = ArticleInterest.builder()
+                    .article(article)
+                    .interest(interest)
+                    .build();
+                articleInterests.add(articleInterest);
+            }
+            articleInterestRepository.saveAll(articleInterests);
+
             log.info("기사 배치 저장 완료: {}개", filtered.size());
             filtered.forEach(article -> log.debug("저장된 기사: {}", article.getTitle()));
         }

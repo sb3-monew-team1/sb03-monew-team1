@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -137,5 +138,66 @@ public interface CommentApi {
         @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId,
         @Parameter(description = "요청자 ID", required = true) @RequestHeader("Monew-Request-User-ID") UUID userId,
         @Valid @RequestBody CommentUpdateRequest commentUpdateRequest
+    );
+
+    @Operation(summary = "댓글 논리 삭제")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204", description = "삭제 성공"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "댓글 정보 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "작성자 아님",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<Void> delete(
+        @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId
+    );
+
+    @Operation(summary = "댓글 물리 삭제")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204", description = "삭제 성공"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "댓글 정보 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<Void> deleteHard(
+        @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId
     );
 }
