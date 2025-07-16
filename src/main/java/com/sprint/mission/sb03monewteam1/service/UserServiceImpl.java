@@ -4,6 +4,7 @@ import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
@@ -134,16 +135,12 @@ public class UserServiceImpl implements UserService {
 
         List<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId);
         log.debug("사용자 관심사 구독자 수 감소 시작: userId={}", userId);
-        subscriptions.forEach(subscription -> {
-            interestRepository.decrementSubscriberCount(subscription.getInterest().getId());
-        });
+        subscriptions.forEach(subscription -> interestRepository.decrementSubscriberCount(subscription.getInterest().getId()));
         log.debug("사용자 관심사 구독자 수 감소 완료: userId={}", userId);
 
         List<CommentLike> commentLikes = commentLikeRepository.findAllByUserId(userId);
         log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 시작: userId={}", userId);
-        commentLikes.forEach(commentLike -> {
-            commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId());
-        });
+        commentLikes.forEach(commentLike -> commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId()));
         log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 처리 완료: userId={}", userId);
 
         log.info("사용자 논리 삭제 완료: userId={}", userId);
@@ -160,32 +157,34 @@ public class UserServiceImpl implements UserService {
             throw new ForbiddenAccessException("다른 사용자는 삭제 할 수 없습니다");
         }
 
-        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundException(userId));
 
-        user.setDeleted();
+        if (!user.isDeleted()) {
 
-        List<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId);
-        log.debug("사용자 관심사 구독자 수 감소 시작: userId={}", userId);
-        subscriptions.forEach(subscription -> {
-            interestRepository.decrementSubscriberCount(subscription.getInterest().getId());
+            user.setDeleted();
+
+            List<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId);
+            log.debug("사용자 관심사 구독자 수 감소 시작: userId={}", userId);
+            subscriptions.forEach(subscription -> interestRepository.decrementSubscriberCount(subscription.getInterest().getId()));
+            log.debug("사용자 관심사 구독자 수 감소 완료: userId={}", userId);
+
+            List<CommentLike> commentLikes = commentLikeRepository.findAllByUserId(userId);
+            log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 시작: userId={}", userId);
+            commentLikes.forEach(commentLike -> commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId()));
+            log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 처리 완료: userId={}", userId);
+
+        }
+
+        List<Comment> comments = commentRepository.findByAuthorId(userId);
+        comments.forEach(comment -> {
+            commentLikeRepository.deleteByCommentId(comment.getId());
+            commentRepository.delete(comment);
         });
-        log.debug("사용자 관심사 구독자 수 감소 완료: userId={}", userId);
-
-        List<CommentLike> commentLikes = commentLikeRepository.findAllByUserId(userId);
-        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 시작: userId={}", userId);
-        commentLikes.forEach(commentLike -> {
-            commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId());
-        });
-        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 처리 완료: userId={}", userId);
-
-
-        subscriptionRepository.deleteByUserId(userId);
-        log.debug("구독 객체 삭제 완료");
         commentLikeRepository.deleteByUserId(userId);
         log.debug("댓글 좋아요 객체 삭제 완료");
-        commentRepository.deleteByAuthorId(userId);
-        log.debug("댓글 객체 삭제 완료");
+        subscriptionRepository.deleteByUserId(userId);
+        log.debug("구독 객체 삭제 완료");
         userRepository.deleteById(userId);
         log.debug("사용자 삭제 완료");
 

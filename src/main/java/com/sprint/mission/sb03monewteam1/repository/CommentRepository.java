@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.repository;
 
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,4 +27,6 @@ public interface CommentRepository extends JpaRepository<Comment, UUID>, Comment
     void decreaseLikeCountAndDeleteById(@Param("commentId") UUID commentId);
 
     Optional<Comment> findByIdAndIsDeletedFalse(UUID commentId);
+
+    List<Comment> findByAuthorId(UUID userId);
 }
