@@ -291,7 +291,6 @@ public class UserControllerTest {
             UUID requestHeaderUserId = UserFixture.getDefaultId();
             UUID userId = UserFixture.getDefaultId();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
-            UserDto userDto = UserFixture.createUserDto();
 
             given(userService.update(requestHeaderUserId, userId, userUpdateRequest))
                 .willThrow(new UserNotFoundException(userId));
