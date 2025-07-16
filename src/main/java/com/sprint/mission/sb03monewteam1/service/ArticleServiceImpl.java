@@ -232,7 +232,14 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public void delete(UUID articleId) {
-        // TODO 구현 필요
+        Article article = getActiveArticle(articleId);
+
+        article.markAsDeleted();
+    }
+
+    private Article getActiveArticle(UUID articleId) {
+        return articleRepository.findByIdAndIsDeletedFalse(articleId)
+            .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));
     }
 
     private boolean shouldIncludeArticle(CollectedArticleDto dto, String keyword) {
