@@ -14,6 +14,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
+import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
@@ -128,10 +129,10 @@ public class InterestServiceImpl implements InterestService {
         log.info("구독 생성 요청: userId={}, interestId={}", userId, interestId);
 
         Interest interest = interestRepository.findById(interestId)
-            .orElseThrow(() -> new InterestNotFoundException(ErrorCode.INTEREST_NOT_FOUND));
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(userId));
 
         log.info("현재 관심사 구독자 수: {}", interest.getSubscriberCount());
 

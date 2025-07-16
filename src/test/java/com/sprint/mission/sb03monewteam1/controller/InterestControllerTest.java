@@ -402,7 +402,7 @@ class InterestControllerTest {
             UUID interestId = UUID.randomUUID();
 
             given(interestService.createSubscription(userId, interestId))
-                .willThrow(new InterestNotFoundException(ErrorCode.INTEREST_NOT_FOUND));
+                .willThrow(new InterestNotFoundException(interestId));
 
             // When & Then
             mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId)
