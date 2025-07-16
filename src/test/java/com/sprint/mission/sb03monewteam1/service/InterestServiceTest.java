@@ -175,8 +175,8 @@ class InterestServiceTest {
             assertThat(result.hasNext()).isFalse();
 
             verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction);
-            verify(subscriptionRepository).existsByUserIdAndInterestId(user.getId(), interest1.getId());
-            verify(subscriptionRepository).existsByUserIdAndInterestId(user.getId(), interest2.getId());
+            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest1.getId());
+            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest2.getId());
         }
 
 
