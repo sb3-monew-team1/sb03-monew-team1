@@ -60,7 +60,7 @@ public class CommentController implements CommentApi {
     ) {
         log.info("댓글 목록 조회 요청: articleId = {}, cursor = {}, after = {}, limit = {}, orderBy = {}, direction = {}", articleId, cursor, after, limit, orderBy, direction);
         CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-            articleId, cursor, after, limit, orderBy, direction
+            articleId, cursor, after, limit, orderBy, direction, userId
         );
         log.info("댓글 목록 조회 완료");
         log.info("조회된 댓글 수: {}", result.content().size());

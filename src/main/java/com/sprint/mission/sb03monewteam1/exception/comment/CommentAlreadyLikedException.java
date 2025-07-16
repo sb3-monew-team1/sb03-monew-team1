@@ -6,7 +6,8 @@ import java.util.UUID;
 
 public class CommentAlreadyLikedException extends CommentException {
 
-  public CommentAlreadyLikedException(UUID commentLikeId) {
-    super(ErrorCode.COMMENT_ALREADY_LIKED, Map.of("commentLikeID", String.valueOf(commentLikeId)));
+  public CommentAlreadyLikedException(UUID commentId, UUID userId) {
+    super(ErrorCode.COMMENT_ALREADY_LIKED,
+        Map.of("commentId", String.valueOf(commentId), "userId", String.valueOf(userId)));
   }
 }

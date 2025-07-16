@@ -7,13 +7,17 @@ import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
+import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
@@ -39,6 +43,7 @@ public class CommentServiceImpl implements CommentService {
     private final ArticleRepository articleRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final CommentMapper commentMapper;
+    private final CommentLikeMapper commentLikeMapper;
 
     @Override
     public CommentDto create(CommentRegisterRequest commentRegisterRequest) {
@@ -61,7 +66,6 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
-        // 기사 댓글 수 증가
         article.increaseCommentCount();
 
         return commentMapper.toDto(savedComment);
@@ -71,7 +75,7 @@ public class CommentServiceImpl implements CommentService {
     public CursorPageResponse<CommentDto> getCommentsWithCursorBySort(
         UUID articleId, String cursor,
         Instant nextAfter, int size,
-        String sortBy, String sortDirection) {
+        String sortBy, String sortDirection, UUID userId) {
 
         log.info(
             "댓글 목록 조회 시작: 기사 ID = {}, cursor = {}, nextAfter = {},  size = {}, sortBy = {}, direction = {}"
@@ -138,8 +142,9 @@ public class CommentServiceImpl implements CommentService {
             : commentRepository.countByArticleId(articleId);
 
         comments = hasNext ? comments.subList(0, size) : comments;
+
         List<CommentDto> commentDtos = comments.stream()
-            .map(commentMapper::toDto)
+            .map(comment -> toCommentDtoWithLikedByMe(comment, userId))
             .toList();
 
         log.info("댓글 목록 조회 완료 - 조회된 댓글 수: {}, hasNext: {}", commentDtos.size(), hasNext);
@@ -172,7 +177,7 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
-        return commentMapper.toDto(comment);
+        return toCommentDtoWithLikedByMe(comment, userId);
     }
 
     @Override
@@ -214,13 +219,53 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentLikeDto like(UUID commentId, UUID userId) {
-        return null;
+
+        log.info("댓글 좋아요 등록 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        // 댓글 유효성
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        // 유저 유효성
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 중복 댓글 확인
+        if (commentLikeRepository.existsByCommentIdAndUserId(commentId, userId)) {
+            throw new CommentAlreadyLikedException(commentId, userId);
+        }
+
+        // 좋아요 생성 후 저장
+        CommentLike commentLike = CommentLike.builder()
+            .comment(comment)
+            .user(user)
+            .build();
+        commentLikeRepository.save(commentLike);
+
+        // 댓글의 좋아요수 +1
+        comment.increaseLikeCount();
+
+        log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
+
+        return commentLikeMapper.toDto(commentLike);
     }
 
     private void validateAuthor(Comment comment, UUID userId) {
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new UnauthorizedCommentAccessException();
         }
+    }
+
+    public CommentDto toCommentDtoWithLikedByMe(Comment comment, UUID userId) {
+        boolean likedByMe = false;
+
+        if (userId != null) {
+            likedByMe = commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), userId);
+        }
+
+        CommentDto dto = commentMapper.toDto(comment);
+        if (dto == null) throw new CommentException(ErrorCode.INTERNAL_SERVER_ERROR);
+        return dto.toBuilder().likedByMe(likedByMe).build();
     }
 
     private Instant parseInstant(String cursorValue) {

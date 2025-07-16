@@ -160,9 +160,12 @@ public class CommentControllerTest {
         void 댓글을_조회하면_200과_댓글목록이_반환된다() throws Exception {
 
             // given
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
-            Article article = ArticleFixture.createArticle();
-            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             String sortBy = "createdAt";
             String sortDirection = "DESC";
             int totalCount = 10;
@@ -189,11 +192,12 @@ public class CommentControllerTest {
                 .hasNext(true)
                 .build();
 
-            given(commentService.getCommentsWithCursorBySort(eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+            given(commentService.getCommentsWithCursorBySort(eq(articleId), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId)))
                 .willReturn(result);
 
             // when & then
             mockMvc.perform(get("/api/comments")
+                    .param("articleId", articleId.toString())
                     .param("orderBy", sortBy)
                     .param("direction", sortDirection)
                     .param("limit", String.valueOf(pageSize))
@@ -212,9 +216,12 @@ public class CommentControllerTest {
         @Test
         void 커서가_있으면_커서_이후의_댓글만_조회된다() throws Exception {
             // given
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
-            Article article = ArticleFixture.createArticle();
-            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             String sortBy = "createdAt";
             String sortDirection = "DESC";
             int totalCount = 10;
@@ -245,11 +252,12 @@ public class CommentControllerTest {
                 .hasNext(true)
                 .build();
 
-            given(commentService.getCommentsWithCursorBySort(eq(null), eq(cursor), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+            given(commentService.getCommentsWithCursorBySort(eq(articleId), eq(cursor), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId)))
                 .willReturn(result);
 
             // when & then
             mockMvc.perform(get("/api/comments")
+                    .param("articleId", articleId.toString())
                     .param("cursor", cursor)
                     .param("orderBy", sortBy)
                     .param("direction", sortDirection)
@@ -276,7 +284,7 @@ public class CommentControllerTest {
             int pageSize = 5;
 
             given(commentService.getCommentsWithCursorBySort(
-                eq(invalidArticleId), any(), any(), eq(pageSize), eq(sortBy), eq(sortDirection))
+                eq(invalidArticleId), any(), any(), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId))
             ).willThrow(new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
             // when & then
@@ -301,7 +309,7 @@ public class CommentControllerTest {
             int pageSize = 5;
 
             given(commentService.getCommentsWithCursorBySort(
-                eq(null), eq(null), eq(null), eq(pageSize), eq(invalidSortBy), eq(sortDirection)
+                eq(null), eq(null), eq(null), eq(pageSize), eq(invalidSortBy), eq(sortDirection), eq(userId)
             )).willThrow(new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD));
 
             // when & then
@@ -324,7 +332,7 @@ public class CommentControllerTest {
             String invalidDirection = "INVALID";
 
             given(commentService.getCommentsWithCursorBySort(
-                eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(invalidDirection)
+                eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(invalidDirection), eq(userId)
             )).willThrow(new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION));
 
             mockMvc.perform(get("/api/comments")

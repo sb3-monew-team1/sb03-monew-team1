@@ -177,7 +177,9 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
 
             int pageSize = 5;
             String sortBy = "createdAt";
@@ -204,7 +206,7 @@ public class CommentServiceTest {
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection, userId
             );
 
             // then
@@ -233,7 +235,9 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
             int pageSize = 5;
             String sortBy = "likeCount";
             String sortDirection = "DESC";
@@ -259,7 +263,7 @@ public class CommentServiceTest {
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection, userId
             );
 
             // then
@@ -278,7 +282,9 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
@@ -309,7 +315,7 @@ public class CommentServiceTest {
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, cursor.toString(), after, pageSize, sortBy, sortDirection
+                articleId, cursor.toString(), after, pageSize, sortBy, sortDirection, userId
             );
 
             // then
@@ -335,7 +341,9 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
@@ -364,7 +372,7 @@ public class CommentServiceTest {
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection
+                articleId, nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection, userId
             );
 
             // then
@@ -390,6 +398,7 @@ public class CommentServiceTest {
         void 댓글이_없는_기사를_조회하면_빈_리스트를_반환한다() {
 
             // given
+            UUID userId = UUID.randomUUID();
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
             int pageSize = 5;
@@ -404,7 +413,7 @@ public class CommentServiceTest {
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection, userId
             );
 
             // then
@@ -423,7 +432,9 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
@@ -435,10 +446,14 @@ public class CommentServiceTest {
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(commentList.subList(0, pageSize));
             given(commentRepository.countByArticleId(articleId)).willReturn(5L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                Comment comment = invocation.getArgument(0);
+                return CommentFixture.createCommentDto(comment);
+            });
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection
+                articleId, null, null, pageSize, sortBy, sortDirection, userId
             );
 
             // then
@@ -454,7 +469,9 @@ public class CommentServiceTest {
             // given
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
             String invalidCursor = "invalid-value";
             int pageSize = 5;
             String sortBy = "createdAt";
@@ -466,7 +483,7 @@ public class CommentServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection, userId)
             ).isInstanceOf(InvalidCursorException.class)
                 .hasMessageContaining(ErrorCode.INVALID_CURSOR_DATE.getMessage());
         }
@@ -475,6 +492,7 @@ public class CommentServiceTest {
         void 유효하지_않은_페이지_크기로_조회시_예외가_발생한다() {
 
             // given
+            UUID userId = UUID.randomUUID();
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
             int invalidPageSize = -1;
@@ -485,7 +503,7 @@ public class CommentServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, null, null, invalidPageSize, sortBy, sortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, null, null, invalidPageSize, sortBy, sortDirection, userId)
             ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("페이지 크기는 1 이상이어야 합니다");
         }
@@ -494,6 +512,7 @@ public class CommentServiceTest {
         void 잘못된_정렬기준_입력시_예외가_발생한다() {
 
             // given
+            UUID userId = UUID.randomUUID();
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
             String invalidSort = "unknownField"; // 허용되지 않은 정렬 기준
@@ -504,7 +523,7 @@ public class CommentServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, invalidSort, sortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, invalidSort, sortDirection, userId)
             )
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
@@ -514,6 +533,7 @@ public class CommentServiceTest {
         void 잘못된_정렬방향_입력시_예외가_발생한다() {
 
             // given
+            UUID userId = UUID.randomUUID();
             UUID articleId = UUID.randomUUID();
             Article article = ArticleFixture.createArticleWithId(articleId);
             int pageSize = 5;
@@ -524,7 +544,7 @@ public class CommentServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, sortBy, invalidSortDirection)
+                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, sortBy, invalidSortDirection, userId)
             )
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_DIRECTION.getMessage());

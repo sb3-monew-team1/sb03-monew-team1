@@ -20,7 +20,8 @@ public interface CommentService {
         Instant nextAfter,
         int size,
         String sortBy,
-        String sortDirection
+        String sortDirection,
+        UUID userId
     );
 
     CommentDto update(UUID commentId, UUID userId, CommentUpdateRequest commentUpdateRequest);
