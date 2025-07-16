@@ -337,7 +337,7 @@ public class UserServiceTest {
             then(interestRepository).should(times(subscriptions.size()))
                 .decrementSubscriberCount(any());
             then(commentRepository).should(times(commentLikes.size()))
-                .decreaseLikeCountAndDeleteById(any());
+                .decreaseLikeCountById(any());
         }
 
         @Test
@@ -435,7 +435,7 @@ public class UserServiceTest {
             then(interestRepository).should(times(subscriptions.size()))
                 .decrementSubscriberCount(any());
             then(commentRepository).should(times(commentLikes.size()))
-                .decreaseLikeCountAndDeleteById(any());
+                .decreaseLikeCountById(any());
             then(commentLikeRepository).should(times(comments.size())).deleteByCommentId(any());
             then(commentRepository).should(times(comments.size())).delete(any());
             then(commentLikeRepository).should().deleteByUserId(userId);
@@ -502,7 +502,7 @@ public class UserServiceTest {
             then(userRepository).should().findById(userId);
             then(commentRepository).should().findByAuthorId(userId);
             then(interestRepository).should(times(0)).decrementSubscriberCount(any());
-            then(commentRepository).should(times(0)).decreaseLikeCountAndDeleteById(any());
+            then(commentRepository).should(times(0)).decreaseLikeCountById(any());
             then(commentLikeRepository).should(times(comments.size())).deleteByCommentId(any());
             then(commentRepository).should(times(comments.size())).delete(any());
             then(commentLikeRepository).should().deleteByUserId(userId);

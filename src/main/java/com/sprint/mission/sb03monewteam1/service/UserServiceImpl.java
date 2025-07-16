@@ -174,9 +174,9 @@ public class UserServiceImpl implements UserService {
         log.debug("사용자 관심사 구독자 수 감소 완료: userId={}", userId);
 
         List<CommentLike> commentLikes = commentLikeRepository.findAllByUserId(userId);
-        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 시작: userId={}", userId);
+        log.debug("댓글 좋아요 수 감소 시작: userId={}", userId);
         commentLikes.forEach(commentLike ->
-            commentRepository.decreaseLikeCountAndDeleteById(commentLike.getComment().getId()));
-        log.debug("댓글 좋아요 수 감소 및 댓글 논리 삭제 처리 완료: userId={}", userId);
+            commentRepository.decreaseLikeCountById(commentLike.getComment().getId()));
+        log.debug("댓글 좋아요 수 감소 완료: userId={}", userId);
     }
 }

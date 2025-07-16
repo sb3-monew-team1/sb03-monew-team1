@@ -233,7 +233,7 @@ public class UserIntegrationTest {
     }
 
     @Test
-    void 사용자_논리_삭제_시_구독자수_좋아요수_감소_및_논리_삭제_적용되어야_한다() throws Exception {
+    void 사용자_논리_삭제_시_구독자수_좋아요_수가_감소되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
         User savedUser = userRepository.save(user);
@@ -277,9 +277,6 @@ public class UserIntegrationTest {
 
         User deletedUser = userRepository.findById(userId).orElseThrow();
         assertThat(deletedUser.isDeleted()).isTrue();
-
-        Comment deletedComment = commentRepository.findById(savedComment.getId()).orElseThrow();
-        assertThat(deletedComment.getIsDeleted()).isTrue();
 
     }
 
