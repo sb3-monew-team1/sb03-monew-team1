@@ -7,6 +7,8 @@ import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -52,11 +54,16 @@ public class SubscriptionDataSeeder implements DataSeeder {
     private List<Subscription> createSubscriptions(List<User> users, List<Interest> interests) {
         Random random = new Random();
         List<Subscription> subscriptions = new ArrayList<>();
+        Set<String> createdPairs = new HashSet<>();
 
         for (User user : users) {
             int subscriptionCount = 40;
             for (int i = 0; i < subscriptionCount; i++) {
                 Interest randomInterest = interests.get(random.nextInt(interests.size()));
+                String key = user.getId() + ":" + randomInterest.getId();
+                if (!createdPairs.add(key)) {
+                    continue;
+                }
                 Subscription subscription = new Subscription(randomInterest, user);
                 subscriptions.add(subscription);
             }
