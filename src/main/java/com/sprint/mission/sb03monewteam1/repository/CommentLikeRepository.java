@@ -15,4 +15,6 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
     List<CommentLike> findAllByUserId(@Param("userId") UUID userId);
 
     void deleteByCommentId(UUID commentId);
+
+    Object existsByCommentIdAndUserId(UUID commentId, UUID userId);
 }

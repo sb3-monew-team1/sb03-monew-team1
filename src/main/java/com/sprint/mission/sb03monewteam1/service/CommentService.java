@@ -1,10 +1,12 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -26,4 +28,6 @@ public interface CommentService {
     Comment delete(UUID commentId, UUID userId);
 
     void deleteHard(UUID commentId);
+
+    CommentLikeDto like(UUID commentId, UUID userId);
 }

@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -209,6 +210,11 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.deleteById(commentId);
 
         log.info("댓글 물리 삭제 완료 : 댓글 ID = {}", commentId);
+    }
+
+    @Override
+    public CommentLikeDto like(UUID commentId, UUID userId) {
+        return null;
     }
 
     private void validateAuthor(Comment comment, UUID userId) {

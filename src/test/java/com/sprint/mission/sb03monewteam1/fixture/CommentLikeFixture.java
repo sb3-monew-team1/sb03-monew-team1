@@ -1,8 +1,10 @@
 package com.sprint.mission.sb03monewteam1.fixture;
 
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,21 @@ public class CommentLikeFixture {
             commentLikes.add(createCommentLike(user, comment));
         }
         return commentLikes;
+    }
+
+    public static CommentLikeDto createCommentLikeDto(CommentLike commentLike) {
+        return CommentLikeDto.builder()
+            .id(commentLike.getId())
+            .likedBy(commentLike.getUser().getId())
+            .createdAt(commentLike.getCreatedAt())
+            .commentId(commentLike.getComment().getId())
+            .articleId(commentLike.getComment().getArticle().getId())
+            .commentUserId(commentLike.getComment().getAuthor().getId())
+            .commentUserNickname(commentLike.getUser().getNickname())
+            .commentContent(commentLike.getComment().getContent())
+            .commentLikeCount(commentLike.getComment().getLikeCount())
+            .commentCreatedAt(commentLike.getComment().getCreatedAt())
+            .build();
     }
 
     public static UUID getDefaultCommentLikeId() {

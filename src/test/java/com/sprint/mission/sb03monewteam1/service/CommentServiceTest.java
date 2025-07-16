@@ -9,21 +9,27 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
@@ -66,6 +72,9 @@ public class CommentServiceTest {
 
     @Mock
     private CommentMapper commentMapper;
+
+    @Mock
+    private CommentLikeMapper commentLikeMapper;
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -780,6 +789,110 @@ public class CommentServiceTest {
             then(commentRepository).should().findById(commentId);
             then(commentLikeRepository).should().deleteByCommentId(commentId);
             then(commentRepository).should().deleteById(commentId);
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 좋아요 테스트")
+    class CommentLikeTest {
+
+        @Test
+        void 댓글에_좋아요시_좋아요_객체와_댓글의_좋아요수가_1증가한다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            UUID commentLikeId = UUID.randomUUID();
+
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            Comment comment = CommentFixture.createComment("좋아요 테스트", user, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            CommentLike savedCommentLike = CommentLikeFixture.createCommentLike(user, comment);
+            ReflectionTestUtils.setField(savedCommentLike, "id", commentLikeId);
+            CommentLikeDto expectedCommentLikeDto = CommentLikeFixture.createCommentLikeDto(savedCommentLike);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
+            given(commentLikeRepository.existsByCommentIdAndUserId(commentId, userId)).willReturn(false);
+            given(commentLikeRepository.save(any(CommentLike.class))).willReturn(savedCommentLike);
+            given(commentLikeMapper.toDto(any(CommentLike.class))).willReturn(expectedCommentLikeDto);
+
+            // when
+            CommentLikeDto result = commentService.like(commentId, userId);
+
+            // then
+            assertThat(result).isEqualTo(expectedCommentLikeDto);
+            assertThat(comment.getLikeCount()).isEqualTo(1L);
+        }
+
+        @Test
+        void 존재하지_않는_댓글에_좋아요시_예외를_던진다() {
+
+            // given
+            UUID invalidCommentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentRepository.findByIdAndIsDeletedFalse(invalidCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.like(invalidCommentId, userId);
+            }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(invalidCommentId);
+        }
+
+        @Test
+        void 존재하지_않는_사용자가_댓글_좋아요시_예외를_던진다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID invalidUserId = UUID.randomUUID();
+
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            Comment comment = CommentFixture.createComment("좋아요 테스트", user, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+            given(userRepository.findByIdAndIsDeletedFalse(invalidUserId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.like(commentId, invalidUserId);
+            }).isInstanceOf(UserNotFoundException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+            then(userRepository).should().findByIdAndIsDeletedFalse(invalidUserId);
+        }
+
+        @Test
+        void 이미_좋아요를_누른_댓글이면_예외를_던진다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            Comment comment = CommentFixture.createComment("좋아요 테스트", user, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
+            given(commentLikeRepository.existsByCommentIdAndUserId(commentId, userId)).willReturn(true);
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.like(commentId, userId);
+            }).isInstanceOf(CommentAlreadyLikedException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
+            then(commentLikeRepository).should().existsByCommentIdAndUserId(commentId, userId);
         }
     }
 
