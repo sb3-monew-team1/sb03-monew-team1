@@ -9,6 +9,7 @@ import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
@@ -307,69 +308,54 @@ class InterestIntegrationTest {
                 .andExpect(jsonPath("$.code").value("INVALID_CURSOR_FORMAT"))
                 .andExpect(jsonPath("$.message").value("잘못된 커서 형식입니다."));
         }
+    }
 
-        @Nested
-        @DisplayName("관심사 구독 테스트")
-        class InterestSubscribeTests {
+    @Nested
+    @DisplayName("관심사 구독 테스트")
+    class InterestSubscribeTests {
 
-            private Interest interest1;
-            private User testUser;
-            private Subscription subscription;
+        private Interest testInterest;
+        private User testUser;
+        private Subscription subscription;
 
-            @BeforeEach
-            void setup() {
-                // Given
-                interest1 = Interest.builder()
-                    .name("aesthetic")
-                    .subscriberCount(150L)
-                    .build();
-                interestRepository.save(interest1);
+        @Test
+        void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() throws Exception {
+            // Given
+            testInterest = InterestFixture.createInterest();
+            interestRepository.save(testInterest);
 
-                testUser = User.builder()
-                    .nickname("testUser")
-                    .build();
-                userRepository.save(testUser);
+            UUID savedInterestId = testInterest.getId();
 
-                subscription = new Subscription(testUser, interest1);
-                subscriptionRepository.save(subscription);
-            }
+            testUser = User.builder()
+                .nickname("testUser")
+                .build();
+            userRepository.save(testUser);
 
-            @Test
-            void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() throws Exception {
+            // When & Then
+            mockMvc.perform(post("/api/interests/{interestId}/subscriptions", savedInterestId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Monew-Request-User-ID", testUser.getId()))
+                .andExpect(status().isCreated());
+        }
 
-                SubscriptionDto expectedResponse = SubscriptionDto.builder()
-                    .id(subscription.getId())
-                    .interestId(interest1.getId())
-                    .interestName(interest1.getName())
-                    .interestKeywords(interest1.getKeywords().stream()
-                        .map(InterestKeyword::getKeyword)
-                        .collect(Collectors.toList()))
-                    .interestSubscriberCount(interest1.getSubscriberCount())
-                    .createdAt(subscription.getCreatedAt())
-                    .build();
 
-                // When & Then
-                mockMvc.perform(post("/api/subscriptions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"interestId\": \"" + interest1.getId() + "\"}"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.interestName").value(expectedResponse.interestName()))
-                    .andExpect(jsonPath("$.createdAt").value(expectedResponse.createdAt()));
-            }
+        @Test
+        void 구독하려는_관심사가_없는_경우_404를_반환한다() throws Exception {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
 
-            @Test
-            void 구독하려는_관심사가_없는_경우_404를_반환한다() throws Exception {
-                // Given
-                UUID nonExistentInterestId = UUID.randomUUID();
+            testUser = User.builder()
+                .nickname("testUser")
+                .build();
+            userRepository.save(testUser);
 
-                // When & Then
-                mockMvc.perform(post("/api/subscriptions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"interestId\": \"" + nonExistentInterestId + "\"}"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND_EXCEPTION"))
-                    .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
-            }
+            // When & Then
+            mockMvc.perform(post("/api/interests/{interestId}/subscriptions", nonExistentInterestId)
+                    .header("Monew-Request-User-ID", testUser.getId())
+                    .contentType("application/json"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
         }
     }
 }

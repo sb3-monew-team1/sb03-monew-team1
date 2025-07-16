@@ -3,24 +3,29 @@ package com.sprint.mission.sb03monewteam1.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
+import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 
 import com.sprint.mission.sb03monewteam1.service.UserService;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,9 +59,6 @@ class InterestControllerTest {
 
     @MockitoBean
     private InterestService interestService;
-
-    @MockitoBean
-    private InterestRepository interestRepository;
 
     @MockitoBean
     private UserService userService;
@@ -234,10 +236,14 @@ class InterestControllerTest {
         void 관심사를_구독자수로_정렬하여_반환한다() throws Exception {
             // Given
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().id(UUID.randomUUID()).name("soccer").subscriberCount(200L).build(),
-                InterestDto.builder().id(UUID.randomUUID()).name("football club").subscriberCount(150L).build(),
-                InterestDto.builder().id(UUID.randomUUID()).name("aesthetic").subscriberCount(100L).build(),
-                InterestDto.builder().id(UUID.randomUUID()).name("beauty").subscriberCount(50L).build()
+                InterestDto.builder().id(UUID.randomUUID()).name("soccer").subscriberCount(200L)
+                    .build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("football club")
+                    .subscriberCount(150L).build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("aesthetic").subscriberCount(100L)
+                    .build(),
+                InterestDto.builder().id(UUID.randomUUID()).name("beauty").subscriberCount(50L)
+                    .build()
             );
 
             CursorPageResponse<InterestDto> responseDto = CursorPageResponse.<InterestDto>builder()
@@ -353,56 +359,58 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_SORT_FIELD"))
                 .andExpect(jsonPath("$.message").value("지원하지 않는 정렬 필드입니다."));
         }
+    }
+
+    @Nested
+    @DisplayName("관심사 구독 테스트")
+    class InterestSubsribeTests {
 
         @Test
-        void 관심사를_구독하면_200을_반환한다() throws Exception {
+        void 관심사를_구독하면_DTO가_반환된다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
             UUID interestId = UUID.randomUUID();
-            Interest interest = InterestFixture.createInterest();
-            User testUser = UserFixture.createUser();
-            Subscription subscription = new Subscription(testUser, interest);
 
-            SubscriptionDto expectedResponse = new SubscriptionDto(
-                subscription.getId(),
-                interest.getId(),
-                interest.getName(),
-                interest.getKeywords().stream()
-                    .map(InterestKeyword::getKeyword)
-                    .collect(Collectors.toList()),
-                interest.getSubscriberCount(),
-                subscription.getCreatedAt()
-            );
+            SubscriptionDto subscriptionDto = SubscriptionDto.builder()
+                .id(UUID.randomUUID())
+                .interestId(interestId)
+                .interestName("aesthetic")
+                .interestKeywords(List.of("art", "design"))
+                .interestSubscriberCount(100L)
+                .createdAt(Instant.now())
+                .build();
 
-            given(subscriptionService.subscribe(testUser, interest)).willReturn(expectedResponse);
+            given(interestService.createSubscription(userId, interestId)).willReturn(subscriptionDto);
 
             // When & Then
             mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId)
-                    .header("Monew-Request-User-ID", testUser.getId().toString())
+                    .header("Monew-Request-User-ID", userId.toString())
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.interestId").value(interestId.toString()))
-                .andExpect(jsonPath("$.interestName").value(interest.getName()))
-                .andExpect(jsonPath("$.interestKeywords").value(interest.getKeywords()))
-                .andExpect(jsonPath("$.interestSubscriberCount").value(interest.getSubscriberCount()))
-                .andExpect(jsonPath("$.createdAt").exists());
+                .andExpect(jsonPath("$.interestName").value("aesthetic"))
+                .andExpect(jsonPath("$.interestSubscriberCount").value(100))
+                .andExpect(jsonPath("$.interestKeywords").isArray())
+                .andExpect(jsonPath("$.interestKeywords[0]").value("art"))
+                .andExpect(jsonPath("$.interestKeywords[1]").value("design"));
         }
 
         @Test
         void 구독하려는_관심사가_없는_경우_404를_반환한다() throws Exception {
             // Given
-            UUID nonExistentInterestId = UUID.randomUUID();
-            User testUser = UserFixture.createUser();
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
 
-            given(interestService.findById(nonExistentInterestId))
-                .willThrow(new InterestNotFoundException("관심사를 찾을 수 없습니다."));
+            given(interestService.createSubscription(userId, interestId))
+                .willThrow(new InterestNotFoundException(ErrorCode.INTEREST_NOT_FOUND));
 
             // When & Then
-            mockMvc.perform(post("/api/interests/{interestId}/subscriptions", nonExistentInterestId)
-                    .header("Monew-Request-User-ID", testUser.getId().toString())
+            mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."))
-                .andExpect(jsonPath("$.status").value(404));
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
         }
+
     }
 }

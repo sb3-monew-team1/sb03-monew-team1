@@ -9,4 +9,8 @@ public class UserNotFoundException extends UserException {
     public UserNotFoundException(UUID userId) {
         super(ErrorCode.USER_NOT_FOUND, Map.of("userId", String.valueOf(userId)));
     }
+
+    public UserNotFoundException(ErrorCode errorCode) {
+        super(ErrorCode.USER_NOT_FOUND);
+    }
 }
