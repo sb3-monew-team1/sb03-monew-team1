@@ -93,4 +93,15 @@ public class CommentFixture {
             .likedByMe(false)
             .build();
     }
+
+    public static Comment createCommentWithId(UUID id, User user, Article article) {
+        Comment comment = Comment.builder()
+            .content(DEFAULT_COMMENT)
+            .author(user)
+            .article(article)
+            .likeCount(DEFAULT_LIKE_COUNT)
+            .build();
+        comment.setIdForTest(id);
+        return comment;
+    }
 }

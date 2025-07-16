@@ -237,6 +237,15 @@ public class ArticleServiceImpl implements ArticleService {
         article.markAsDeleted();
     }
 
+    @Override
+    @Transactional
+    public void deleteHard(UUID articleId) {
+        Article article = articleRepository.findById(articleId)
+            .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));
+
+        // TODO: 물리 삭제 구현
+    }
+
     private Article getActiveArticle(UUID articleId) {
         return articleRepository.findByIdAndIsDeletedFalse(articleId)
             .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));

@@ -20,17 +20,23 @@ import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
+import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -61,6 +67,12 @@ class ArticleServiceTest {
 
     @Mock
     private ArticleInterestRepository articleInterestRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
 
     @Mock
     private NaverNewsCollector naverNewsCollector;
@@ -420,5 +432,39 @@ class ArticleServiceTest {
             .isInstanceOf(ArticleNotFoundException.class);
 
         verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
+    }
+
+    @Test
+    void 기사_물리_삭제시_연관데이터_모두_삭제() {
+        UUID articleId = UUID.randomUUID();
+        UUID commentId = UUID.randomUUID();
+
+        Article article = ArticleFixture.createArticleWithId(articleId);
+
+        User user = UserFixture.createUser();
+        Comment comment = CommentFixture.createCommentWithId(commentId, user, article);
+
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(article));
+        when(commentRepository.findAllByArticleId(articleId)).thenReturn(List.of(comment));
+
+        articleService.deleteHard(articleId);
+
+        verify(commentRepository).findAllByArticleId(articleId);
+        verify(commentLikeRepository).deleteByCommentId(commentId);
+        verify(commentRepository).deleteById(commentId);
+        verify(articleViewRepository).deleteByArticleId(articleId);
+        verify(articleInterestRepository).deleteByArticleId(articleId);
+        verify(articleRepository).deleteById(articleId);
+    }
+
+    @Test
+    void 존재하지_않는_기사_물리_삭제_요청시_예외() {
+        UUID articleId = UUID.randomUUID();
+        when(articleRepository.findById(articleId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> articleService.deleteHard(articleId))
+            .isInstanceOf(ArticleNotFoundException.class);
+
+        verify(articleRepository).findById(articleId);
     }
 }
