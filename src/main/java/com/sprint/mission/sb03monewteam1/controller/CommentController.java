@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 
 import com.sprint.mission.sb03monewteam1.controller.api.CommentApi;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -118,5 +119,21 @@ public class CommentController implements CommentApi {
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
             .build();
+    }
+
+    @Override
+    @PostMapping(path = "/{commentId}/comment-likes")
+    public ResponseEntity<CommentLikeDto> like(
+        @PathVariable UUID commentId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId) {
+
+        log.info("댓글 좋아요 요청: commentId = {}, userId = {}", commentId, userId);
+
+        CommentLikeDto result = commentService.like(commentId, userId);
+
+        log.info("댓글 좋아요 완료: commentId = {}", commentId);
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(result);
     }
 }

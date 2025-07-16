@@ -620,13 +620,14 @@ public class CommentControllerTest {
 
             Comment comment = CommentFixture.createComment("좋아요 테스트", user, article);
             ReflectionTestUtils.setField(comment, "id", commentId);
+            ReflectionTestUtils.setField(comment, "createdAt", Instant.now());
             CommentLike commentLike = CommentLikeFixture.createCommentLike(user, comment);
-            CommentLikeDto responseDto = CommentLikeFixture.createCommentLikeDto(commentLike);
+            CommentLikeDto responseDto = CommentLikeFixture.createCommentLikeDtoWithLikeCount(commentLike,1L);
 
             given(commentService.like(eq(commentId), eq(userId))).willReturn(responseDto);
 
             // when & then
-            mockMvc.perform(post("/api/comments/{commentId}/like", commentId)
+            mockMvc.perform(post("/api/comments/{commentId}/comment-likes", commentId)
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.likedBy").value(userId.toString()))
@@ -650,7 +651,7 @@ public class CommentControllerTest {
                 .willThrow(new CommentNotFoundException(commentId));
 
             // when & then
-            mockMvc.perform(post("/api/comments/{commentId}/like", commentId)
+            mockMvc.perform(post("/api/comments/{commentId}/comment-likes", commentId)
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isNotFound());
         }

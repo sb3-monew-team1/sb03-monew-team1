@@ -58,6 +58,21 @@ public class CommentLikeFixture {
             .build();
     }
 
+    public static CommentLikeDto createCommentLikeDtoWithLikeCount(CommentLike commentLike, Long likeCount) {
+        return CommentLikeDto.builder()
+            .id(commentLike.getId())
+            .likedBy(commentLike.getUser().getId())
+            .createdAt(commentLike.getCreatedAt())
+            .commentId(commentLike.getComment().getId())
+            .articleId(commentLike.getComment().getArticle().getId())
+            .commentUserId(commentLike.getComment().getAuthor().getId())
+            .commentUserNickname(commentLike.getUser().getNickname())
+            .commentContent(commentLike.getComment().getContent())
+            .commentLikeCount(likeCount)
+            .commentCreatedAt(commentLike.getComment().getCreatedAt())
+            .build();
+    }
+
     public static UUID getDefaultCommentLikeId() {
         return DEFAULT_COMMENT_LIKE_ID;
     }

@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.controller.api;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -199,5 +200,37 @@ public interface CommentApi {
     })
     ResponseEntity<Void> deleteHard(
         @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId
+    );
+
+    @Operation(summary = "관심사 댓글 좋아요")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "댓글 좋아요 성공",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = CommentLikeDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "댓글 정보 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<CommentLikeDto> like(
+        @Parameter(description = "댓글 ID", required = true) @PathVariable UUID commentId,
+        @Parameter(description = "요청자 ID", required = true) @RequestHeader("Monew-Request-User-ID") UUID userId
     );
 }
