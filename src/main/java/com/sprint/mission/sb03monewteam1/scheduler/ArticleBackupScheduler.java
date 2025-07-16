@@ -21,7 +21,7 @@ public class ArticleBackupScheduler {
     public void runArticleBackupJob() {
         try {
             JobParameters params = new JobParametersBuilder()
-                .addLong("time", System.currentTimeMillis())
+                .addLong("timestamp", System.currentTimeMillis())
                 .toJobParameters();
             jobLauncher.run(articleBackupJob, params);
         } catch (Exception e) {

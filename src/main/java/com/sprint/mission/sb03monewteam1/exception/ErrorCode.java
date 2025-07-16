@@ -28,6 +28,10 @@ public enum ErrorCode {
     // 기사 관련 예외
     ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "기사를 찾을 수 없습니다."),
     DUPLICATE_ARTICLE_VIEW(HttpStatus.CONFLICT, "이미 조회한 기사입니다."),
+    ARTICLE_COLLECTION_NETWORK_ERROR(HttpStatus.BAD_GATEWAY, "기사 수집 중 네트워크 오류가 발생했습니다."),
+    ARTICLE_COLLECTION_PARSING_ERROR(HttpStatus.BAD_REQUEST, "기사 파싱 중 오류가 발생했습니다."),
+    ARTICLE_COLLECTION_VALIDATION_ERROR(HttpStatus.UNPROCESSABLE_ENTITY, "수집 데이터 검증에 실패했습니다."),
+    ARTICLE_COLLECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "기사 수집에 실패했습니다."),
 
     // 댓글 관련 예외
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
