@@ -229,6 +229,12 @@ public class ArticleServiceImpl implements ArticleService {
         saveCollectedArticles(collectedArticles, interest, keyword);
     }
 
+    @Override
+    @Transactional
+    public void delete(UUID articleId) {
+        // TODO 구현 필요
+    }
+
     private boolean shouldIncludeArticle(CollectedArticleDto dto, String keyword) {
         String kw = keyword.toLowerCase();
         return (dto.title() != null && dto.title().toLowerCase().contains(kw))

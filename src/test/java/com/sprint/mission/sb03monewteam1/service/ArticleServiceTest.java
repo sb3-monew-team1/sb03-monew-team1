@@ -397,4 +397,28 @@ class ArticleServiceTest {
         verify(articleRepository).saveAll(anyList());
         verify(articleInterestRepository).saveAll(anyList());
     }
+
+    @Test
+    void 기사_논리_삭제_시_flag_변경() {
+        UUID articleId = UUID.randomUUID();
+        Article article = ArticleFixture.createArticleWithId(articleId);
+        when(articleRepository.findByIdAndIsDeletedFalse(articleId)).thenReturn(
+            Optional.of(article));
+
+        articleService.delete(articleId);
+
+        assertThat(article.isDeleted()).isTrue();
+        verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
+    }
+
+    @Test
+    void 존재하지_않는_기사_논리_삭제_요청시_예외() {
+        UUID articleId = UUID.randomUUID();
+        when(articleRepository.findByIdAndIsDeletedFalse(articleId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> articleService.delete(articleId))
+            .isInstanceOf(ArticleNotFoundException.class);
+
+        verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
+    }
 }
