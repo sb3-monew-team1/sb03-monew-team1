@@ -2,13 +2,20 @@ package com.sprint.mission.sb03monewteam1.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
+import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,6 +53,12 @@ class InterestIntegrationTest {
 
     @Autowired
     private InterestKeywordRepository interestKeywordRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     @Nested
     @DisplayName("관심사 생성 태스트")
@@ -199,7 +212,7 @@ class InterestIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(4)); // 2개의 Interest 객체
+                .andExpect(jsonPath("$.content.length()").value(4));
         }
 
         @Test
@@ -293,6 +306,70 @@ class InterestIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_CURSOR_FORMAT"))
                 .andExpect(jsonPath("$.message").value("잘못된 커서 형식입니다."));
+        }
+
+        @Nested
+        @DisplayName("관심사 구독 테스트")
+        class InterestSubscribeTests {
+
+            private Interest interest1;
+            private User testUser;
+            private Subscription subscription;
+
+            @BeforeEach
+            void setup() {
+                // Given
+                interest1 = Interest.builder()
+                    .name("aesthetic")
+                    .subscriberCount(150L)
+                    .build();
+                interestRepository.save(interest1);
+
+                testUser = User.builder()
+                    .nickname("testUser")
+                    .build();
+                userRepository.save(testUser);
+
+                subscription = new Subscription(testUser, interest1);
+                subscriptionRepository.save(subscription);
+            }
+
+            @Test
+            void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() throws Exception {
+
+                SubscriptionDto expectedResponse = SubscriptionDto.builder()
+                    .id(subscription.getId())
+                    .interestId(interest1.getId())
+                    .interestName(interest1.getName())
+                    .interestKeywords(interest1.getKeywords().stream()
+                        .map(InterestKeyword::getKeyword)
+                        .collect(Collectors.toList()))
+                    .interestSubscriberCount(interest1.getSubscriberCount())
+                    .createdAt(subscription.getCreatedAt())
+                    .build();
+
+                // When & Then
+                mockMvc.perform(post("/api/subscriptions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"interestId\": \"" + interest1.getId() + "\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.interestName").value(expectedResponse.interestName()))
+                    .andExpect(jsonPath("$.createdAt").value(expectedResponse.createdAt()));
+            }
+
+            @Test
+            void 구독하려는_관심사가_없는_경우_404를_반환한다() throws Exception {
+                // Given
+                UUID nonExistentInterestId = UUID.randomUUID();
+
+                // When & Then
+                mockMvc.perform(post("/api/subscriptions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"interestId\": \"" + nonExistentInterestId + "\"}"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND_EXCEPTION"))
+                    .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+            }
         }
     }
 }

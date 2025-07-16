@@ -10,20 +10,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
+import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -130,8 +138,8 @@ class InterestServiceTest {
 
             List<Interest> interests = Arrays.asList(interest2, interest1); // 정렬 기준에 맞게 정렬된 상태
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("soccer").subscriberCount(200).build(),
-                InterestDto.builder().name("aesthetic").subscriberCount(150).build()
+                InterestDto.builder().name("soccer").subscriberCount(200L).build(),
+                InterestDto.builder().name("aesthetic").subscriberCount(150L).build()
             );
 
             when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
@@ -166,7 +174,7 @@ class InterestServiceTest {
 
             List<Interest> interests = Arrays.asList(interest1); // "soccer"만 검색되는 리스트
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("soccer").subscriberCount(150).build()
+                InterestDto.builder().name("soccer").subscriberCount(150L).build()
             );
 
             when(interestRepository.searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
@@ -198,8 +206,8 @@ class InterestServiceTest {
 
             List<Interest> interests = Arrays.asList(interest1, interest2);
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("aesthetic").subscriberCount(150).build(),
-                InterestDto.builder().name("soccer").subscriberCount(200).build()
+                InterestDto.builder().name("aesthetic").subscriberCount(150L).build(),
+                InterestDto.builder().name("soccer").subscriberCount(200L).build()
             );
 
             when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
@@ -257,6 +265,68 @@ class InterestServiceTest {
 
             then(interestRepository).shouldHaveNoInteractions();
             then(interestMapper).shouldHaveNoInteractions();
+        }
+
+
+        @Nested
+        @DisplayName("관심사 구독 테스트")
+        class InterestSubscribeTests {
+
+            @Test
+            void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() {
+
+                Interest interest1 = InterestFixture.createInterest();
+
+                User testUser = UserFixture.createUser();
+
+                Subscription subscription = new Subscription(testUser, interest1);
+
+                SubscriptionDto expectedResponse = SubscriptionDto.builder()
+                    .id(subscription.getId())
+                    .interestId(interest1.getId())
+                    .interestName(interest1.getName())
+                    .interestKeywords(interest1.getKeywords().stream()
+                        .map(InterestKeyword::getKeyword)
+                        .collect(java.util.stream.Collectors.toList()))
+                    .interestSubscriberCount(interest1.getSubscriberCount())
+                    .createdAt(subscription.getCreatedAt())
+                    .build();
+
+                given(subscriptionRepository.existsByUserAndInterest(testUser, interest1)).willReturn(false);
+                given(subscriptionRepository.save(any(Subscription.class))).willReturn(subscription);
+
+                // When
+                SubscriptionDto result = subscriptionService.subscribe(testUser, interest1);
+
+                // Then
+                assertThat(result)
+                    .isNotNull()
+                    .extracting(SubscriptionDto::getInterestName)
+                    .isEqualTo(expectedResponse.getInterestName());
+
+                then(subscriptionRepository).should().existsByUserAndInterest(testUser, interest1);
+                then(subscriptionRepository).should().save(any(Subscription.class));
+            }
+
+            @Test
+            void 구독하려는_관심사가_없는_경우_InterestNotFoundException가_발생한다() {
+
+                // Given
+                UUID nonExistentInterestId = UUID.randomUUID();
+                User testUser = UserFixture.createUser();
+
+                given(interestRepository.existsById(nonExistentInterestId)).willReturn(false);
+
+                // When
+                Throwable throwable = catchThrowable(() -> subscriptionService.subscribe(testUser, nonExistentInterestId));
+
+                // Then
+                assertThat(throwable).isInstanceOf(InterestNotFoundException.class)
+                    .hasMessageContaining("관심사를 찾을 수 없습니다.");
+
+                then(interestRepository).shouldHaveNoInteractions();
+                then(interestMapper).shouldHaveNoInteractions();
+            }
         }
     }
 }

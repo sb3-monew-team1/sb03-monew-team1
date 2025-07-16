@@ -5,7 +5,6 @@ import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -71,5 +70,25 @@ public class InterestFixture {
             .subscriberCount(subscriberCount)
             .subscribedByMe(false)
             .build();
+    }
+
+    // 기본 Entity 생성
+    public static Interest createInterest(String name, Long subscriberCount, List<String> keywords) {
+        Interest.InterestBuilder interestBuilder = Interest.builder()
+            .name(name)
+            .subscriberCount(subscriberCount);
+
+        if (keywords != null && !keywords.isEmpty()) {
+            List<InterestKeyword> interestKeywords = keywords.stream()
+                .map(keyword -> InterestKeyword.builder().keyword(keyword).build())
+                .toList();
+            interestBuilder.keywords(interestKeywords);
+        }
+
+        return interestBuilder.build();
+    }
+
+    public static Interest createInterest() {
+        return createInterest(DEFAULT_NAME, 150000L, DEFAULT_KEYWORDS);
     }
 }
