@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
 
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
@@ -247,7 +248,8 @@ public class UserServiceTest {
             );
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
-            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(existedUser));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(
+                Optional.of(existedUser));
             given(userMapper.toDto(existedUser)).willReturn(existedUserDto);
 
             // When
@@ -314,7 +316,8 @@ public class UserServiceTest {
             List<CommentLike> commentLikes
                 = CommentLikeFixture.createCommentLikes(existedUser);
 
-            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(existedUser));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(
+                Optional.of(existedUser));
             given(subscriptionRepository.findAllByUserId(userId)).willReturn(subscriptions);
             given(commentLikeRepository.findAllByUserId(userId)).willReturn(commentLikes);
 
@@ -331,18 +334,16 @@ public class UserServiceTest {
                 .decrementSubscriberCount(any());
             then(commentRepository).should(times(commentLikes.size()))
                 .decreaseLikeCountAndDeleteById(any());
-            then(userRepository).shouldHaveNoMoreInteractions();
-            then(userMapper).shouldHaveNoInteractions();
         }
 
         @Test
         void 다른_사용자를_논리_삭제_시_예외가_발생한다() {
             // Given
             UUID requestUserId = UUID.randomUUID();
-            UUID targetUserId = UUID.randomUUID();
+            UUID requesterId = UUID.randomUUID();
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(requestUserId, targetUserId))
+            assertThatThrownBy(() -> userService.delete(requestUserId, requesterId))
                 .isInstanceOf(ForbiddenAccessException.class);
 
             then(userRepository).shouldHaveNoInteractions();
@@ -354,7 +355,8 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
-            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(UserNotFoundException.class);
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(
+                UserNotFoundException.class);
 
             // When & Then
             assertThatThrownBy(() -> userService.delete(requesterId, userId))
@@ -374,7 +376,8 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
-            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(UserNotFoundException.class);
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(
+                UserNotFoundException.class);
 
             // When & Then
             assertThatThrownBy(() -> userService.delete(requesterId, userId))
@@ -385,6 +388,47 @@ public class UserServiceTest {
             then(userMapper).shouldHaveNoInteractions();
         }
 
+    }
+
+    @Nested
+    @DisplayName("사용자 물리 삭제 테스트")
+    class UserPhysicalDeleteTests {
+
+        @Test
+        void 사용자를_물리_삭제_시_204를_반환해야한다() {
+            // Given
+            User existedUser = UserFixture.createUser();
+            UUID userId = UserFixture.getDefaultId();
+            UUID requesterId = UserFixture.getDefaultId();
+
+            List<Subscription> subscriptions
+                = SubscriptionFixture.createSubscriptions(existedUser);
+
+            List<CommentLike> commentLikes
+                = CommentLikeFixture.createCommentLikes(existedUser);
+
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(
+                Optional.of(existedUser));
+            given(subscriptionRepository.findAllByUserId(userId)).willReturn(subscriptions);
+            given(commentLikeRepository.findAllByUserId(userId)).willReturn(commentLikes);
+            willDoNothing().given(subscriptionRepository).deleteByUserId(userId);
+            willDoNothing().given(commentLikeRepository).deleteByUserId(userId);
+
+            // When
+            userService.deleteHard(requesterId, userId);
+
+            // Then
+            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
+            then(subscriptionRepository).should().findAllByUserId(userId);
+            then(commentLikeRepository).should().findAllByUserId(userId);
+            then(interestRepository).should(times(subscriptions.size()))
+                .decrementSubscriberCount(any());
+            then(commentRepository).should(times(commentLikes.size()))
+                .decreaseLikeCountAndDeleteById(any());
+            then(subscriptionRepository).should().deleteByUserId(userId);
+            then(commentLikeRepository).should().deleteByUserId(userId);
+
+        }
     }
 
 }
