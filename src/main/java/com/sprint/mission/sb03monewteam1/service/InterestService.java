@@ -1,8 +1,18 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 public interface InterestService {
-    InterestResponse create(InterestRegisterRequest request);
+
+    InterestDto create(InterestRegisterRequest request);
+
+    CursorPageResponse<InterestDto> getInterests(
+        String searchKeyword,
+        String cursor,
+        int limit,
+        String sortBy,
+        String sortDirection);
+
 }

@@ -1,8 +1,9 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
 import com.sprint.mission.sb03monewteam1.controller.api.InterestApi;
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.response.InterestResponse;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,33 @@ public class InterestController implements InterestApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<InterestResponse> create(
+    public ResponseEntity<InterestDto> create(
         @Valid @RequestBody InterestRegisterRequest request
     ) {
-        log.info("받은 요청: {}", request);
+        log.info("관심사 등록 요청: {}", request);
 
-        InterestResponse response = interestService.create(request);
-        log.info("응답: {}", response);
+        InterestDto response = interestService.create(request);
+        log.info("관심사 등록 완료: {}", response);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<CursorPageResponse<InterestDto>> getInterests(
+        @RequestParam(defaultValue = "") String keyword,
+        @RequestParam(defaultValue = "") String cursor,
+        @RequestParam(defaultValue = "10") int limit,
+        @RequestParam(defaultValue = "subscriberCount") String orderBy,
+        @RequestParam(defaultValue = "DESC") String direction) {
+
+        log.info("관심사 조회 요청: keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
+            keyword, cursor, limit, orderBy, direction);
+
+        CursorPageResponse<InterestDto> response = interestService.getInterests(
+            keyword, cursor, limit, orderBy, direction);
+
+        log.info("관심사 조회 완료: {}", response);
+
+        return ResponseEntity.ok(response);
     }
 }
