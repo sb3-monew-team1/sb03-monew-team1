@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -459,6 +460,97 @@ public class CommentControllerTest {
                     .header("Monew-Request-User-ID", userId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()));
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 논리 삭제 테스트")
+    class CommentDeleteTest {
+
+        @Test
+        void 댓글을_논리삭제하면_204가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            // 컨트롤러 테스트이므로, 반환되는 comment 객체의 삭제 상태는 신경쓰지 않음
+            given(commentService.delete(commentId, user.getId())).willReturn(comment);
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", user.getId()))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_존재하지_않는_댓글이면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentService.delete(commentId, userId))
+                .willThrow(new CommentNotFoundException(commentId));
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", userId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_이미_삭제된_댓글이면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "이미 삭제된 댓글";
+            Comment deletedComment = CommentFixture.createCommentWithIsDeleted(content, user, article);
+            ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
+            UUID deletedCommentId = deletedComment.getId();
+
+            given(commentService.delete(deletedCommentId, user.getId()))
+                .willThrow(new CommentNotFoundException(deletedCommentId));
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + deletedCommentId.toString())
+                    .header("Monew-Request-User-ID", user.getId()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 댓글을_삭제할_때_작성자가_아니라면_403가_반환되어야_한다() throws Exception {
+
+            // given
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String content = "논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+            UUID otherUserId = UUID.randomUUID();
+
+            given(commentService.delete(
+                eq(commentId), eq(otherUserId))
+            ).willThrow(new UnauthorizedCommentAccessException());
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/" + commentId.toString())
+                    .header("Monew-Request-User-ID", otherUserId))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
+                .andExpect(jsonPath("$.message").exists());
         }
     }
 }

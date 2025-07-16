@@ -162,17 +162,38 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new CommentNotFoundException(commentId));
 
-        if (!comment.getAuthor().getId().equals(userId)) {
-            throw new UnauthorizedCommentAccessException();
-        }
+        validateAuthor(comment, userId);
 
         String newContent = commentUpdateRequest.content();
-
         comment.updateContent(newContent);
 
         log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
         return commentMapper.toDto(comment);
+    }
+
+    @Override
+    public Comment delete(UUID commentId, UUID userId) {
+
+        log.info("댓글 논리 삭제 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        Comment comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        validateAuthor(comment, userId);
+
+        comment.delete();
+        comment.getArticle().decreaseCommentCount();
+
+        log.info("댓글 논리 삭제 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        return comment;
+    }
+
+    private void validateAuthor(Comment comment, UUID userId) {
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedCommentAccessException();
+        }
     }
 
     private Instant parseInstant(String cursorValue) {

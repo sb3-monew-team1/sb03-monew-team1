@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
@@ -14,12 +15,11 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
-import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
-import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
@@ -27,7 +27,6 @@ import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
-import java.sql.Ref;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -603,6 +603,78 @@ public class CommentServiceTest {
                 commentService.update(commentId, otherUserId, commentUpdateRequest
                 )).isInstanceOf(UnauthorizedCommentAccessException.class)
                 .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 논리 삭제 테스트")
+    class CommentDeleteTest {
+
+        @Test
+        void 댓글을_논리삭제하면_isDeleted가_true가_된다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            String content = "댓글 논리 삭제 테스트";
+            Comment comment = CommentFixture.createComment(content, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+            // when
+            Comment result = commentService.delete(commentId, user.getId());
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getIsDeleted()).isTrue();
+            assertThat(article.getCommentCount()).isEqualTo(0L);
+        }
+
+        @Test
+        void 존재하지_않는_댓글_삭제_요청시_예외를_던진다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.delete(commentId, userId);
+                }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findById(commentId);
+        }
+
+        @Test
+        void 이미_삭제된_댓글_삭제_요청시_예외를_던진다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            Comment deletedComment = CommentFixture.createCommentWithIsDeleted("삭제 테스트", user, article);
+            ReflectionTestUtils.setField(deletedComment, "id", UUID.randomUUID());
+            UUID deletedCommentId = deletedComment.getId();
+
+            given(commentRepository.findById(deletedCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.delete(deletedCommentId, user.getId());
+            }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findById(deletedCommentId);
         }
     }
 
