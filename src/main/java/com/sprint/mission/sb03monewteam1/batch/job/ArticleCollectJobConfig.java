@@ -7,7 +7,6 @@ import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -18,13 +17,11 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
@@ -50,11 +47,17 @@ public class ArticleCollectJobConfig {
     }
 
     @Bean
+    public ListItemReader<String> distinctKeywordReader() {
+        List<String> keywords = interestKeywordRepository.findAllDistinct();
+        return new ListItemReader<>(keywords);
+    }
+
+    @Bean
     public Step naverNewsCollectStep(JobRepository jobRepository,
         PlatformTransactionManager transactionManager) {
         return new StepBuilder("naverNewsCollectStep", jobRepository)
-            .<InterestKeyword, List<Article>>chunk(10, transactionManager)
-            .reader(keywordReader())
+            .<String, List<Article>>chunk(10, transactionManager)
+            .reader(distinctKeywordReader())
             .processor(naverNewsCollectProcessor())
             .writer(articleListWriter())
             .faultTolerant()
@@ -68,8 +71,8 @@ public class ArticleCollectJobConfig {
     public Step hankyungNewsCollectStep(JobRepository jobRepository,
         PlatformTransactionManager transactionManager) {
         return new StepBuilder("hankyungNewsCollectStep", jobRepository)
-            .<InterestKeyword, List<Article>>chunk(10, transactionManager)
-            .reader(keywordReader())
+            .<String, List<Article>>chunk(10, transactionManager)
+            .reader(distinctKeywordReader())
             .processor(hankyungNewsCollectProcessor())
             .writer(articleListWriter())
             .faultTolerant()
@@ -79,41 +82,33 @@ public class ArticleCollectJobConfig {
     }
 
     @Bean
-    public RepositoryItemReader<InterestKeyword> keywordReader() {
-        return new RepositoryItemReaderBuilder<InterestKeyword>()
-            .name("keywordReader")
-            .repository(interestKeywordRepository)
-            .methodName("findAll")
-            .pageSize(100)
-            .arguments()
-            .sorts(Map.of("id", Sort.Direction.ASC))
-            .build();
-    }
+    public ItemProcessor<String, List<Article>> naverNewsCollectProcessor() {
+        return keyword -> {
+            List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
+                keyword);
 
-    @Bean
-    public ItemProcessor<InterestKeyword, List<Article>> naverNewsCollectProcessor() {
-        return interestKeyword -> {
-            articleService.collectAndSaveNaverArticles(
-                interestKeyword.getInterest(),
-                interestKeyword.getKeyword()
-            );
+            for (InterestKeyword ik : interestKeywords) {
+                articleService.collectAndSaveNaverArticles(ik.getInterest(), ik.getKeyword());
+            }
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.warn("Thread interrupted during sleep", e);
+                log.warn("다음 작업을 위해 Thread.sleep", e);
             }
             return List.of();
         };
     }
 
     @Bean
-    public ItemProcessor<InterestKeyword, List<Article>> hankyungNewsCollectProcessor() {
-        return interestKeyword -> {
-            articleService.collectAndSaveHankyungArticles(
-                interestKeyword.getInterest(),
-                interestKeyword.getKeyword()
-            );
+    public ItemProcessor<String, List<Article>> hankyungNewsCollectProcessor() {
+        return keyword -> {
+            List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
+                keyword);
+
+            for (InterestKeyword ik : interestKeywords) {
+                articleService.collectAndSaveHankyungArticles(ik.getInterest(), ik.getKeyword());
+            }
             return List.of();
         };
     }
@@ -131,6 +126,7 @@ public class ArticleCollectJobConfig {
 
     @Bean
     public TaskExecutor taskExecutor() {
+        // 멀티 스레드 실행을 위한 TaskExecutor 설정
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("batch-task-");
         executor.setConcurrencyLimit(10);
         return executor;
