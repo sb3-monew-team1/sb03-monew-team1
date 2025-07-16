@@ -722,6 +722,7 @@ public class CommentServiceTest {
             UUID commentId = UUID.randomUUID();
             User user = UserFixture.createUser();
             Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
             Comment comment = CommentFixture.createComment("댓글 물리 삭제 테스트", user, article);
             ReflectionTestUtils.setField(comment, "id", commentId);
 
