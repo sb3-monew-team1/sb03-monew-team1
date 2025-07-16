@@ -330,11 +330,19 @@ class InterestIntegrationTest {
                 .build();
             userRepository.save(testUser);
 
+            long initialSubscriberCount = testInterest.getSubscriberCount();
+
             // When & Then
             mockMvc.perform(post("/api/interests/{interestId}/subscriptions", savedInterestId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Monew-Request-User-ID", testUser.getId()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.interestId").value(savedInterestId.toString()))
+                .andExpect(jsonPath("$.interestName").value(testInterest.getName()))
+                .andExpect(jsonPath("$.interestSubscriberCount").value(initialSubscriberCount + 1))
+                .andExpect(jsonPath("$.interestKeywords").isArray())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.createdAt").exists());
         }
 
         @Test
