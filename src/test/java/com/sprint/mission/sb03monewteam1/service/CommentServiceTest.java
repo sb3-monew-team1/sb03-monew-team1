@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
@@ -25,6 +26,7 @@ import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
@@ -58,6 +60,9 @@ public class CommentServiceTest {
 
     @Mock
     private ArticleRepository articleRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
 
     @Mock
     private CommentMapper commentMapper;
@@ -675,6 +680,105 @@ public class CommentServiceTest {
             }).isInstanceOf(CommentNotFoundException.class);
 
             then(commentRepository).should().findByIdAndIsDeletedFalse(deletedCommentId);
+        }
+
+        @Test
+        void 다른_사용자가_댓글_논리삭제_요청시_권한_예외를_던진다() {
+
+            // given
+            UUID authorId = UUID.randomUUID();
+            UUID otherUserId = UUID.randomUUID();
+            UUID commentId = UUID.randomUUID();
+
+            User author = UserFixture.createUser();
+            ReflectionTestUtils.setField(author, "id", authorId);
+
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            ReflectionTestUtils.setField(article, "id", UUID.randomUUID());
+
+            Comment comment = CommentFixture.createComment("댓글", author, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                    commentService.delete(commentId, otherUserId);
+                }).isInstanceOf(UnauthorizedCommentAccessException.class)
+                .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 물리 삭제 테스트")
+    class CommentHardDeleteTest {
+
+        @Test
+        void 댓글을_물리삭제하면_좋아요와_댓글이_함께_삭제되고_기사_댓글수가_1감소한다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+            Comment comment = CommentFixture.createComment("댓글 물리 삭제 테스트", user, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+            willDoNothing().given(commentLikeRepository).deleteByCommentId(commentId);
+            willDoNothing().given(commentRepository).deleteById(commentId);
+
+            // when
+            commentService.deleteHard(commentId);
+
+            // then
+            assertThat(article.getCommentCount()).isEqualTo(0L);
+            then(commentRepository).should().findById(commentId);
+            then(commentLikeRepository).should().deleteByCommentId(commentId);
+            then(commentRepository).should().deleteById(commentId);
+        }
+
+        @Test
+        void 존재하지_않는_댓글_물리삭제_요청시_예외를_던진다() {
+
+            // given
+            UUID invalidCommentId = UUID.randomUUID();
+
+            given(commentRepository.findById(invalidCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.deleteHard(invalidCommentId);
+            }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findById(invalidCommentId);
+        }
+
+        @Test
+        void 논리삭제된_댓글은_물리삭제시_기사_댓글수가_감소하지_않는다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            Article article = ArticleFixture.createArticleWithCommentCount(1L);
+
+            Comment deletedComment = CommentFixture.createComment("삭제된 댓글", user, article);
+            deletedComment.delete(); // isDeleted = true
+            ReflectionTestUtils.setField(deletedComment, "id", commentId);
+
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(deletedComment));
+            willDoNothing().given(commentLikeRepository).deleteByCommentId(commentId);
+            willDoNothing().given(commentRepository).deleteById(commentId);
+
+            // when & then
+            commentService.deleteHard(commentId);
+
+            // then
+            assertThat(article.getCommentCount()).isEqualTo(1L);
+            then(commentRepository).should().findById(commentId);
+            then(commentLikeRepository).should().deleteByCommentId(commentId);
+            then(commentRepository).should().deleteById(commentId);
         }
     }
 

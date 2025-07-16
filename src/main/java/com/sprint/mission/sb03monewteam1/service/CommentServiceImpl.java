@@ -190,6 +190,11 @@ public class CommentServiceImpl implements CommentService {
         return comment;
     }
 
+    @Override
+    public void deleteHard(UUID commentId) {
+        return ;
+    }
+
     private void validateAuthor(Comment comment, UUID userId) {
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new UnauthorizedCommentAccessException();
