@@ -228,23 +228,23 @@ public class CommentRepositoryTest {
             .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
     }
 
-//    @Test
-//    void isDeleted_가_true인_댓글은_findById로_조회되지_않는다() {
-//
-//        // given
-//        Comment deletedComment = CommentFixture.createComment("삭제 테스트", user, article);
-//        deletedComment.delete(); // isDeleted = true
-//        em.persist(deletedComment);
-//        em.flush();
-//        em.clear();
-//        UUID id = deletedComment.getId();
-//
-//        // when
-//        Optional<Comment> result = commentRepository.findById(id);
-//
-//        // then
-//        assertThat(result).isEmpty();
-//    }
+    @Test
+    void isDeleted_가_true인_댓글은_findById로_조회되지_않는다() {
+
+        // given
+        Comment deletedComment = CommentFixture.createComment("삭제 테스트", user, article);
+        deletedComment.delete(); // isDeleted = true
+        em.persist(deletedComment);
+        em.flush();
+        em.clear();
+        UUID id = deletedComment.getId();
+
+        // when
+        Optional<Comment> result = commentRepository.findByIdAndIsDeletedFalse(id);
+
+        // then
+        assertThat(result).isEmpty();
+    }
 
     @Test
     void isDeleted_가_false인_댓글은_findById로_조회된다() {
@@ -257,7 +257,7 @@ public class CommentRepositoryTest {
         UUID id = comment.getId();
 
         // when
-        Optional<Comment> result = commentRepository.findById(id);
+        Optional<Comment> result = commentRepository.findByIdAndIsDeletedFalse(id);
 
         // then
         assertThat(result).isPresent();
