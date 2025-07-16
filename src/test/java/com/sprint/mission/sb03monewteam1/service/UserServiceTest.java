@@ -450,7 +450,7 @@ public class UserServiceTest {
             UUID requesterId = UUID.randomUUID();
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(requestUserId, requesterId))
+            assertThatThrownBy(() -> userService.deleteHard(requestUserId, requesterId))
                 .isInstanceOf(ForbiddenAccessException.class);
 
             then(userRepository).shouldHaveNoInteractions();
@@ -462,14 +462,13 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
-            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(
-                UserNotFoundException.class);
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(requesterId, userId))
+            assertThatThrownBy(() -> userService.deleteHard(requesterId, userId))
                 .isInstanceOf(UserNotFoundException.class);
 
-            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
+            then(userRepository).should().findById(userId);
             then(userRepository).shouldHaveNoMoreInteractions();
             then(userMapper).shouldHaveNoInteractions();
         }
