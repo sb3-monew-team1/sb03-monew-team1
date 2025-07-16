@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -76,6 +77,23 @@ public class UserController implements UserApi {
 
         log.info("사용자 정보 수정 완료: id={}, nickname={}", userDto.id(), userDto.nickname());
 
-        return ResponseEntity.ok(userDto);
+        return ResponseEntity.status(HttpStatus.OK).body(userDto);
+    }
+
+    @Override
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> delete(
+        @PathVariable UUID userId,
+        HttpServletRequest httpServletRequest
+    ) {
+        log.info("사용자 논리 삭제 요청: userId={}", userId);
+        UUID requestUserId = (UUID) httpServletRequest.getAttribute("userId");
+        log.info("Monew-Request-User-ID: {}", requestUserId);
+
+        userService.delete(requestUserId, userId);
+
+        log.info("사용자 논리 삭제 완료: id={}", userId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

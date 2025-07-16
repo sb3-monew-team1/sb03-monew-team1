@@ -2,10 +2,7 @@ package com.sprint.mission.sb03monewteam1.fixture;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-
 import com.sprint.mission.sb03monewteam1.entity.Interest;
-import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +13,21 @@ public class InterestFixture {
     private static final String DEFAULT_NAME = "football activity";
     private static final String SIMILAR_NAME = "football activities";
     private static final List<String> DEFAULT_KEYWORDS = List.of("스포츠", "해외축구");
+    private static final UUID DEFAULT_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+    private static final Long DEFAULT_SUBSCRIBER_COUNT = 10L;
+
+
+    // 기본 객체 생성
+    public static Interest createInterest() {
+        return createInterest(DEFAULT_NAME, DEFAULT_SUBSCRIBER_COUNT);
+    }
+
+    public static Interest createInterest(String name, Long subscriberCount) {
+        return Interest.builder()
+            .name(name)
+            .subscriberCount(subscriberCount)
+            .build();
+    }
 
     // 기본 요청 DTO
     public static InterestRegisterRequest createInterestRegisterRequest() {
