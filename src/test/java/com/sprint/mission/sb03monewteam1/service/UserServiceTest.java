@@ -247,7 +247,7 @@ public class UserServiceTest {
             );
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(existedUser));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(existedUser));
             given(userMapper.toDto(existedUser)).willReturn(existedUserDto);
 
             // When
@@ -260,7 +260,7 @@ public class UserServiceTest {
             assertThat(result.nickname()).isEqualTo(userUpdateRequest.nickname());
             assertThat(result.createdAt()).isNotNull();
 
-            then(userRepository).should().findById(userId);
+            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
             then(userMapper).should().toDto(existedUser);
         }
 
@@ -286,7 +286,7 @@ public class UserServiceTest {
             UUID userId = UUID.randomUUID();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
-            given(userRepository.findById(userId)).willReturn(Optional.empty());
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> userService.update(userId, userId, userUpdateRequest))
@@ -314,7 +314,7 @@ public class UserServiceTest {
             List<CommentLike> commentLikes
                 = CommentLikeFixture.createCommentLikes(existedUser);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(existedUser));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(existedUser));
             given(subscriptionRepository.findAllByUserId(userId)).willReturn(subscriptions);
             given(commentLikeRepository.findAllByUserId(userId)).willReturn(commentLikes);
 
@@ -324,7 +324,7 @@ public class UserServiceTest {
             // Then
             assertThat(existedUser.isDeleted()).isTrue();
 
-            then(userRepository).should().findById(userId);
+            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
             then(subscriptionRepository).should().findAllByUserId(userId);
             then(commentLikeRepository).should().findAllByUserId(userId);
             then(interestRepository).should(times(subscriptions.size()))
@@ -354,13 +354,13 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
-            given(userRepository.findById(userId)).willThrow(UserNotFoundException.class);
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(UserNotFoundException.class);
 
             // When & Then
             assertThatThrownBy(() -> userService.delete(requesterId, userId))
                 .isInstanceOf(UserNotFoundException.class);
 
-            then(userRepository).should().findById(userId);
+            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
             then(userRepository).shouldHaveNoMoreInteractions();
             then(userMapper).shouldHaveNoInteractions();
         }
@@ -374,13 +374,13 @@ public class UserServiceTest {
             UUID userId = UserFixture.getDefaultId();
             UUID requesterId = UserFixture.getDefaultId();
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(deletedUser));
+            given(userRepository.findByIdAndIsDeletedFalse(userId)).willThrow(UserNotFoundException.class);
 
             // When & Then
             assertThatThrownBy(() -> userService.delete(requesterId, userId))
                 .isInstanceOf(UserNotFoundException.class);
 
-            then(userRepository).should().findById(userId);
+            then(userRepository).should().findByIdAndIsDeletedFalse(userId);
             then(userRepository).shouldHaveNoMoreInteractions();
             then(userMapper).shouldHaveNoInteractions();
         }

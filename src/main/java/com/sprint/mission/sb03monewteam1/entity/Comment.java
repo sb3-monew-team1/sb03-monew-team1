@@ -20,7 +20,6 @@ import org.hibernate.annotations.Where;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Where(clause = "is_deleted = false")
 public class Comment extends BaseUpdatableEntity {
 
     @Column(name = "content", nullable = false, length = 500)

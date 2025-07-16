@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
                 });
 
         if (!user.getPassword().equals(password) || user.isDeleted()) {
-            log.warn("로그인 실패 - 비밀번호 불일치, 입력한 비밀번호: {}", password);
+            log.warn("로그인 실패 - 존재하지 않는 비밀번호, 입력한 비밀번호: {}", password);
             throw new InvalidEmailOrPasswordException(email);
         }
 
@@ -102,7 +102,7 @@ public class UserServiceImpl implements UserService {
             throw new ForbiddenAccessException("다른 사용자의 정보는 수정할 수 없습니다");
         }
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
             .orElseThrow(
                 () -> {
                     log.warn("수정 실패 (존재하지 않는 사용자): userId={}", userId);
@@ -127,14 +127,8 @@ public class UserServiceImpl implements UserService {
             throw new ForbiddenAccessException("다른 사용자는 삭제할 수 없습니다");
         }
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
             .orElseThrow(() -> new UserNotFoundException(userId));
-
-        if (user.isDeleted()) {
-            log.warn("논리 삭제 실패 (이미 삭제된 사용자): requestUserId={}, userId={}", requestHeaderUserId,
-                userId);
-            throw new UserNotFoundException(userId);
-        }
 
         user.setDeleted();
 
