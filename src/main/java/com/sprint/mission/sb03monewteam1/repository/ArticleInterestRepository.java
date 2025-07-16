@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ArticleInterestRepository extends JpaRepository<ArticleInterest, UUID> {
 
+    void deleteByArticleId(UUID articleId);
 }
