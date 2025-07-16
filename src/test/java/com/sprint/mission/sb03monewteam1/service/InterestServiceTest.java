@@ -174,9 +174,9 @@ class InterestServiceTest {
             assertThat(result.content().get(1).name()).isEqualTo("aesthetic");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction); // searchByKeywordOrName 메서드 호출 확인
-            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest1.getId());  // 구독 체크 2번 호출 확인
-            verify(subscriptionRepository, times(2)).existsByUserIdAndInterestId(user.getId(), interest2.getId());  // 구독 체크 2번 호출 확인
+            verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction);
+            verify(subscriptionRepository).existsByUserIdAndInterestId(user.getId(), interest1.getId());
+            verify(subscriptionRepository).existsByUserIdAndInterestId(user.getId(), interest2.getId());
         }
 
 
