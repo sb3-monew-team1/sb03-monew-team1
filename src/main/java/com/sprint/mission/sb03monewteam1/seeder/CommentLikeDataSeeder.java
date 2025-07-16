@@ -33,10 +33,13 @@ public class CommentLikeDataSeeder implements DataSeeder {
             Collections.shuffle(users);
 
             // 1~3명 유저 선택
-            int likeCount = (int) (Math.random() * 3) + 1;
+            int likeCount = Math.min((int) (Math.random() * 3) + 1, users.size());
             List<User> selectedUsers = users.subList(0, likeCount);
 
             for (User user : selectedUsers) {
+                if (commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), user.getId())) {
+                    continue;
+                }
                 CommentLike like = createCommentLike(user, comment);
                 comment.increaseLikeCount(); // 좋아요 수 증가
                 commentLikeRepository.save(like);

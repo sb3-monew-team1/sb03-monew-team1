@@ -24,7 +24,7 @@ public class ArticleDataSeeder implements DataSeeder{
             articleRepository.save(article);
         }
 
-        log.info("샘플 기사 10개 생성 완료");
+        log.info("샘플 기사 5개 생성 완료");
     }
 
     private Article createArticle(String source, String sourceUrl, String title, String summary, Instant publishDate) {

@@ -51,7 +51,7 @@ public class CommentLikeFixture {
             .commentId(commentLike.getComment().getId())
             .articleId(commentLike.getComment().getArticle().getId())
             .commentUserId(commentLike.getComment().getAuthor().getId())
-            .commentUserNickname(commentLike.getUser().getNickname())
+            .commentUserNickname(commentLike.getComment().getAuthor().getNickname())
             .commentContent(commentLike.getComment().getContent())
             .commentLikeCount(commentLike.getComment().getLikeCount())
             .commentCreatedAt(commentLike.getComment().getCreatedAt())

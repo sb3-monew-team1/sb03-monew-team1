@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.repository;
 
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,13 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
     void deleteByCommentId(UUID commentId);
 
     boolean existsByCommentIdAndUserId(UUID commentId, UUID userId);
+
+    @Query("""
+            SELECT cl.comment.id FROM CommentLike cl 
+            WHERE cl.user.id = :userId AND cl.comment.id IN :commentIds
+           """)
+    Set<UUID> findLikedCommentIdsByUserIdAndCommentIds(
+        @Param("userId") UUID userId,
+        @Param("commentIds") List<UUID> commentIds
+    );
 }

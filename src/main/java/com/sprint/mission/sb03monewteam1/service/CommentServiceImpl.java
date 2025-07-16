@@ -25,7 +25,9 @@ import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -143,8 +145,22 @@ public class CommentServiceImpl implements CommentService {
 
         comments = hasNext ? comments.subList(0, size) : comments;
 
+        List<UUID> commentIds = comments.stream()
+            .map(Comment::getId)
+            .toList();
+
+        Set<UUID> likedCommentIds = (userId != null && !commentIds.isEmpty())
+            ? commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIds(userId, commentIds)
+            : Collections.emptySet();
+
         List<CommentDto> commentDtos = comments.stream()
-            .map(comment -> toCommentDtoWithLikedByMe(comment, userId))
+            .map(comment -> {
+                boolean likedByMe = likedCommentIds.contains(comment.getId());
+                return commentMapper.toDto(comment)
+                    .toBuilder()
+                    .likedByMe(likedByMe)
+                    .build();
+            })
             .toList();
 
         log.info("댓글 목록 조회 완료 - 조회된 댓글 수: {}, hasNext: {}", commentDtos.size(), hasNext);
