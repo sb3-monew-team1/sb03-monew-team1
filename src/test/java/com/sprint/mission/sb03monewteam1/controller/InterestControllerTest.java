@@ -411,6 +411,5 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
         }
-
     }
 }

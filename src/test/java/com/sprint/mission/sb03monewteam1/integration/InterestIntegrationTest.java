@@ -316,7 +316,6 @@ class InterestIntegrationTest {
 
         private Interest testInterest;
         private User testUser;
-        private Subscription subscription;
 
         @Test
         void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() throws Exception {
@@ -337,7 +336,6 @@ class InterestIntegrationTest {
                     .header("Monew-Request-User-ID", testUser.getId()))
                 .andExpect(status().isCreated());
         }
-
 
         @Test
         void 구독하려는_관심사가_없는_경우_404를_반환한다() throws Exception {

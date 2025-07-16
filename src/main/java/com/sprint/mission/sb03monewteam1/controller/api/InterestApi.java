@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.controller.api;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.exception.ErrorResponse;
@@ -10,7 +11,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "관심사 관리", description = "관심사 관련 API")
@@ -94,5 +98,37 @@ public interface InterestApi {
         @RequestParam(defaultValue = "10") int limit,
         @RequestParam(defaultValue = "subscriberCount") String orderBy,
         @RequestParam(defaultValue = "DESC") String direction
+    );
+
+    @Operation(summary = "관심사 구독", description = "사용자가 특정 관심사를 구독합니다.")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "201",
+            description = "구독 성공",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = SubscriptionDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "관심사를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<SubscriptionDto> createSubscription(
+        @PathVariable UUID interestId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId
     );
 }

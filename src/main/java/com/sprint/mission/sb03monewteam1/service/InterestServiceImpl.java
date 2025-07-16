@@ -125,32 +125,32 @@ public class InterestServiceImpl implements InterestService {
 
     @Transactional
     public SubscriptionDto createSubscription(UUID userId, UUID interestId) {
+        log.info("구독 생성 요청: userId={}, interestId={}", userId, interestId);
+
         Interest interest = interestRepository.findById(interestId)
             .orElseThrow(() -> new InterestNotFoundException(ErrorCode.INTEREST_NOT_FOUND));
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        // Create a Subscription object using the builder
+        log.info("현재 관심사 구독자 수: {}", interest.getSubscriberCount());
+
+        interest.setSubscriberCount(interest.getSubscriberCount() + 1);
+        log.info("구독자 수 증가 후: {}", interest.getSubscriberCount());
+
         Subscription subscription = Subscription.builder()
-            .user(user)  // Ensure 'user' is initialized
+            .user(user)
             .interest(interest)
             .build();
 
-        // Save the Subscription
         Subscription savedSubscription = subscriptionRepository.save(subscription);
 
-        // Return the DTO
+        log.info("구독 생성 완료: subscriptionId={}, userId={}, interestId={}",
+            savedSubscription.getId(), user.getId(), interest.getId());
+
         return subscriptionMapper.toDto(savedSubscription);
     }
 
-    public Interest findById(UUID interestId) {
-        return interestRepository.findById(interestId)
-            .orElseThrow(() -> {
-                Map<String, String> details = Map.of("interestId", interestId.toString());
-                return new InterestNotFoundException(ErrorCode.INTEREST_NOT_FOUND, details);
-            });
-    }
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
         if (interests.size() <= limit) {
             return null;

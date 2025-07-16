@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -290,9 +291,6 @@ class InterestServiceTest {
         @Test
         void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() {
             // Given
-            UUID userId = UUID.randomUUID();
-            UUID interestId = UUID.randomUUID();
-
             Interest interest = Interest.builder()
                 .name("aesthetic")
                 .subscriberCount(150L)
@@ -301,8 +299,6 @@ class InterestServiceTest {
             User user = User.builder()
                 .nickname("testUser")
                 .build();
-
-            ReflectionTestUtils.setField(user, "id", userId);
 
             Subscription subscription = new Subscription(interest, user);
 
@@ -314,21 +310,22 @@ class InterestServiceTest {
                 .createdAt(subscription.getCreatedAt())
                 .build();
 
-            when(interestRepository.findById(interestId)).thenReturn(Optional.of(interest));
-            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            when(interestRepository.findById(interest.getId())).thenReturn(Optional.of(interest));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             when(subscriptionRepository.save(any(Subscription.class))).thenReturn(subscription);
             when(subscriptionMapper.toDto(subscription)).thenReturn(expectedDto);
 
             // When
-            SubscriptionDto result = interestService.createSubscription(interestId, userId);
+            SubscriptionDto result = interestService.createSubscription(interest.getId(), user.getId());
 
             // Then
             assertThat(result).isNotNull();
+            assertThat(interest.getSubscriberCount()).isEqualTo(151L);
             assertThat(result.interestId()).isEqualTo(expectedDto.interestId());
             assertThat(result.interestName()).isEqualTo(expectedDto.interestName());
             assertThat(result.interestSubscriberCount()).isEqualTo(expectedDto.interestSubscriberCount());
             assertThat(result.createdAt()).isEqualTo(expectedDto.createdAt());
-            verify(interestRepository).findById(interestId);
+            verify(interestRepository).findById(interest.getId());
         }
 
 
@@ -336,17 +333,18 @@ class InterestServiceTest {
         void 구독하려는_관심사가_없는_경우_InterestNotFoundException가_발생한다() {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
-            UUID userId = UUID.randomUUID();
+            User user = User.builder()
+                .nickname("testUser")
+                .build();
 
             when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
 
             // When & Then
-            Throwable throwable = catchThrowable(() -> {
-                interestService.createSubscription(nonExistentInterestId, userId);
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
+                interestService.createSubscription(user.getId(), nonExistentInterestId);
             });
 
-            assertThat(throwable).isInstanceOf(InterestNotFoundException.class)
-                .hasMessageContaining("관심사를 찾을 수 없습니다.");
+            assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
 
             verify(interestRepository).findById(nonExistentInterestId);
         }
