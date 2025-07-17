@@ -77,7 +77,7 @@ public class ArticleController implements ArticleApi {
 
     @Override
     @DeleteMapping("/{articleId}/hard")
-    public ResponseEntity<Void> deleteHard(UUID articleId) {
+    public ResponseEntity<Void> deleteHard(@PathVariable UUID articleId) {
         log.info("기사 물리 삭제 요청 - articleId: {}", articleId);
         articleService.deleteHard(articleId);
         return ResponseEntity.noContent().build();
