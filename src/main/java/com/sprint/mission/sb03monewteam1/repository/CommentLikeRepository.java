@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.repository;
 
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,6 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
         @Param("userId") UUID userId,
         @Param("commentIds") List<UUID> commentIds
     );
+
+    Optional<CommentLike> findByUserIdAndCommentId(UUID userId, UUID commentId);
 }

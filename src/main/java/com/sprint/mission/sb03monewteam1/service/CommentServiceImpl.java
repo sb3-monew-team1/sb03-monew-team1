@@ -12,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentLikeNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -264,6 +265,11 @@ public class CommentServiceImpl implements CommentService {
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
 
         return commentLikeMapper.toDto(commentLike);
+    }
+
+    @Override
+    public void likeCancel(UUID commentId, UUID userId) {
+
     }
 
     private void validateAuthor(Comment comment, UUID userId) {

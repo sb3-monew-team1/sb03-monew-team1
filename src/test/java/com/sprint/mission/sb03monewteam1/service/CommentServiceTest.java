@@ -20,6 +20,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentLikeNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -916,16 +917,80 @@ public class CommentServiceTest {
         }
     }
 
-    private List<Comment> createCommentsWithCreatedAt(int count, Article article, User user) {
-        List<Comment> comments = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Instant createdAt = Instant.now().plusMillis(i);
-            Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, createdAt);
-            ReflectionTestUtils.setField(comment, "createdAt", createdAt);
-            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-            comments.add(comment);
+    @Nested
+    @DisplayName("댓글 좋아요 취소 테스트")
+    class CommentLikeCancelTest {
+
+        @Test
+        void 좋아요_취소시_댓글의_좋아요수가_1감소한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            UUID commentId = UUID.randomUUID();
+            UUID commentLikeId = UUID.randomUUID();
+
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            Comment comment = CommentFixture.createCommentWithLikeCount("좋아요 취소 테스트", user, article, 1L);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+            CommentLike savedCommentLike = CommentLikeFixture.createCommentLike(user, comment);
+            ReflectionTestUtils.setField(savedCommentLike, "id", commentLikeId);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+            given(commentLikeRepository.findByUserIdAndCommentId(commentId, userId)).willReturn(Optional.of(savedCommentLike));
+            willDoNothing().given(commentLikeRepository).deleteById(commentLikeId);
+
+            // when
+            commentService.likeCancel(commentId, userId);
+
+            // then
+            assertThat(comment.getLikeCount()).isEqualTo(0L);
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+            then(commentLikeRepository).should().findByUserIdAndCommentId(commentId, userId);
+            then(commentLikeRepository).should().deleteById(commentLikeId);
         }
-        return comments;
+
+        @Test
+        void 존재하지_않는_댓글에_좋아요_취소시_예외를_던진다() {
+
+            // given
+            UUID invalidCommentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentRepository.findByIdAndIsDeletedFalse(invalidCommentId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.likeCancel(invalidCommentId, userId);
+            }).isInstanceOf(CommentNotFoundException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(invalidCommentId);
+        }
+
+        @Test
+        void 좋아요_정보가_없는_상태에서_좋아요_취소시_예외를_던진다() {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            Comment comment = CommentFixture.createCommentWithLikeCount("좋아요 취소 테스트", user, article, 1L);
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+            given(commentLikeRepository.findByUserIdAndCommentId(commentId, userId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                commentService.likeCancel(commentId, userId);
+            }).isInstanceOf(CommentLikeNotFoundException.class);
+
+            then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
+            then(commentLikeRepository).should().findByUserIdAndCommentId(commentId, userId);
+        }
     }
 
     private List<Comment> createCommentsWithLikeCount(int count, Article article, User user) {
