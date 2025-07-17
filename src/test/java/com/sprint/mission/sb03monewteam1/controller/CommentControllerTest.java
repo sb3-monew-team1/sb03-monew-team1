@@ -15,11 +15,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -28,6 +30,7 @@ import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAc
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.CommentService;
 import java.time.Instant;
@@ -160,9 +163,12 @@ public class CommentControllerTest {
         void 댓글을_조회하면_200과_댓글목록이_반환된다() throws Exception {
 
             // given
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
-            Article article = ArticleFixture.createArticle();
-            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             String sortBy = "createdAt";
             String sortDirection = "DESC";
             int totalCount = 10;
@@ -189,11 +195,12 @@ public class CommentControllerTest {
                 .hasNext(true)
                 .build();
 
-            given(commentService.getCommentsWithCursorBySort(eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+            given(commentService.getCommentsWithCursorBySort(eq(articleId), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId)))
                 .willReturn(result);
 
             // when & then
             mockMvc.perform(get("/api/comments")
+                    .param("articleId", articleId.toString())
                     .param("orderBy", sortBy)
                     .param("direction", sortDirection)
                     .param("limit", String.valueOf(pageSize))
@@ -212,9 +219,12 @@ public class CommentControllerTest {
         @Test
         void 커서가_있으면_커서_이후의_댓글만_조회된다() throws Exception {
             // given
+            UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
-            Article article = ArticleFixture.createArticle();
-            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
             String sortBy = "createdAt";
             String sortDirection = "DESC";
             int totalCount = 10;
@@ -245,11 +255,12 @@ public class CommentControllerTest {
                 .hasNext(true)
                 .build();
 
-            given(commentService.getCommentsWithCursorBySort(eq(null), eq(cursor), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection)))
+            given(commentService.getCommentsWithCursorBySort(eq(articleId), eq(cursor), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId)))
                 .willReturn(result);
 
             // when & then
             mockMvc.perform(get("/api/comments")
+                    .param("articleId", articleId.toString())
                     .param("cursor", cursor)
                     .param("orderBy", sortBy)
                     .param("direction", sortDirection)
@@ -276,7 +287,7 @@ public class CommentControllerTest {
             int pageSize = 5;
 
             given(commentService.getCommentsWithCursorBySort(
-                eq(invalidArticleId), any(), any(), eq(pageSize), eq(sortBy), eq(sortDirection))
+                eq(invalidArticleId), any(), any(), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId))
             ).willThrow(new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
             // when & then
@@ -301,7 +312,7 @@ public class CommentControllerTest {
             int pageSize = 5;
 
             given(commentService.getCommentsWithCursorBySort(
-                eq(null), eq(null), eq(null), eq(pageSize), eq(invalidSortBy), eq(sortDirection)
+                eq(null), eq(null), eq(null), eq(pageSize), eq(invalidSortBy), eq(sortDirection), eq(userId)
             )).willThrow(new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD));
 
             // when & then
@@ -324,7 +335,7 @@ public class CommentControllerTest {
             String invalidDirection = "INVALID";
 
             given(commentService.getCommentsWithCursorBySort(
-                eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(invalidDirection)
+                eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(invalidDirection), eq(userId)
             )).willThrow(new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION));
 
             mockMvc.perform(get("/api/comments")
@@ -590,6 +601,59 @@ public class CommentControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
                 .andExpect(jsonPath("$.message").exists());
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 좋아요 테스트")
+    class CommentLikeTest {
+
+        @Test
+        void 댓글에_좋아요를_누르면_200과_좋아요DTO_좋아요수가_1증가되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            Comment comment = CommentFixture.createComment("좋아요 테스트", user, article);
+            ReflectionTestUtils.setField(comment, "id", commentId);
+            ReflectionTestUtils.setField(comment, "createdAt", Instant.now());
+            CommentLike commentLike = CommentLikeFixture.createCommentLike(user, comment);
+            CommentLikeDto responseDto = CommentLikeFixture.createCommentLikeDtoWithLikeCount(commentLike,1L);
+
+            given(commentService.like(eq(commentId), eq(userId))).willReturn(responseDto);
+
+            // when & then
+            mockMvc.perform(post("/api/comments/{commentId}/comment-likes", commentId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.likedBy").value(userId.toString()))
+                .andExpect(jsonPath("$.commentId").value(commentId.toString()))
+                .andExpect(jsonPath("$.commentLikeCount").value(1L))
+                .andExpect(jsonPath("$.articleId").value(article.getId().toString()))
+                .andExpect(jsonPath("$.commentUserId").value(userId.toString()))
+                .andExpect(jsonPath("$.commentUserNickname").value(user.getNickname()))
+                .andExpect(jsonPath("$.commentContent").value(comment.getContent()))
+                .andExpect(jsonPath("$.commentCreatedAt").exists());
+        }
+
+        @Test
+        void 존재하지_않는_댓글에_좋아요를_요청시_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(commentService.like(eq(commentId), eq(userId)))
+                .willThrow(new CommentNotFoundException(commentId));
+
+            // when & then
+            mockMvc.perform(post("/api/comments/{commentId}/comment-likes", commentId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNotFound());
         }
     }
 }

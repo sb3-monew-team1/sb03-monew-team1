@@ -16,4 +16,6 @@ public interface UserService {
 
     void delete(UUID requestHeaderUserId, UUID userId);
 
+    void deleteHard(UUID requestHeaderUserId, UUID userId);
+
 }
