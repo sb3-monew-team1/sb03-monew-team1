@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.entity;
 
+import com.sprint.mission.sb03monewteam1.dto.ResourceType;
 import com.sprint.mission.sb03monewteam1.entity.base.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,7 +30,7 @@ public class Notification extends BaseUpdatableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "resource_type", nullable = false)
-    private String resourceType;
+    private ResourceType resourceType;
 
     @Column(name = "resource_id")
     private UUID resourceId;
