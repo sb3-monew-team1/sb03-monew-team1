@@ -15,18 +15,15 @@ public interface CommentRepository extends JpaRepository<Comment, UUID>, Comment
 
     Long countByArticleId(UUID articleId);
 
-    @Modifying
-    @Query("UPDATE Comment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :commentId")
-    int increaseLikeCount(@Param("commentId") UUID commentId);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE Comment c "
-        + "SET c.likeCount = CASE WHEN c.likeCount > 0 THEN c.likeCount - 1 ELSE 0 END,"
-        + " c.isDeleted = true"
-        + " WHERE c.id = :commentId")
-    void decreaseLikeCountAndDeleteById(@Param("commentId") UUID commentId);
+    @Query("UPDATE Comment c " +
+        "SET c.likeCount = CASE WHEN c.likeCount > 0 THEN c.likeCount - 1 ELSE 0 END " +
+        "WHERE c.id = :commentId")
+    void decreaseLikeCountById(@Param("commentId") UUID commentId);
 
     Optional<Comment> findByIdAndIsDeletedFalse(UUID commentId);
 
     List<Comment> findAllByArticleId(UUID articleId);
+
+    List<Comment> findByAuthorId(UUID userId);
 }

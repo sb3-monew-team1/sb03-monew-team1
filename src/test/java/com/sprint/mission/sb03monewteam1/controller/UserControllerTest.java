@@ -15,6 +15,7 @@ import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserUpdateRequest;
+import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
@@ -32,6 +33,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @ActiveProfiles("test")
@@ -368,6 +370,72 @@ public class UserControllerTest {
             mockMvc.perform(delete("/api/users/{userId}", userId)
                     .requestAttr("userId", requestHeaderUserId))
                 .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 물리 삭제 테스트")
+    class UserForceDeleteTests {
+
+        @Test
+        void 사용자를_물리_삭제_시_204를_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UserFixture.getDefaultId();
+
+            willDoNothing().given(userService).deleteHard(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                    .requestAttr("userId", userId))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 다른_사용자를_물리_삭제_시_403을_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new ForbiddenAccessException("다른 사용자를 삭제 할 수 없습니다"))
+                .given(userService).deleteHard(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void 존재하지_않는_사용자를_물리_삭제_시_404을_반환해야_한다() throws Exception {
+            // Given
+            UUID requestHeaderUserId = UserFixture.getDefaultId();
+            UUID userId = UserFixture.getDefaultId();
+
+            willThrow(new UserNotFoundException(userId))
+                .given(userService).deleteHard(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void 논리_삭제된_사용자를_물리_삭제_시에도_204를_반환해야_한다() throws Exception {
+            // Given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID requestHeaderUserId = user.getId();
+            UUID userId = user.getId();
+            user.setDeleted();
+
+            willDoNothing().given(userService).deleteHard(requestHeaderUserId, userId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                    .requestAttr("userId", requestHeaderUserId))
+                .andExpect(status().isNoContent());
         }
     }
 }
