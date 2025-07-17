@@ -25,9 +25,11 @@ import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentLikeNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
@@ -654,6 +656,66 @@ public class CommentControllerTest {
             mockMvc.perform(post("/api/comments/{commentId}/comment-likes", commentId)
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 좋아요 취소 테스트")
+    class CommentLikeCancelTest {
+
+        @Test
+        void 댓글_좋아요_취소시_204가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            willDoNothing()
+                .given(commentService)
+                .likeCancel(eq(commentId), eq(userId));
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/{commentId}/comment-likes", commentId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 존재하지_않는_댓글에_좋아요_취소_요청시_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new CommentNotFoundException(commentId))
+                .given(commentService)
+                .likeCancel(eq(commentId), eq(userId));;
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/{commentId}/comment-likes", commentId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 좋아요를_누르지_않은_댓글에_좋아요_취소_요청시_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID commentId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new CommentLikeNotFoundException(userId, commentId))
+                .given(commentService)
+                .likeCancel(eq(commentId), eq(userId));
+
+            // when & then
+            mockMvc.perform(delete("/api/comments/{commentId}/comment-likes", commentId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMMENT_LIKE_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
         }
     }
 }

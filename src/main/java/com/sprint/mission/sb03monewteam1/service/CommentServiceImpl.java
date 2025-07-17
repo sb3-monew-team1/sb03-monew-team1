@@ -12,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentLikeNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -264,6 +265,26 @@ public class CommentServiceImpl implements CommentService {
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
 
         return commentLikeMapper.toDto(commentLike);
+    }
+
+    @Override
+    public void likeCancel(UUID commentId, UUID userId) {
+
+        log.info("댓글 좋아요 취소 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        // 댓글 유효성
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        // 댓글 좋아요 여부 확인
+        CommentLike commentLike = commentLikeRepository.findByUserIdAndCommentId(userId, commentId)
+            .orElseThrow(() -> new CommentLikeNotFoundException(userId, commentId));
+
+        // 댓글 좋아요 -1
+        commentLikeRepository.deleteById(commentLike.getId());
+        comment.decreaseLikeCount();
+
+        log.info("댓글 좋아요 취소 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
     }
 
     private void validateAuthor(Comment comment, UUID userId) {
