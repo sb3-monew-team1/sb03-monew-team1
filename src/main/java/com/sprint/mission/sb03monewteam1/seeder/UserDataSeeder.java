@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
-@Profile("dev")
+@Profile({"dev", "postgres"})
 @RequiredArgsConstructor
 public class UserDataSeeder implements DataSeeder {
 
