@@ -6,7 +6,6 @@ import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
-import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.service.CommentService;
 import jakarta.validation.Valid;
 import java.time.Instant;
@@ -37,15 +36,15 @@ public class CommentController implements CommentApi {
     @Override
     @PostMapping
     public ResponseEntity<CommentDto> create(
-            @Valid @RequestBody CommentRegisterRequest commentRegisterRequest
+        @Valid @RequestBody CommentRegisterRequest commentRegisterRequest
     ) {
         log.info("댓글 등록 요청: {}", commentRegisterRequest);
         CommentDto commentDto = commentService.create(commentRegisterRequest);
         log.info("댓글 등록 완료: {}", commentDto);
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(commentDto);
+            .status(HttpStatus.CREATED)
+            .body(commentDto);
     }
 
     @Override
@@ -59,7 +58,9 @@ public class CommentController implements CommentApi {
         @RequestParam(required = false) Instant after,
         @RequestParam int limit
     ) {
-        log.info("댓글 목록 조회 요청: articleId = {}, cursor = {}, after = {}, limit = {}, orderBy = {}, direction = {}", articleId, cursor, after, limit, orderBy, direction);
+        log.info(
+            "댓글 목록 조회 요청: articleId = {}, cursor = {}, after = {}, limit = {}, orderBy = {}, direction = {}",
+            articleId, cursor, after, limit, orderBy, direction);
         CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
             articleId, cursor, after, limit, orderBy, direction, userId
         );
@@ -79,7 +80,8 @@ public class CommentController implements CommentApi {
         @Valid @RequestBody CommentUpdateRequest commentUpdateRequest
     ) {
         String updateContent = commentUpdateRequest.content();
-        log.info("댓글 수정 요청: commentId = {}, userId = {}, 수정 내용 = {}", commentId, userId, updateContent);
+        log.info("댓글 수정 요청: commentId = {}, userId = {}, 수정 내용 = {}", commentId, userId,
+            updateContent);
 
         CommentDto result = commentService.update(commentId, userId, commentUpdateRequest);
 
