@@ -1,14 +1,13 @@
--- 유저에게 DB 권한 부여
-GRANT ALL PRIVILEGES ON DATABASE monew TO monew_user;
-
--- 기본 public 스키마 대신 사용자 전용 공간에서의 관리를 위한 스키마 생성
-CREATE SCHEMA IF NOT EXISTS monew AUTHORIZATION monew_user;
-
--- monew_user 유저 기본 접근 스키마 설정
-ALTER ROLE monew_user SET search_path TO monew;
-
--- 이후 모든 테이블 생성 및 쿼리는 monew 스키마 내에서 진행
-SET search_path TO monew;
+-- ============ 권한 부여 및 스키마 설정 ============
+-- 1. 유저에게 DB 권한 부여
+-- 2. 기본 public 스키마 대신 사용자 전용 공간에서의 관리를 위한 스키마 생성
+-- 3. monew_user 유저 기본 접근 스키마 설정
+-- 4. 이후 모든 테이블 생성 및 쿼리는 monew 스키마 내에서 진행
+-- GRANT ALL PRIVILEGES ON DATABASE monew TO monew_user;
+-- CREATE SCHEMA IF NOT EXISTS monew AUTHORIZATION monew_user;
+-- ALTER ROLE monew_user SET search_path TO monew;
+-- SET search_path TO monew;
+-- ==================================================
 
 -- =============================
 -- 💣 Drop all tables if exist
