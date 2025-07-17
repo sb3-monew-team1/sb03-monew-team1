@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Profile("dev")
+@Profile({"dev", "postgres"})
 @Component
 @RequiredArgsConstructor
 public class AllDataSeederRunner {
