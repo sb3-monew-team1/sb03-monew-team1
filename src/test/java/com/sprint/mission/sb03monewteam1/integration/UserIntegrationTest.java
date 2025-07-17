@@ -233,7 +233,7 @@ public class UserIntegrationTest {
     }
 
     @Test
-    void 사용자_삭제_시_구독자수_좋아요수_감소_및_논리삭제_적용되어야_한다() throws Exception {
+    void 사용자_논리_삭제_시_구독자수_좋아요_수가_감소되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
         User savedUser = userRepository.save(user);
@@ -258,7 +258,6 @@ public class UserIntegrationTest {
 
         Long beforeSubscriberCount
             = interestRepository.findById(savedInterest.getId()).get().getSubscriberCount();
-
         Long beforeCommentLikeCount
             = commentRepository.findById(savedComment.getId()).get().getLikeCount();
 
@@ -278,9 +277,6 @@ public class UserIntegrationTest {
 
         User deletedUser = userRepository.findById(userId).orElseThrow();
         assertThat(deletedUser.isDeleted()).isTrue();
-
-        Comment deletedComment = commentRepository.findById(savedComment.getId()).orElseThrow();
-        assertThat(deletedComment.getIsDeleted()).isTrue();
 
     }
 
@@ -302,7 +298,7 @@ public class UserIntegrationTest {
     }
 
     @Test
-    void 존재하지_않는_사용자를_삭제할_시_404를_반환해야_한다() throws Exception {
+    void 존재하지_않는_사용자를_논리_삭제할_시_404를_반환해야_한다() throws Exception {
         // Given
         UUID requestHeaderUserId = UserFixture.getDefaultId();
         UUID userId = UserFixture.getDefaultId();
@@ -314,7 +310,7 @@ public class UserIntegrationTest {
     }
 
     @Test
-    void 논리_삭제된_사용자를_삭제할_시_404를_반환해야_한다() throws Exception {
+    void 논리_삭제된_사용자를_논리_삭제할_시_404를_반환해야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
         user.setDeleted();
@@ -329,5 +325,156 @@ public class UserIntegrationTest {
 
     }
 
+    @Test
+    void 논리_삭제_되지_않은_사용자를_물리_삭제_시_관련_객체가_모두_제거되어야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        User savedUser = userRepository.save(user);
+
+        User otherUser = UserFixture.createUser("other@example.com", "otherUser", "Password123!");
+        User savedOtherUser = userRepository.save(otherUser);
+
+        UUID requestHeaderUserId = savedUser.getId();
+        UUID userId = savedUser.getId();
+
+        Interest interest = InterestFixture.createInterest();
+        Interest savedInterest = interestRepository.save(interest);
+
+        Subscription subscription = SubscriptionFixture.createSubscription(savedUser,
+            savedInterest);
+        subscriptionRepository.save(subscription);
+
+        Article article = ArticleFixture.createArticle();
+        articleRepository.save(article);
+
+        Comment comment = CommentFixture.createComment(savedUser, article);
+        Comment otherComment = CommentFixture.createComment(savedOtherUser, article);
+        Comment savedComment = commentRepository.save(comment);
+        Comment savedOtherComment = commentRepository.save(otherComment);
+
+        CommentLike commentLike = CommentLikeFixture.createCommentLike(savedUser, savedComment);
+        CommentLike otherCommentLike = CommentLikeFixture.createCommentLike(savedUser,
+            savedOtherComment);
+        commentLikeRepository.save(commentLike);
+        commentLikeRepository.save(otherCommentLike);
+
+        Long beforeSubscriberCount
+            = interestRepository.findById(savedInterest.getId()).get().getSubscriberCount();
+        Long beforeCommentLikeCount
+            = commentRepository.findById(savedOtherComment.getId()).get().getLikeCount();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNoContent());
+
+        Long afterSubscriberCount = interestRepository.findById(savedInterest.getId()).get()
+            .getSubscriberCount();
+        Long afterCommentLikeCount = commentRepository.findById(savedOtherComment.getId()).get()
+            .getLikeCount();
+
+        assertThat(afterSubscriberCount).isEqualTo(beforeSubscriberCount - 1);
+
+        assertThat(afterCommentLikeCount).isEqualTo(beforeCommentLikeCount - 1);
+
+        boolean userExists = userRepository.existsById(userId);
+        assertThat(userExists).isFalse();
+
+        boolean commentExists = commentRepository.existsById(savedComment.getId());
+        assertThat(commentExists).isFalse();
+
+    }
+
+    @Test
+    void 논리_삭제된_사용자를_물리_삭제할_시_정상적으로_연관된_객체를_삭제해야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        user.setDeleted();
+        User savedUser = userRepository.save(user);
+
+        User otherUser = UserFixture.createUser("other@example.com", "otherUser", "Password123!");
+        User savedOtherUser = userRepository.save(otherUser);
+
+        UUID requestHeaderUserId = savedUser.getId();
+        UUID userId = savedUser.getId();
+
+        Interest interest = InterestFixture.createInterest();
+        Interest savedInterest = interestRepository.save(interest);
+
+        Subscription subscription = SubscriptionFixture.createSubscription(savedUser,
+            savedInterest);
+        subscriptionRepository.save(subscription);
+
+        Article article = ArticleFixture.createArticle();
+        articleRepository.save(article);
+
+        Comment comment = CommentFixture.createComment(savedUser, article);
+        Comment otherComment = CommentFixture.createComment(savedOtherUser, article);
+        Comment savedComment = commentRepository.save(comment);
+        Comment savedOtherComment = commentRepository.save(otherComment);
+
+        CommentLike commentLike = CommentLikeFixture.createCommentLike(savedUser, savedComment);
+        CommentLike otherCommentLike = CommentLikeFixture.createCommentLike(savedUser,
+            savedOtherComment);
+        commentLikeRepository.save(commentLike);
+        commentLikeRepository.save(otherCommentLike);
+
+        Long beforeSubscriberCount
+            = interestRepository.findById(savedInterest.getId()).get().getSubscriberCount();
+        Long beforeOtherCommentLikeCount =
+            commentRepository.findById(savedOtherComment.getId()).orElseThrow().getLikeCount();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNoContent());
+
+        Long afterSubscriberCount = interestRepository.findById(savedInterest.getId())
+            .get()
+            .getSubscriberCount();
+        Long afterOtherCommentLikeCount = commentRepository.findById(savedOtherComment.getId())
+            .get()
+            .getLikeCount();
+
+        assertThat(afterSubscriberCount).isEqualTo(beforeSubscriberCount);
+        assertThat(afterOtherCommentLikeCount).isEqualTo(beforeOtherCommentLikeCount);
+
+        boolean userExists = userRepository.existsById(userId);
+        assertThat(userExists).isFalse();
+
+        boolean commentExists = commentRepository.existsById(savedComment.getId());
+        assertThat(commentExists).isFalse();
+
+    }
+
+
+    @Test
+    void 다른_사용자를_물리_삭제_시_403을_반환해야_한다() throws Exception {
+        // Given
+        User user = UserFixture.createUser();
+        User savedUser = userRepository.save(user);
+        UUID requestHeaderUserId = UUID.randomUUID();
+        UUID userId = savedUser.getId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isForbidden());
+
+        User result = userRepository.findById(userId).orElseThrow();
+        assertThat(result.isDeleted()).isFalse();
+    }
+
+    @Test
+    void 존재하지_않는_사용자를_물리_삭제할_시_404를_반환해야_한다() throws Exception {
+        // Given
+        UUID requestHeaderUserId = UserFixture.getDefaultId();
+        UUID userId = UserFixture.getDefaultId();
+
+        // When & Then
+        mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .requestAttr("userId", requestHeaderUserId))
+            .andExpect(status().isNotFound());
+    }
 
 }
