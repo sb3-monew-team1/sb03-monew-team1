@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  # PostgreSQL 데이터베이스 서비스
+  postgres:
+    image: postgres:15-alpine
+    container_name: monew-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - monew_postgres:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - monew-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 애플리케이션 서비스
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: monew:monew-local
+    container_name: monew-app
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres # 컨테이너 환경용
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_PORT: ${APP_INTERNAL_PORT:-80}
+      JVM_OPTS: ${JVM_OPTS:-}
+      # AWS S3 Configuration
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
+      AWS_S3_REGION: ${AWS_S3_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      # NAVER
+      NEWS_API_NAVER_CLIENT_ID: ${NEWS_API_NAVER_CLIENT_ID}
+      NEWS_API_NAVER_CLIENT_SECRET: ${NEWS_API_NAVER_CLIENT_SECRET}
+      # NAVER API
+      NEWS_API_NAVER_BASE_URL: ${NEWS_API_NAVER_BASE_URL}
+      # RSS URLs
+      NEWS_RSS_HANKYUNG_URL: ${NEWS_RSS_HANKYUNG_URL}
+      NEWS_RSS_CHOSUN_URL: ${NEWS_RSS_CHOSUN_URL}
+      NEWS_RSS_YONHAP_URL: ${NEWS_RSS_YONHAP_URL}
+    ports:
+      - "${APP_EXTERNAL_PORT:-8080}:${APP_INTERNAL_PORT:-80}" # 외부 포트와 내부 포트 매핑
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - monew-network
+    restart: unless-stopped
+
+# 볼륨 정의
+volumes:
+  monew_postgres:
+    driver: local
+
+# 네트워크 정의
+networks:
+  monew-network:
+    driver: bridge
