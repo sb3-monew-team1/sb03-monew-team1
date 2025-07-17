@@ -15,7 +15,7 @@ COPY gradlew gradlew.bat build.gradle settings.gradle ./
 COPY gradle/ gradle/
 
 # 의존성만 먼저 다운로드 (캐시 활용)
-RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || return 0
+RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || true
 
 # 소스 코드 복사
 COPY src/ src/
