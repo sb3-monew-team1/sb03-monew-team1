@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -17,15 +18,18 @@ public class ArticleDataSeeder implements DataSeeder {
     private final ArticleRepository articleRepository;
 
     @Override
+    @Transactional
     public void seed() {
+        if (articleRepository.count() > 0) {
+            log.info("ArticleDataSeeder: 기사가 이미 존재하여 시드를 실행하지 않습니다.");
+            return;
+        }
 
         for (int i = 1; i <= 5; i++) {
-            String sourceUrl = "https://news.naver.com/article" + i;
-            if (!articleRepository.existsBySourceUrl(sourceUrl)) {
-                Article article = createArticle("NAVER", sourceUrl, "샘플 기사" + i, "샘플 요약",
-                    Instant.now());
-                articleRepository.save(article);
-            }
+            Article article = createArticle("NAVER", "https://news.naver.com/article" + i,
+                "샘플 기사" + i, "샘플 요약", Instant.now());
+            articleRepository.save(article);
+            articleRepository.flush();
         }
 
         log.info("샘플 기사 5개 생성 완료");

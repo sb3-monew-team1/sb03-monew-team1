@@ -9,10 +9,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5433:5432"
+      - "${PG_EXTERNAL_PORT:-5433}:${POSTGRES_PORT:-5432}"
     volumes:
+      # 실행 sql은 라인이 아닌 알파벳 순서로 실행되기 때문에 번호 명시
       - monew_postgres:/var/lib/postgresql/data
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./src/main/resources/docker-pg-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
     networks:
       - monew-network
     healthcheck:

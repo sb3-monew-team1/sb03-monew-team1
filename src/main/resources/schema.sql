@@ -19,7 +19,7 @@
 -- 🛠 Create tables (UUID version, NO DEFAULT)
 -- =============================
 
-CREATE TABLE users
+CREATE TABLE IF NOT EXISTS users
 (
     id         UUID PRIMARY KEY,
     email      VARCHAR(100)             NOT NULL UNIQUE,
@@ -30,7 +30,7 @@ CREATE TABLE users
     updated_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE interests
+CREATE TABLE IF NOT EXISTS interests
 (
     id               UUID PRIMARY KEY,
     name             VARCHAR(255)             NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE interests
     updated_at       TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE subscriptions
+CREATE TABLE IF NOT EXISTS subscriptions
 (
     id          UUID PRIMARY KEY,
     interest_id UUID                     NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE subscriptions
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE interest_keywords
+CREATE TABLE IF NOT EXISTS interest_keywords
 (
     id          UUID PRIMARY KEY,
     keyword     VARCHAR(255)             NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE interest_keywords
     FOREIGN KEY (interest_id) REFERENCES interests (id)
 );
 
-CREATE TABLE articles
+CREATE TABLE IF NOT EXISTS articles
 (
     id            UUID PRIMARY KEY,
     source        VARCHAR(50)              NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE articles
     created_at    TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE comments
+CREATE TABLE IF NOT EXISTS comments
 (
     id         UUID PRIMARY KEY,
     content    VARCHAR(500)             NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE comments
     FOREIGN KEY (article_id) REFERENCES articles (id)
 );
 
-CREATE TABLE comment_likes
+CREATE TABLE IF NOT EXISTS comment_likes
 (
     id         UUID PRIMARY KEY,
     comment_id UUID                     NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE comment_likes
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE article_views
+CREATE TABLE IF NOT EXISTS article_views
 (
     id         UUID PRIMARY KEY,
     user_id    UUID                     NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE article_views
     FOREIGN KEY (article_id) REFERENCES articles (id)
 );
 
-CREATE TABLE article_interests
+CREATE TABLE IF NOT EXISTS article_interests
 (
     id          UUID PRIMARY KEY,
     article_id  UUID                     NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE article_interests
     FOREIGN KEY (interest_id) REFERENCES interests (id)
 );
 
-CREATE TABLE activity_logs
+CREATE TABLE IF NOT EXISTS activity_logs
 (
     id          UUID PRIMARY KEY,
     action_type VARCHAR(15)              NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE activity_logs
     CHECK (action_type IN ('VIEW_ARTICLE', 'LIKE_COMMENT', 'COMMENT', 'SUBSCRIBE'))
 );
 
-CREATE TABLE notifications
+CREATE TABLE IF NOT EXISTS notifications
 (
     id            UUID PRIMARY KEY,
     content       TEXT                     NOT NULL,
