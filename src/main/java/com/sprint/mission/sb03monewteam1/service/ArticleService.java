@@ -31,4 +31,6 @@ public interface ArticleService {
     void collectAndSaveHankyungArticles(Interest interest, String keyword);
 
     void delete(UUID articleId);
+
+    void deleteHard(UUID articleId);
 }

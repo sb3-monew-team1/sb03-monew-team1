@@ -16,7 +16,6 @@ public class ArticleFixture {
     public static final Boolean DEFAULT_IS_DELETED = false;
     public static final Instant DEFAULT_PUBLISH_DATE = Instant.parse("2024-01-01T10:00:00Z");
 
-    // 기본 Article 생성
     public static Article createArticle() {
         return Article.builder()
             .source(DEFAULT_SOURCE)
@@ -30,7 +29,6 @@ public class ArticleFixture {
             .build();
     }
 
-    // 커스텀 Article 생성
     public static Article createArticle(String source, String sourceUrl, String title) {
         return Article.builder()
             .source(source)
@@ -44,22 +42,6 @@ public class ArticleFixture {
             .build();
     }
 
-    // ID가 있는 Article 생성
-    public static Article createArticleWithId(UUID id) {
-        return Article.builder()
-            .id(id)
-            .source(DEFAULT_SOURCE)
-            .sourceUrl(DEFAULT_SOURCE_URL + "/" + id)
-            .title(DEFAULT_TITLE)
-            .publishDate(DEFAULT_PUBLISH_DATE)
-            .summary(DEFAULT_SUMMARY)
-            .viewCount(DEFAULT_VIEW_COUNT)
-            .commentCount(DEFAULT_COMMENT_COUNT)
-            .isDeleted(DEFAULT_IS_DELETED)
-            .build();
-    }
-
-    // 조회수가 있는 Article 생성
     public static Article createArticleWithViewCount(Long viewCount) {
         return Article.builder()
             .source(DEFAULT_SOURCE)
@@ -73,7 +55,6 @@ public class ArticleFixture {
             .build();
     }
 
-    // 댓글수가 있는 Article 생성
     public static Article createArticleWithCommentCount(Long commentCount) {
         return Article.builder()
             .source(DEFAULT_SOURCE)
@@ -87,7 +68,6 @@ public class ArticleFixture {
             .build();
     }
 
-    // 삭제된 Article 생성
     public static Article createDeletedArticle() {
         return Article.builder()
             .source(DEFAULT_SOURCE)
@@ -99,5 +79,20 @@ public class ArticleFixture {
             .commentCount(DEFAULT_COMMENT_COUNT)
             .isDeleted(true)
             .build();
+    }
+
+    public static Article createArticleWithId(UUID id) {
+        Article article = Article.builder()
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .isDeleted(DEFAULT_IS_DELETED)
+            .build();
+        article.setIdForTest(id); // 테스트 전용 id 세팅
+        return article;
     }
 }

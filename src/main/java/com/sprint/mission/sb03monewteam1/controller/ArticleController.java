@@ -23,6 +23,16 @@ import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -75,6 +85,14 @@ public class ArticleController implements ArticleApi {
     public ResponseEntity<Void> delete(@PathVariable UUID articleId) {
         log.info("기사 삭제 요청 - articleId: {}", articleId);
         articleService.delete(articleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    @DeleteMapping("/{articleId}/hard")
+    public ResponseEntity<Void> deleteHard(@PathVariable UUID articleId) {
+        log.info("기사 물리 삭제 요청 - articleId: {}", articleId);
+        articleService.deleteHard(articleId);
         return ResponseEntity.noContent().build();
     }
 }

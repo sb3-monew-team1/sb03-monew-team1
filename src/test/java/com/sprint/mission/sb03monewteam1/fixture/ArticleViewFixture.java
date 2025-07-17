@@ -6,10 +6,8 @@ import java.util.UUID;
 
 public class ArticleViewFixture {
 
-    // 기본값 상수
     public static final UUID DEFAULT_USER_ID = UUID.randomUUID();
 
-    // 기본 ArticleView 생성
     public static ArticleView createArticleView() {
         return ArticleView.builder()
             .userId(DEFAULT_USER_ID)
@@ -17,18 +15,8 @@ public class ArticleViewFixture {
             .build();
     }
 
-    // 사용자 ID와 Article을 지정한 ArticleView 생성
     public static ArticleView createArticleView(UUID userId, Article article) {
         return ArticleView.builder()
-            .userId(userId)
-            .article(article)
-            .build();
-    }
-
-    // ID가 있는 ArticleView 생성
-    public static ArticleView createArticleViewWithId(UUID id, UUID userId, Article article) {
-        return ArticleView.builder()
-            .id(id)
             .userId(userId)
             .article(article)
             .build();

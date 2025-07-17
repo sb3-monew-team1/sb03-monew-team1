@@ -9,6 +9,7 @@ import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -18,6 +19,8 @@ import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.ArticleViewRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -40,11 +43,15 @@ public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleRepository articleRepository;
     private final ArticleViewRepository articleViewRepository;
+    private final ArticleInterestRepository articleInterestRepository;
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
+
     private final ArticleMapper articleMapper;
     private final ArticleViewMapper articleViewMapper;
+
     private final NaverNewsCollector naverNewsCollector;
     private final HankyungNewsCollector hankyungNewsCollector;
-    private final ArticleInterestRepository articleInterestRepository;
 
     @Override
     @Transactional
@@ -235,6 +242,26 @@ public class ArticleServiceImpl implements ArticleService {
         Article article = getActiveArticle(articleId);
 
         article.markAsDeleted();
+    }
+
+    @Override
+    @Transactional
+    public void deleteHard(UUID articleId) {
+        articleRepository.findById(articleId)
+            .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));
+
+        List<Comment> comments = commentRepository.findAllByArticleId(articleId);
+
+        for (Comment comment : comments) {
+            UUID commentId = comment.getId();
+            commentLikeRepository.deleteByCommentId(commentId);
+            commentRepository.deleteById(commentId);
+        }
+
+        articleViewRepository.deleteByArticleId(articleId);
+        articleInterestRepository.deleteByArticleId(articleId);
+
+        articleRepository.deleteById(articleId);
     }
 
     private Article getActiveArticle(UUID articleId) {

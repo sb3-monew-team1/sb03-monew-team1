@@ -23,5 +23,7 @@ public interface CommentRepository extends JpaRepository<Comment, UUID>, Comment
 
     Optional<Comment> findByIdAndIsDeletedFalse(UUID commentId);
 
+    List<Comment> findAllByArticleId(UUID articleId);
+
     List<Comment> findByAuthorId(UUID userId);
 }
