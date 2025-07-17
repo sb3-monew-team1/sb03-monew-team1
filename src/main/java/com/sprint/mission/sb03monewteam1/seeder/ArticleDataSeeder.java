@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile({"dev", "postgres"})
 @RequiredArgsConstructor
-public class ArticleDataSeeder implements DataSeeder{
+public class ArticleDataSeeder implements DataSeeder {
 
     private final ArticleRepository articleRepository;
 
@@ -20,14 +20,19 @@ public class ArticleDataSeeder implements DataSeeder{
     public void seed() {
 
         for (int i = 1; i <= 5; i++) {
-            Article article = createArticle("NAVER", "https://news.naver.com/article" + i, "샘플 기사" + i, "샘플 요약", Instant.now());
-            articleRepository.save(article);
+            String sourceUrl = "https://news.naver.com/article" + i;
+            if (!articleRepository.existsBySourceUrl(sourceUrl)) {
+                Article article = createArticle("NAVER", sourceUrl, "샘플 기사" + i, "샘플 요약",
+                    Instant.now());
+                articleRepository.save(article);
+            }
         }
 
         log.info("샘플 기사 5개 생성 완료");
     }
 
-    private Article createArticle(String source, String sourceUrl, String title, String summary, Instant publishDate) {
+    private Article createArticle(String source, String sourceUrl, String title, String summary,
+        Instant publishDate) {
 
         return Article.builder()
             .source(source)

@@ -17,7 +17,7 @@ public class ArticleBackupScheduler {
     private final JobLauncher jobLauncher;
     private final Job articleBackupJob;
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 0 2 * * *")
     public void runArticleBackupJob() {
         try {
             JobParameters params = new JobParametersBuilder()
