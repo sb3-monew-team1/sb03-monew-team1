@@ -2,28 +2,39 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
+import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
+import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
+import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
 import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.UserRepository;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,6 +44,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InterestService 테스트")
@@ -42,7 +54,16 @@ class InterestServiceTest {
     private InterestRepository interestRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
     private InterestMapper interestMapper;
+
+    @Mock
+    private SubscriptionMapper subscriptionMapper;
 
     @InjectMocks
     private InterestServiceImpl interestService;
@@ -125,32 +146,42 @@ class InterestServiceTest {
             String orderBy = "subscriberCount";
             String direction = "desc";
 
+            User user = User.builder()
+                .nickname("testUser")
+                .build();
+
             Interest interest1 = Interest.builder().name("aesthetic").subscriberCount(150L).build();
             Interest interest2 = Interest.builder().name("soccer").subscriberCount(200L).build();
 
-            List<Interest> interests = Arrays.asList(interest2, interest1); // 정렬 기준에 맞게 정렬된 상태
-            List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("soccer").subscriberCount(200).build(),
-                InterestDto.builder().name("aesthetic").subscriberCount(150).build()
-            );
+            List<Interest> interests = Arrays.asList(interest2, interest1);
 
-            when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
+            when(interestRepository.searchByKeywordOrName(null, null, limit + 1, orderBy, direction))
                 .thenReturn(interests);
 
-            when(interestMapper.toDto(eq(interest2), eq(true))).thenReturn(interestDtos.get(0));
-            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(1));
+            Subscription subscription1 = Subscription.builder()
+                .user(user)
+                .interest(interest1)
+                .build();
+
+            Subscription subscription2 = Subscription.builder()
+                .user(user)
+                .interest(interest2)
+                .build();
+
+            when(subscriptionRepository.findAllByUserId(user.getId()))
+                .thenReturn(Arrays.asList(subscription1, subscription2));
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(user.getId(), null, null, limit, orderBy, direction);
 
             // Then
-            assertThat(result.content()).hasSize(2); // 결과의 크기가 2인지 확인
+            assertThat(result.content()).hasSize(2);
             assertThat(result.content().get(0).name()).isEqualTo("soccer");
             assertThat(result.content().get(1).name()).isEqualTo("aesthetic");
             assertThat(result.hasNext()).isFalse();
 
-            // verify
-            verify(interestRepository).searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)); // searchByKeywordOrName 메서드 호출 확인
+            verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction);
+            verify(subscriptionRepository).findAllByUserId(user.getId());
         }
 
         @Test
@@ -164,18 +195,16 @@ class InterestServiceTest {
             Interest interest1 = Interest.builder().name("soccer").subscriberCount(15L).build();
             Interest interest2 = Interest.builder().name("basketball").subscriberCount(100L).build();
 
-            List<Interest> interests = Arrays.asList(interest1); // "soccer"만 검색되는 리스트
+            List<Interest> interests = Arrays.asList(interest1);
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("soccer").subscriberCount(150).build()
+                InterestDto.builder().name("soccer").subscriberCount(150L).build()
             );
 
             when(interestRepository.searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
-            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
-
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(keyword, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),keyword, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(1);
@@ -198,18 +227,15 @@ class InterestServiceTest {
 
             List<Interest> interests = Arrays.asList(interest1, interest2);
             List<InterestDto> interestDtos = Arrays.asList(
-                InterestDto.builder().name("aesthetic").subscriberCount(150).build(),
-                InterestDto.builder().name("soccer").subscriberCount(200).build()
+                InterestDto.builder().name("aesthetic").subscriberCount(150L).build(),
+                InterestDto.builder().name("soccer").subscriberCount(200L).build()
             );
 
             when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
-            when(interestMapper.toDto(eq(interest1), eq(true))).thenReturn(interestDtos.get(0));
-            when(interestMapper.toDto(eq(interest2), eq(true))).thenReturn(interestDtos.get(1));
-
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(null, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),null, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(2);
@@ -229,7 +255,7 @@ class InterestServiceTest {
             String direction = "asc";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(keyword, null, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(UUID.randomUUID(), keyword, null, limit, orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidSortOptionException.class)
@@ -249,7 +275,7 @@ class InterestServiceTest {
             String cursor = "invalidCursorFormat";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(keyword, cursor, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(() -> interestService.getInterests(UUID.randomUUID(), keyword, cursor, limit, orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidCursorException.class)
@@ -257,6 +283,72 @@ class InterestServiceTest {
 
             then(interestRepository).shouldHaveNoInteractions();
             then(interestMapper).shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 구독 테스트")
+    class InterestSubscribeTests {
+
+        @Test
+        void 관심사를_구독하면_구독된_관심사_응답_DTO를_반환한다() {
+            // Given
+            Interest interest = Interest.builder()
+                .name("aesthetic")
+                .subscriberCount(150L)
+                .build();
+
+            User user = User.builder()
+                .nickname("testUser")
+                .build();
+
+            Subscription subscription = new Subscription(interest, user);
+
+            SubscriptionDto expectedDto = SubscriptionDto.builder()
+                .id(subscription.getId())
+                .interestId(interest.getId())
+                .interestName(interest.getName())
+                .interestSubscriberCount(interest.getSubscriberCount())
+                .createdAt(subscription.getCreatedAt())
+                .build();
+
+            when(interestRepository.findById(interest.getId())).thenReturn(Optional.of(interest));
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(subscriptionRepository.save(any(Subscription.class))).thenReturn(subscription);
+            when(subscriptionMapper.toDto(subscription)).thenReturn(expectedDto);
+
+            // When
+            SubscriptionDto result = interestService.createSubscription(interest.getId(), user.getId());
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(interest.getSubscriberCount()).isEqualTo(151L);
+            assertThat(result.interestId()).isEqualTo(expectedDto.interestId());
+            assertThat(result.interestName()).isEqualTo(expectedDto.interestName());
+            assertThat(result.interestSubscriberCount()).isEqualTo(expectedDto.interestSubscriberCount());
+            assertThat(result.createdAt()).isEqualTo(expectedDto.createdAt());
+            verify(interestRepository).findById(interest.getId());
+        }
+
+
+        @Test
+        void 구독하려는_관심사가_없는_경우_InterestNotFoundException가_발생한다() {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            User user = User.builder()
+                .nickname("testUser")
+                .build();
+
+            when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
+
+            // When & Then
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
+                interestService.createSubscription(user.getId(), nonExistentInterestId);
+            });
+
+            assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
+
+            verify(interestRepository).findById(nonExistentInterestId);
         }
     }
 }

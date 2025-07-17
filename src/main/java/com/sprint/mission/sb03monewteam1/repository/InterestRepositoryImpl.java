@@ -70,10 +70,13 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom {
         BooleanBuilder builder = new BooleanBuilder();
         addSearchConditions(builder, keyword);
 
-        return jpaQueryFactory
-            .selectFrom(qInterest)
+        Long count = jpaQueryFactory
+            .select(qInterest.count())
+            .from(qInterest)
             .where(builder)
-            .fetchCount();
+            .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
     private void addSearchConditions(BooleanBuilder builder, String keyword) {

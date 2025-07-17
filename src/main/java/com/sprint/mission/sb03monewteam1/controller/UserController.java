@@ -96,4 +96,21 @@ public class UserController implements UserApi {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @Override
+    @DeleteMapping("/{userId}/hard")
+    public ResponseEntity<Void> deleteHard(
+        @PathVariable UUID userId,
+        HttpServletRequest httpServletRequest
+    ) {
+        log.info("사용자 물리 삭제 요청: userId={}", userId);
+        UUID requestUserId = (UUID) httpServletRequest.getAttribute("userId");
+        log.info("Monew-Request-User-ID: {}", requestUserId);
+
+        userService.deleteHard(requestUserId, userId);
+
+        log.info("사용자 물리 삭제 완료: id={}", userId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }

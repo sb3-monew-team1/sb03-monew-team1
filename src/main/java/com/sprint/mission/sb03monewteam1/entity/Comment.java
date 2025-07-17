@@ -46,6 +46,16 @@ public class Comment extends BaseUpdatableEntity {
         }
     }
 
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
+
     public void delete() {
         this.isDeleted = true;
     }

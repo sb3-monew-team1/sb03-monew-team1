@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;
 
-@Builder
+@Builder(toBuilder = true)
 public record CommentDto(
     UUID id,
     Instant createdAt,
