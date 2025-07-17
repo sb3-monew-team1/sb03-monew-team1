@@ -2,8 +2,6 @@ package com.sprint.mission.sb03monewteam1.seeder;
 
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
-import java.time.OffsetDateTime;
-import java.util.List;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile("dev")
+@Profile({"dev", "postgres"})
 @RequiredArgsConstructor
 public class ArticleDataSeeder implements DataSeeder{
 

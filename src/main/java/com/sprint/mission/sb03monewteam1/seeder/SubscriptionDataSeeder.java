@@ -20,7 +20,7 @@ import java.util.Random;
 
 @Slf4j
 @Component
-@Profile("dev")
+@Profile({"dev", "postgres"})
 @RequiredArgsConstructor
 public class SubscriptionDataSeeder implements DataSeeder {
 

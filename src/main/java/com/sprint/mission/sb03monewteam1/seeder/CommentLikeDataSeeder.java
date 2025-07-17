@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile("dev")
+@Profile({"dev", "postgres"})
 @RequiredArgsConstructor
 public class CommentLikeDataSeeder implements DataSeeder {
 
