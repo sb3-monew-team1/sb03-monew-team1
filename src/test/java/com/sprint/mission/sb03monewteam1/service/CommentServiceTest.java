@@ -938,7 +938,7 @@ public class CommentServiceTest {
             ReflectionTestUtils.setField(savedCommentLike, "id", commentLikeId);
 
             given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
-            given(commentLikeRepository.findByUserIdAndCommentId(commentId, userId)).willReturn(Optional.of(savedCommentLike));
+            given(commentLikeRepository.findByUserIdAndCommentId(userId, commentId)).willReturn(Optional.of(savedCommentLike));
             willDoNothing().given(commentLikeRepository).deleteById(commentLikeId);
 
             // when
@@ -947,7 +947,7 @@ public class CommentServiceTest {
             // then
             assertThat(comment.getLikeCount()).isEqualTo(0L);
             then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
-            then(commentLikeRepository).should().findByUserIdAndCommentId(commentId, userId);
+            then(commentLikeRepository).should().findByUserIdAndCommentId(userId, commentId);
             then(commentLikeRepository).should().deleteById(commentLikeId);
         }
 
@@ -981,7 +981,7 @@ public class CommentServiceTest {
             Comment comment = CommentFixture.createCommentWithLikeCount("좋아요 취소 테스트", user, article, 1L);
 
             given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
-            given(commentLikeRepository.findByUserIdAndCommentId(commentId, userId)).willReturn(Optional.empty());
+            given(commentLikeRepository.findByUserIdAndCommentId(userId, commentId)).willReturn(Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
@@ -989,8 +989,20 @@ public class CommentServiceTest {
             }).isInstanceOf(CommentLikeNotFoundException.class);
 
             then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
-            then(commentLikeRepository).should().findByUserIdAndCommentId(commentId, userId);
+            then(commentLikeRepository).should().findByUserIdAndCommentId(userId, commentId);
         }
+    }
+
+    private List<Comment> createCommentsWithCreatedAt(int count, Article article, User user) {
+        List<Comment> comments = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Instant createdAt = Instant.now().plusMillis(i);
+            Comment comment = CommentFixture.createCommentWithCreatedAt("test" + i, user, article, createdAt);
+            ReflectionTestUtils.setField(comment, "createdAt", createdAt);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            comments.add(comment);
+        }
+        return comments;
     }
 
     private List<Comment> createCommentsWithLikeCount(int count, Article article, User user) {

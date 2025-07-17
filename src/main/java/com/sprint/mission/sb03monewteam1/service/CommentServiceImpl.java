@@ -270,6 +270,21 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void likeCancel(UUID commentId, UUID userId) {
 
+        log.info("댓글 좋아요 취소 시작 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        // 댓글 유효성
+        Comment comment = commentRepository.findByIdAndIsDeletedFalse(commentId)
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+        // 댓글 좋아요 여부 확인
+        CommentLike commentLike = commentLikeRepository.findByUserIdAndCommentId(userId, commentId)
+            .orElseThrow(() -> new CommentLikeNotFoundException(userId, commentId));
+
+        // 댓글 좋아요 -1
+        commentLikeRepository.deleteById(commentLike.getId());
+        comment.decreaseLikeCount();
+
+        log.info("댓글 좋아요 취소 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
     }
 
     private void validateAuthor(Comment comment, UUID userId) {
