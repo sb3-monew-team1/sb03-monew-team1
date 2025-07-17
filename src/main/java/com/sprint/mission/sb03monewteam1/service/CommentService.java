@@ -31,4 +31,6 @@ public interface CommentService {
     void deleteHard(UUID commentId);
 
     CommentLikeDto like(UUID commentId, UUID userId);
+
+    void likeCancel(UUID commentId, UUID userId);
 }
