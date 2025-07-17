@@ -3,13 +3,19 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import java.time.Instant;
 import java.util.Arrays;
@@ -222,5 +228,28 @@ class ArticleControllerTest {
             .andExpect(jsonPath("$[0]").value("연합뉴스"))
             .andExpect(jsonPath("$[1]").value("중앙일보"))
             .andExpect(jsonPath("$[2]").value("한국일보"));
+    }
+
+    @Test
+    void 기사_논리_삭제_성공() throws Exception {
+        UUID articleId = UUID.randomUUID();
+        willDoNothing().given(articleService).delete(articleId);
+
+        mockMvc.perform(delete("/api/articles/" + articleId))
+            .andExpect(status().isNoContent());
+
+        then(articleService).should().delete(articleId);
+    }
+
+    @Test
+    void 기사_논리_삭제_실패_기사없음() throws Exception {
+        UUID articleId = UUID.randomUUID();
+        willThrow(new ArticleNotFoundException(articleId.toString()))
+            .given(articleService).delete(articleId);
+
+        mockMvc.perform(delete("/api/articles/" + articleId))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ErrorCode.ARTICLE_NOT_FOUND.name()))
+            .andExpect(jsonPath("$.message").exists());
     }
 }

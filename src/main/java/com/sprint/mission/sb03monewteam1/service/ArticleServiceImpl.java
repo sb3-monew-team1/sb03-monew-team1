@@ -229,6 +229,19 @@ public class ArticleServiceImpl implements ArticleService {
         saveCollectedArticles(collectedArticles, interest, keyword);
     }
 
+    @Override
+    @Transactional
+    public void delete(UUID articleId) {
+        Article article = getActiveArticle(articleId);
+
+        article.markAsDeleted();
+    }
+
+    private Article getActiveArticle(UUID articleId) {
+        return articleRepository.findByIdAndIsDeletedFalse(articleId)
+            .orElseThrow(() -> new ArticleNotFoundException(articleId.toString()));
+    }
+
     private boolean shouldIncludeArticle(CollectedArticleDto dto, String keyword) {
         String kw = keyword.toLowerCase();
         return (dto.title() != null && dto.title().toLowerCase().contains(kw))

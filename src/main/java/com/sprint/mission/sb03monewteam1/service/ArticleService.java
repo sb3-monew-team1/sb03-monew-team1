@@ -29,4 +29,6 @@ public interface ArticleService {
     void collectAndSaveNaverArticles(Interest interest, String keyword);
 
     void collectAndSaveHankyungArticles(Interest interest, String keyword);
+
+    void delete(UUID articleId);
 }
