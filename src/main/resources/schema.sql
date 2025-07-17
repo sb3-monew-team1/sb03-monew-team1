@@ -3,17 +3,17 @@
 -- H2는 항상 초기화니까 불필요
 -- Postgres에서 필요할 때 활성화 또는 별도 쿼리문 적용
 -- =============================
--- DROP TABLE IF EXISTS article_interests CASCADE;
--- DROP TABLE IF EXISTS article_views CASCADE;
--- DROP TABLE IF EXISTS comment_likes CASCADE;
--- DROP TABLE IF EXISTS comments CASCADE;
--- DROP TABLE IF EXISTS activity_logs CASCADE;
--- DROP TABLE IF EXISTS notifications CASCADE;
--- DROP TABLE IF EXISTS interest_keywords CASCADE;
--- DROP TABLE IF EXISTS subscriptions CASCADE;
--- DROP TABLE IF EXISTS articles CASCADE;
--- DROP TABLE IF EXISTS interests CASCADE;
--- DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS article_interests CASCADE;
+DROP TABLE IF EXISTS article_views CASCADE;
+DROP TABLE IF EXISTS comment_likes CASCADE;
+DROP TABLE IF EXISTS comments CASCADE;
+DROP TABLE IF EXISTS activity_logs CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS interest_keywords CASCADE;
+DROP TABLE IF EXISTS subscriptions CASCADE;
+DROP TABLE IF EXISTS articles CASCADE;
+DROP TABLE IF EXISTS interests CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
 -- =============================
 -- 🛠 Create tables (UUID version, NO DEFAULT)
