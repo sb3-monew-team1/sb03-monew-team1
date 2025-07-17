@@ -155,6 +155,8 @@ class InterestIntegrationTest {
     @DisplayName("관심사 조회 테스트")
     class InterestReadTests {
 
+        private User testUser;
+
         @BeforeEach
         void setUp() {
             Interest interest1 = Interest.builder()
@@ -199,12 +201,21 @@ class InterestIntegrationTest {
 
             interestRepository.saveAll(List.of(interest1, interest2, interest3, interest4));
             interestKeywordRepository.saveAll(List.of(keyword1, keyword2, keyword3, keyword4));
+
+
+            testUser = User.builder()
+                .nickname("testUser")
+                .email("testuser@example.com")
+                .password("password1234*")
+                .build();
+            userRepository.save(testUser);
         }
 
         @Test
         void 관심사_목록을_조회하면_관심사_목록을_반환한다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", testUser.getId())
                     .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
@@ -220,6 +231,7 @@ class InterestIntegrationTest {
         void 관심사_이름으로_검색하면_부분일치하는_관심사만_조회된다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", testUser.getId())
                     .param("keyword", "soccer")
                     .param("cursor", "")
                     .param("limit", "10")
@@ -236,6 +248,7 @@ class InterestIntegrationTest {
         void 관심사_이름순으로_정렬하면_이름순으로_정렬된_목록을_반환한다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", testUser.getId())
                     .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
@@ -253,6 +266,7 @@ class InterestIntegrationTest {
         void 관심사_구독자순으로_내림차순으로_정렬하면_구독자순으로_내림차순으로_정렬된_목록을_반환한다() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", testUser.getId())
                     .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
@@ -276,6 +290,7 @@ class InterestIntegrationTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", testUser.getId())
                     .param("keyword", keyword)
                     .param("cursor", "")
                     .param("limit", String.valueOf(limit))
@@ -298,6 +313,7 @@ class InterestIntegrationTest {
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", testUser.getId())
                     .param("keyword", keyword)
                     .param("cursor", cursor)
                     .param("limit", String.valueOf(limit))

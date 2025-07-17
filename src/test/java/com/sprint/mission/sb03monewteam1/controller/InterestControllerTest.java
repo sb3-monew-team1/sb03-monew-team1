@@ -176,17 +176,20 @@ class InterestControllerTest {
         @Test
         void 관심사_목록을_조회하면_관심사_목록을_반환한다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
+
             List<InterestDto> interestDtos = InterestFixture.createInterestDtoList();
             CursorPageResponse<InterestDto> responseDto = new CursorPageResponse<>(
                 interestDtos, null, null, 10, 4L, false
             );
 
             given(interestService.getInterests(
-                anyString(), anyString(), anyInt(), anyString(), anyString()))
+                any(UUID.class),anyString(), anyString(), anyInt(), anyString(), anyString()))
                 .willReturn(responseDto);
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", userId.toString())
                     .param("keyword", "")
                     .param("cursor", "")
                     .param("limit", "10")
@@ -205,6 +208,8 @@ class InterestControllerTest {
         @Test
         void 관심사를_이름으로_검색하면_부분일치하는_관심사만_조회된다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
+
             List<InterestDto> interestDtos = List.of(
                 InterestFixture.createInterestResponseDto("football", List.of("club", "sport")),
                 InterestFixture.createInterestResponseDto("soccer", List.of("ball", "sports"))
@@ -214,11 +219,12 @@ class InterestControllerTest {
             );
 
             given(interestService.getInterests(
-                eq("football"), anyString(), eq(10), eq("name"), eq("asc")))
+                any(UUID.class), eq("football"), anyString(), eq(10), eq("name"), eq("asc")))
                 .willReturn(responseDto);
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", userId.toString())
                     .param("keyword", "football")
                     .param("cursor", "")
                     .param("limit", "10")
@@ -235,6 +241,8 @@ class InterestControllerTest {
         @Test
         void 관심사를_구독자수로_정렬하여_반환한다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
+
             List<InterestDto> interestDtos = Arrays.asList(
                 InterestDto.builder().id(UUID.randomUUID()).name("soccer").subscriberCount(200L)
                     .build(),
@@ -256,11 +264,12 @@ class InterestControllerTest {
                 .build();
 
             given(interestService.getInterests(
-                anyString(), anyString(), eq(10), eq("subscriberCount"), eq("desc")))
+                any(UUID.class), anyString(), anyString(), eq(10), eq("subscriberCount"), eq("desc")))
                 .willReturn(responseDto);
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", userId.toString())
                     .param("keyword", "")
                     .param("cursor", "")
                     .param("orderBy", "subscriberCount")
@@ -281,6 +290,7 @@ class InterestControllerTest {
         @Test
         void 관심사를_이름순으로_정렬하여_반환한다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
             List<InterestDto> interestDtos = Arrays.asList(
                 InterestDto.builder().id(UUID.randomUUID()).name("aesthetic").build(),
                 InterestDto.builder().id(UUID.randomUUID()).name("beauty").build(),
@@ -298,11 +308,12 @@ class InterestControllerTest {
                 .build();
 
             given(interestService.getInterests(
-                anyString(), anyString(), eq(10), eq("name"), eq("asc")))
+                any(UUID.class), anyString(), anyString(), eq(10), eq("name"), eq("asc")))
                 .willReturn(responseDto);
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", userId.toString())
                     .param("keyword", "")
                     .param("cursor", "")
                     .param("orderBy", "name")
@@ -319,15 +330,17 @@ class InterestControllerTest {
         @Test
         void 잘못된_커서_형식인_경우_400을_반환한다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
             String invalidCursor = "invalidCursor";
             String keyword = "soccer";
             int limit = 10;
 
-            given(interestService.getInterests(any(), any(), anyInt(), any(), any()))
+            given(interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
                 .willThrow(new InvalidCursorException("잘못된 커서 형식입니다."));
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", userId.toString())
                     .param("keyword", keyword)
                     .param("cursor", invalidCursor)
                     .param("limit", String.valueOf(limit))
@@ -341,15 +354,17 @@ class InterestControllerTest {
         @Test
         void 잘못된_정렬_기준인_경우_400을_반환한다() throws Exception {
             // Given
+            UUID userId = UUID.randomUUID();
             String invalidOrderBy = "invalidOrder";
             String keyword = "soccer";
             int limit = 10;
 
-            given(interestService.getInterests(any(), any(), anyInt(), any(), any()))
+            given(interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
                 .willThrow(new InvalidSortOptionException("지원하지 않는 정렬 필드입니다."));
 
             // When & Then
             mockMvc.perform(get("/api/interests")
+                    .header("Monew-Request-User-ID", userId.toString())
                     .param("keyword", keyword)
                     .param("cursor", "")
                     .param("limit", String.valueOf(limit))

@@ -93,6 +93,7 @@ public interface InterestApi {
         )
     })
     ResponseEntity<CursorPageResponse<InterestDto>> getInterests(
+        @RequestHeader("Monew-Request-User-ID") UUID userId,
         @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
