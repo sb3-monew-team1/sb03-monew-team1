@@ -18,6 +18,10 @@ public class ArticleDataSeeder implements DataSeeder{
 
     @Override
     public void seed() {
+        if (articleRepository.count() > 0) {
+            log.info("ArticleDataSeeder: 기사가 이미 존재하여 시드를 실행하지 않습니다.");
+            return;
+        }
 
         for (int i = 1; i <= 5; i++) {
             Article article = createArticle("NAVER", "https://news.naver.com/article" + i, "샘플 기사" + i, "샘플 요약", Instant.now());

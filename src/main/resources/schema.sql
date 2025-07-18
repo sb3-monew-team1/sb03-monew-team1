@@ -1,16 +1,7 @@
--- ============ 권한 부여 및 스키마 설정 ============
--- 1. 유저에게 DB 권한 부여
--- 2. 기본 public 스키마 대신 사용자 전용 공간에서의 관리를 위한 스키마 생성
--- 3. monew_user 유저 기본 접근 스키마 설정
--- 4. 이후 모든 테이블 생성 및 쿼리는 monew 스키마 내에서 진행
--- GRANT ALL PRIVILEGES ON DATABASE monew TO monew_user;
--- CREATE SCHEMA IF NOT EXISTS monew AUTHORIZATION monew_user;
--- ALTER ROLE monew_user SET search_path TO monew;
--- SET search_path TO monew;
--- ==================================================
-
 -- =============================
 -- 💣 Drop all tables if exist
+-- H2는 항상 초기화니까 불필요
+-- Postgres에서 필요할 때 활성화 또는 별도 쿼리문 적용
 -- =============================
 DROP TABLE IF EXISTS article_interests CASCADE;
 DROP TABLE IF EXISTS article_views CASCADE;
@@ -28,7 +19,7 @@ DROP TABLE IF EXISTS users CASCADE;
 -- 🛠 Create tables (UUID version, NO DEFAULT)
 -- =============================
 
-CREATE TABLE users
+CREATE TABLE IF NOT EXISTS users
 (
     id         UUID PRIMARY KEY,
     email      VARCHAR(100)             NOT NULL UNIQUE,
@@ -39,7 +30,7 @@ CREATE TABLE users
     updated_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE interests
+CREATE TABLE IF NOT EXISTS interests
 (
     id               UUID PRIMARY KEY,
     name             VARCHAR(255)             NOT NULL,
@@ -48,27 +39,27 @@ CREATE TABLE interests
     updated_at       TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE subscriptions
+CREATE TABLE IF NOT EXISTS subscriptions
 (
     id          UUID PRIMARY KEY,
-    interest_id UUID                    NOT NULL,
-    user_id     UUID                    NOT NULL,
+    interest_id UUID                     NOT NULL,
+    user_id     UUID                     NOT NULL,
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
     UNIQUE (interest_id, user_id),
     FOREIGN KEY (interest_id) REFERENCES interests (id),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE interest_keywords
+CREATE TABLE IF NOT EXISTS interest_keywords
 (
     id          UUID PRIMARY KEY,
     keyword     VARCHAR(255)             NOT NULL,
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
-    interest_id UUID                    NOT NULL,
+    interest_id UUID                     NOT NULL,
     FOREIGN KEY (interest_id) REFERENCES interests (id)
 );
 
-CREATE TABLE articles
+CREATE TABLE IF NOT EXISTS articles
 (
     id            UUID PRIMARY KEY,
     source        VARCHAR(50)              NOT NULL,
@@ -82,21 +73,21 @@ CREATE TABLE articles
     created_at    TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE comments
+CREATE TABLE IF NOT EXISTS comments
 (
-    id              UUID PRIMARY KEY,
-    content         VARCHAR(500)             NOT NULL,
-    like_count      BIGINT                   NOT NULL DEFAULT 0,
-    is_deleted      BOOLEAN                  NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at      TIMESTAMP WITH TIME ZONE,
-    user_id         UUID                     NOT NULL,
+    id         UUID PRIMARY KEY,
+    content    VARCHAR(500)             NOT NULL,
+    like_count BIGINT                   NOT NULL DEFAULT 0,
+    is_deleted BOOLEAN                  NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    user_id    UUID                     NOT NULL,
     article_id UUID                     NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (article_id) REFERENCES articles (id)
 );
 
-CREATE TABLE comment_likes
+CREATE TABLE IF NOT EXISTS comment_likes
 (
     id         UUID PRIMARY KEY,
     comment_id UUID                     NOT NULL,
@@ -107,29 +98,29 @@ CREATE TABLE comment_likes
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE article_views
+CREATE TABLE IF NOT EXISTS article_views
 (
-    id              UUID PRIMARY KEY,
-    user_id         UUID                     NOT NULL,
+    id         UUID PRIMARY KEY,
+    user_id    UUID                     NOT NULL,
     article_id UUID                     NOT NULL,
-    created_at      TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     UNIQUE (user_id, article_id),
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (article_id) REFERENCES articles (id)
 );
 
-CREATE TABLE article_interests
+CREATE TABLE IF NOT EXISTS article_interests
 (
-    id              UUID PRIMARY KEY,
-    article_id UUID                     NOT NULL,
-    interest_id     UUID                     NOT NULL,
-    created_at      TIMESTAMP WITH TIME ZONE NOT NULL,
+    id          UUID PRIMARY KEY,
+    article_id  UUID                     NOT NULL,
+    interest_id UUID                     NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
     UNIQUE (article_id, interest_id),
     FOREIGN KEY (article_id) REFERENCES articles (id),
     FOREIGN KEY (interest_id) REFERENCES interests (id)
 );
 
-CREATE TABLE activity_logs
+CREATE TABLE IF NOT EXISTS activity_logs
 (
     id          UUID PRIMARY KEY,
     action_type VARCHAR(15)              NOT NULL,
@@ -140,7 +131,7 @@ CREATE TABLE activity_logs
     CHECK (action_type IN ('VIEW_ARTICLE', 'LIKE_COMMENT', 'COMMENT', 'SUBSCRIBE'))
 );
 
-CREATE TABLE notifications
+CREATE TABLE IF NOT EXISTS notifications
 (
     id            UUID PRIMARY KEY,
     content       TEXT                     NOT NULL,
