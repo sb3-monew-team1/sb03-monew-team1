@@ -45,6 +45,7 @@ public class NotificationEventListener {
                 subscriber -> notificationService.createNewArticleNotification(subscriber, interest, articles.size()));
             log.info("구독 알림 전송 완료 - 관심사:{}, 구독자 수:{}", interest.getName(), subscribers.size());
         } catch (Exception e) {
+            log.error("구독 알림 전송 실패 - 관심사:{}, 구독자 수:{}", interest.getName(), subscribers.size());
             throw new NotificationSendException("구독 알림 전송에 실패하였습니다");
         }
 
