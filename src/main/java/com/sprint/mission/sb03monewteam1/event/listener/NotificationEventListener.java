@@ -37,6 +37,7 @@ public class NotificationEventListener {
             = subscriptionRepository.findAllByInterestIdFetchUser(interest.getId())
             .stream()
             .map(Subscription::getUser)
+            .filter(user -> !user.isDeleted())
             .toList();
 
         try {
