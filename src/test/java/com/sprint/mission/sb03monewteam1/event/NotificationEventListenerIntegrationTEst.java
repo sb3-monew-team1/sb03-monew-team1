@@ -14,10 +14,10 @@ import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.SubscriptionFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
-import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.NotificationRepository;
-import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
 import java.time.Duration;
 import java.util.List;
 import org.awaitility.Awaitility;
@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @LoadTestEnv

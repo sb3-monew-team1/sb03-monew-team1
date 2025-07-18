@@ -6,7 +6,7 @@ import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationSendException;
-import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

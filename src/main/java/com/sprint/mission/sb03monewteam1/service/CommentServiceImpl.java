@@ -20,10 +20,10 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
-import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
-import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
-import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;

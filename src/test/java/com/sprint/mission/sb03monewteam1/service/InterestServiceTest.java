@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,9 +27,9 @@ import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
-import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
