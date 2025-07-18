@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.service;
+package com.sprint.mission.sb03monewteam1.event;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.service.NotificationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
