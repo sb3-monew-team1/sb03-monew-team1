@@ -32,7 +32,7 @@ public class Notification extends BaseUpdatableEntity {
     @Column(name = "resource_type", nullable = false)
     private ResourceType resourceType;
 
-    @Column(name = "resource_id")
+    @Column(name = "resource_id", nullable = false)
     private UUID resourceId;
 
     @Builder.Default
