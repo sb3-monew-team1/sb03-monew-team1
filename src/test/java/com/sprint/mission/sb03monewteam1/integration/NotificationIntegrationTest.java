@@ -9,34 +9,22 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
-import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
-import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
-import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
-import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
-import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
-import com.sprint.mission.sb03monewteam1.repository.NotificationRepository;
-import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
 import com.sprint.mission.sb03monewteam1.service.CommentServiceImpl;
-import com.sprint.mission.sb03monewteam1.service.NotificationServiceImpl;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 @LoadTestEnv
 @SpringBootTest

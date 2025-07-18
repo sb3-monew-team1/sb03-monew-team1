@@ -11,7 +11,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
-import com.sprint.mission.sb03monewteam1.repository.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;

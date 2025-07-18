@@ -12,7 +12,7 @@ import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
-import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

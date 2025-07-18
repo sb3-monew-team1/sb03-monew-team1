@@ -13,6 +13,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;

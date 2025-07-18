@@ -19,7 +19,7 @@ import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.SubscriptionFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
-import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
