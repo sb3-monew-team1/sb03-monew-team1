@@ -2,7 +2,7 @@ package com.sprint.mission.sb03monewteam1.batch.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
-import com.sprint.mission.sb03monewteam1.repository.ArticleRepositoryCustom;
+import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepositoryCustom;
 import com.sprint.mission.sb03monewteam1.util.S3Util;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
