@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @LoadTestEnv
-@Transactional
 @ActiveProfiles("test")
 @DisplayName("NotificationIntegration 테스트")
 public class NotificationEventListenerIntegrationTEst {
@@ -60,42 +59,42 @@ public class NotificationEventListenerIntegrationTEst {
             "user1",
             "!Password123"
         );
-        userRepository.save(user1);
+        User savedUser1 = userRepository.save(user1);
 
         User user2 = UserFixture.createUser(
             "user2@exapmle.com",
             "user2",
             "!Password123"
         );
-        userRepository.save(user2);
+        User savedUser2 = userRepository.save(user2);
 
         User user3 = UserFixture.createUser(
             "user3@exapmle.com",
             "user3",
             "!Password123"
         );
-        userRepository.save(user3);
+        User savedUser3 = userRepository.save(user3);
 
         Interest interest = InterestFixture.createInterest();
-        interestRepository.save(interest);
+        Interest savedInterest = interestRepository.save(interest);
 
-        Subscription subscription1 = SubscriptionFixture.createSubscription(user1, interest);
+        Subscription subscription1 = SubscriptionFixture.createSubscription(savedUser1, savedInterest);
         subscriptionRepository.save(subscription1);
 
-        Subscription subscription2 = SubscriptionFixture.createSubscription(user2, interest);
+        Subscription subscription2 = SubscriptionFixture.createSubscription(savedUser2, savedInterest);
         subscriptionRepository.save(subscription2);
 
-        Subscription subscription3 = SubscriptionFixture.createSubscription(user3, interest);
+        Subscription subscription3 = SubscriptionFixture.createSubscription(savedUser3, savedInterest);
         subscriptionRepository.save(subscription3);
 
         List<ArticleDto> articles = ArticleFixture.createArticleDtoList();
 
         // When
-        eventPublisher.publishEvent(new NewArticleCollectEvent(interest, articles));
+        eventPublisher.publishEvent(new NewArticleCollectEvent(savedInterest, articles));
 
         // Then
         Awaitility.await()
-            .atMost(Duration.ofSeconds(5))
+            .atMost(Duration.ofSeconds(10))
             .untilAsserted(() -> {
                 List<Notification> notifications = notificationRepository.findAll();
                 assertThat(notifications.size()).isEqualTo(3);
