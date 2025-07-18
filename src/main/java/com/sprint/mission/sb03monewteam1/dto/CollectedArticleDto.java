@@ -12,5 +12,6 @@ public record CollectedArticleDto(
         Instant publishDate,
         String summary,
         String rawContent,
-        String imageUrl) {
+        String imageUrl
+) {
 }

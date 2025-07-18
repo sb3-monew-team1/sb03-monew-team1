@@ -23,6 +23,7 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ArticleServiceTest {
@@ -76,6 +78,9 @@ class ArticleServiceTest {
 
     @Mock
     private NaverNewsCollector naverNewsCollector;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ArticleServiceImpl articleService;
@@ -408,6 +413,7 @@ class ArticleServiceTest {
         // then
         verify(articleRepository).saveAll(anyList());
         verify(articleInterestRepository).saveAll(anyList());
+        verify(eventPublisher).publishEvent(any(NewArticleCollectEvent.class));
     }
 
     @Test

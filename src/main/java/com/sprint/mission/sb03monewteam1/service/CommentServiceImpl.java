@@ -9,6 +9,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +49,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final CommentMapper commentMapper;
     private final CommentLikeMapper commentLikeMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CommentDto create(CommentRegisterRequest commentRegisterRequest) {
@@ -261,6 +264,10 @@ public class CommentServiceImpl implements CommentService {
 
         // 댓글의 좋아요수 +1
         comment.increaseLikeCount();
+
+        // 이벤트 발행
+        eventPublisher.publishEvent(new CommentLikeEvent(user, comment));
+        log.info("좋아요 등록 알림 이벤트 발행: likedBy={}, comment={}", user.getId(), comment.getId());
 
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
 

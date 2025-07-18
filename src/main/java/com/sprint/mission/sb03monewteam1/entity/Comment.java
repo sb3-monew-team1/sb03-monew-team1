@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 
 @Builder
 @Entity
-@Table(name = "comment")
+@Table(name = "comments")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
