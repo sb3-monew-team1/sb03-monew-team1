@@ -9,7 +9,6 @@ import com.sprint.mission.sb03monewteam1.exception.notification.NotificationSend
 import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
