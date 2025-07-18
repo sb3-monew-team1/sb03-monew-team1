@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
@@ -35,5 +36,22 @@ public class NotificationServiceImpl implements NotificationService {
 
         log.info("구독 알림 등록 완료: userId={}, interestId={}, articleCount={}",
             user.getId(), interest.getId(), articleCount);
+    }
+
+    @Override
+    public void createCommentLikeNotification(User user, Comment comment) {
+
+        log.info("좋아요 알림 등록 시작: comment={}, likedBy={}, author={}", comment.getId(), user.getId(), comment.getAuthor().getId());
+
+        Notification notification = Notification.builder()
+            .content(String.format("%s님이 나의 댓글을 좋아합니다.", user.getNickname()))
+            .resourceType(ResourceType.comment)
+            .resourceId(comment.getId())
+            .user(comment.getAuthor())
+            .build();
+
+        notificationRepository.save(notification);
+
+        log.info("좋아요 알림 등록 완료: comment={}, likedBy={}, author={}", comment.getId(), user.getId(), comment.getAuthor().getId());
     }
 }

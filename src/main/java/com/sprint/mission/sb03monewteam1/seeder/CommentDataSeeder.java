@@ -25,6 +25,11 @@ public class CommentDataSeeder implements DataSeeder{
     @Override
     public void seed() {
 
+        if (commentRepository.count() > 0) {
+            log.info("CommentDataSeeder: 댓글이 이미 존재하여 시드를 실행하지 않습니다.");
+            return;
+        }
+
         User savedUser = userRepository.findByEmail("user1@example.com")
             .orElseThrow(() -> new IllegalStateException("User not found in seeder"));
 

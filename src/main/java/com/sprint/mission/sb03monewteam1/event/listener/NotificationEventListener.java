@@ -1,9 +1,11 @@
 package com.sprint.mission.sb03monewteam1.event.listener;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationSendException;
 import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
@@ -52,4 +54,23 @@ public class NotificationEventListener {
 
     }
 
+    @Async
+    @EventListener
+    public void handleCommentLike(CommentLikeEvent event) {
+
+        User user = event.getUser();
+        Comment comment = event.getComment();
+        User author = comment.getAuthor();
+
+        log.info("좋아요 등록 이벤트 요청 - comment={}, likedBy={}, author={}", comment.getId(), user.getNickname(), author.getId());
+
+        try {
+            log.debug("좋아요 알림 전송 요청 - comment={}, likedBy={}, author={}", comment.getId(), user.getNickname(), author.getId());
+            notificationService.createCommentLikeNotification(user, comment);
+            log.info("좋아요 알림 전송 완료 - comment={}, likedBy={}, author={}", comment.getId(), user.getNickname(), author.getId());
+        } catch (Exception e) {
+            log.error("좋아요 알림 전송 실패: {}", e.getMessage(), e);
+            throw new NotificationSendException("좋아요 알림 전송에 실패하였습니다.");
+        }
+    }
 }

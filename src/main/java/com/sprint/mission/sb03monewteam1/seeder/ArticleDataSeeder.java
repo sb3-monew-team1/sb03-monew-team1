@@ -26,8 +26,7 @@ public class ArticleDataSeeder implements DataSeeder {
         }
 
         for (int i = 1; i <= 5; i++) {
-            Article article = createArticle("NAVER", "https://news.naver.com/article" + i,
-                "샘플 기사" + i, "샘플 요약", Instant.now());
+            Article article = createArticle("NAVER", "https://news.naver.com/article/seeder" + i, "샘플 기사" + i, "샘플 요약", Instant.now());
             articleRepository.save(article);
             articleRepository.flush();
         }

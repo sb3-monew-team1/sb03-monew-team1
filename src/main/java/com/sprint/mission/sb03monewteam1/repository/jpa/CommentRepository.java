@@ -13,7 +13,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, UUID>, CommentRepositoryCustom {
 
-    Long countByArticleId(UUID articleId);
+    long countByIsDeletedFalse();
+
+    long countByArticleIdAndIsDeletedFalse(UUID articleId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Comment c " +
