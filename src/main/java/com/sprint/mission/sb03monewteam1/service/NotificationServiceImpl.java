@@ -40,5 +40,17 @@ public class NotificationServiceImpl implements NotificationService{
     @Override
     public void createCommentLikeNotification(User user, Comment comment) {
 
+        log.info("좋아요 알림 등록 시작: user={}, comment={}", user.getId(), comment.getId());
+
+        Notification notification = Notification.builder()
+            .content(String.format("%s님이 나의 댓글을 좋아합니다.", user.getNickname()))
+            .resourceType(ResourceType.comment)
+            .resourceId(comment.getId())
+            .user(user)
+            .build();
+
+        notificationRepository.save(notification);
+
+        log.info("좋아요 알림 등록 완료: user={}, comment={}", user.getId(), comment.getId());
     }
 }
