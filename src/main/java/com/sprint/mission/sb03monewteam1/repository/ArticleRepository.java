@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.repository.jpa;
+package com.sprint.mission.sb03monewteam1.repository;
 
 import java.util.Optional;
 import java.util.UUID;

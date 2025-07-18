@@ -1,7 +1,7 @@
 package com.sprint.mission.sb03monewteam1.seeder;
 
 import com.sprint.mission.sb03monewteam1.entity.Article;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

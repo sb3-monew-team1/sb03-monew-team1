@@ -2,8 +2,8 @@ package com.sprint.mission.sb03monewteam1.seeder;
 
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
+import com.sprint.mission.sb03monewteam1.repository.InterestRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;

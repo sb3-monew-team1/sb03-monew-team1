@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.repository.jpa;
+package com.sprint.mission.sb03monewteam1.repository;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.entity.Article;
