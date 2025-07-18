@@ -23,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationService 테스트")
-public class NotificationServiceTest {
+public class NotificationServiceTEst {
 
     @Mock
     private NotificationRepository notificationRepository;
