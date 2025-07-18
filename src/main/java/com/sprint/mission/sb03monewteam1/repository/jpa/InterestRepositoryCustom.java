@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.repository;
+package com.sprint.mission.sb03monewteam1.repository.jpa;
 
 import java.util.List;
 import com.sprint.mission.sb03monewteam1.entity.Interest;

@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -9,6 +10,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -20,10 +22,10 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
-import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.CommentLikeRepository;
-import com.sprint.mission.sb03monewteam1.repository.CommentRepository;
-import com.sprint.mission.sb03monewteam1.repository.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
@@ -32,6 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +50,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final CommentMapper commentMapper;
     private final CommentLikeMapper commentLikeMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CommentDto create(CommentRegisterRequest commentRegisterRequest) {
