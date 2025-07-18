@@ -19,7 +19,7 @@ public class NotificationServiceImpl implements NotificationService{
     private final NotificationRepository notificationRepository;
 
     @Override
-    public void create(User user, Interest interest, int articleCount) {
+    public void createNewArticleNotification(User user, Interest interest, int articleCount) {
 
         log.info("구독 알림 등록 요청: user={}, interest={}, articleCount={}", user, interest, articleCount);
 
