@@ -53,6 +53,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @DisplayName("CommentService 슬라이스 테스트")
@@ -79,6 +80,9 @@ public class CommentServiceTest {
 
     @InjectMocks
     private CommentServiceImpl commentService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
     void setUp() {
@@ -839,6 +843,7 @@ public class CommentServiceTest {
             given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.of(user));
             given(commentLikeRepository.existsByCommentIdAndUserId(commentId, userId)).willReturn(false);
             given(commentLikeRepository.save(any(CommentLike.class))).willReturn(savedCommentLike);
+
             given(commentLikeMapper.toDto(any(CommentLike.class))).willReturn(expectedCommentLikeDto);
 
             // when
