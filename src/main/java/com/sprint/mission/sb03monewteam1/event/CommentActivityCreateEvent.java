@@ -1,11 +1,9 @@
 package com.sprint.mission.sb03monewteam1.event;
 
-import com.sprint.mission.sb03monewteam1.dto.CommentDto;
-import lombok.Builder;
+import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 
-@Builder
 public record CommentActivityCreateEvent(
-    CommentDto commentDto
-) {
+    CommentActivityDto commentActivityDto
+){
 
 }
