@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.document;
 
+import com.sprint.mission.sb03monewteam1.dto.ArticleViewActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class ArticleViewActivity {
     private UUID userId;
 
     @Builder.Default
-    private List<ArticleViewDto> articleViews = new ArrayList<>();;
+    private List<ArticleViewActivityDto> articleViews = new ArrayList<>();;
 
     @Builder.Default
     private Instant createdAt = Instant.now();

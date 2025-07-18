@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.document;
 
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class CommentLikeActivity {
     private UUID userId;
 
     @Builder.Default
-    private List<CommentLikeDto> commentLikes = new ArrayList<>();
+    private List<CommentLikeActivityDto> commentLikes = new ArrayList<>();
 
     @Builder.Default
     private Instant createdAt = Instant.now();
