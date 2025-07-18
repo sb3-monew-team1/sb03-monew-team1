@@ -144,8 +144,8 @@ public class CommentServiceImpl implements CommentService {
         }
 
         Long totalElements = (articleId == null)
-            ? commentRepository.count()
-            : commentRepository.countByArticleId(articleId);
+            ? commentRepository.countByIsDeletedFalse()
+            : commentRepository.countByArticleIdAndIsDeletedFalse(articleId);
 
         comments = hasNext ? comments.subList(0, size) : comments;
 

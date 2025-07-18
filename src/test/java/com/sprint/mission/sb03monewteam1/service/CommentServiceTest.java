@@ -202,7 +202,7 @@ public class CommentServiceTest {
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
-            given(commentRepository.countByArticleId(articleId)).willReturn(10L);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(articleId)).willReturn(10L);
             given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
                 Comment comment = invocation.getArgument(0);
                 return CommentFixture.createCommentDto(comment);
@@ -259,7 +259,7 @@ public class CommentServiceTest {
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
-            given(commentRepository.countByArticleId(articleId)).willReturn(10L);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(articleId)).willReturn(10L);
             given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
                     Comment comment = invocation.getArgument(0);
                     return CommentFixture.createCommentDto(comment);
@@ -311,7 +311,7 @@ public class CommentServiceTest {
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(secondPage);
-            given(commentRepository.countByArticleId(article.getId())).willReturn(10L);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(article.getId())).willReturn(10L);
             given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
                     Comment comment = invocation.getArgument(0);
                     return CommentFixture.createCommentDto(comment);
@@ -368,7 +368,7 @@ public class CommentServiceTest {
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(nextCursor.toString()), eq(nextAfter), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(lastPage);
-            given(commentRepository.countByArticleId(articleId)).willReturn(10L);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(articleId)).willReturn(10L);
             given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
                     Comment comment = invocation.getArgument(0);
                     return CommentFixture.createCommentDto(comment);
@@ -414,7 +414,7 @@ public class CommentServiceTest {
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(Collections.emptyList());
-            given(commentRepository.countByArticleId(article.getId())).willReturn(0L);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(article.getId())).willReturn(0L);
 
             // when
             CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
@@ -450,7 +450,7 @@ public class CommentServiceTest {
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(commentList.subList(0, pageSize));
-            given(commentRepository.countByArticleId(articleId)).willReturn(5L);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(articleId)).willReturn(5L);
             given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
                 Comment comment = invocation.getArgument(0);
                 return CommentFixture.createCommentDto(comment);
