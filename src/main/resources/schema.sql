@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS notifications
     id            UUID PRIMARY KEY,
     content       TEXT                     NOT NULL,
     resource_type VARCHAR(10)              NOT NULL,
-    resource_id   UUID,
+    resource_id   UUID                     NOT NULL,
     is_checked    BOOLEAN                  NOT NULL DEFAULT FALSE,
     created_at    TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at    TIMESTAMP WITH TIME ZONE,

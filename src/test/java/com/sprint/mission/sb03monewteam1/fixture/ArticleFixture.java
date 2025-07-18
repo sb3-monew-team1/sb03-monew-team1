@@ -137,12 +137,6 @@ public class ArticleFixture {
         );
     }
 
-    public static List<ArticleDto> createArticleDtoList(int count) {
-        return List.of(
-            createArticleDto("테스트 기사 " + (count + 1), List.of("테스트 관심사"))
-        );
-    }
-
     public static List<ArticleDto> createArticleDtoListWithInterests(List<String> interests) {
         return List.of(
             createArticleDto("관심사 관련 기사 1", interests),
