@@ -3,15 +3,15 @@ package com.sprint.mission.sb03monewteam1.batch.job;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
-import com.sprint.mission.sb03monewteam1.repository.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.InterestKeywordRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -27,7 +27,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
-@EnableBatchProcessing
 public class ArticleCollectJobConfig {
 
     private final InterestKeywordRepository interestKeywordRepository;
@@ -47,6 +46,7 @@ public class ArticleCollectJobConfig {
     }
 
     @Bean
+    @StepScope
     public ListItemReader<String> distinctKeywordReader() {
         List<String> keywords = interestKeywordRepository.findAllDistinct();
         return new ListItemReader<>(keywords);

@@ -1,17 +1,24 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
 
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
-import com.sprint.mission.sb03monewteam1.repository.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,8 +44,34 @@ public class NotificationServiceTest {
     private NotificationServiceImpl notificationService;
 
     @BeforeEach
-    void setUp() {
+    @DisplayName("테스트 환경 설정 확인")
+    public void setup() {
+        assertNotNull(notificationRepository);
+        assertNotNull(notificationService);
+    }
 
+    @Nested
+    @DisplayName("관심 기사 등록 테스트")
+    class InterestRegisterTests {
+
+        @Test
+        void 관심_기사_등록_알림을_생성할_수_있다() {
+            // Given
+            User user = UserFixture.createUser();
+            Interest interest = InterestFixture.createInterest();
+            Notification notification
+                = NotificationFixture.createNewArticleNotification();
+            int articleCount = 10;
+
+            given(notificationRepository.save(any(Notification.class))).willReturn(notification);
+
+            // When
+            notificationService.createNewArticleNotification(user, interest, articleCount);
+
+            // Then
+            then(notificationRepository).should().save(any(Notification.class));
+            then(notificationRepository).shouldHaveNoMoreInteractions();
+        }
     }
 
     @Nested

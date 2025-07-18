@@ -8,7 +8,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationSendException;
-import com.sprint.mission.sb03monewteam1.repository.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -39,14 +39,16 @@ public class NotificationEventListener {
             = subscriptionRepository.findAllByInterestIdFetchUser(interest.getId())
             .stream()
             .map(Subscription::getUser)
+            .filter(user -> !user.isDeleted())
             .toList();
 
         try {
-            log.debug("구독 알림 전송 요청 - 괸삼사:{}, 구독자 수:{}", interest.getName(), subscribers.size());
+            log.info("구독 알림 전송 요청 - 괸삼사:{}, 구독자 수:{}", interest.getName(), subscribers.size());
             subscribers.forEach(
                 subscriber -> notificationService.createNewArticleNotification(subscriber, interest, articles.size()));
             log.info("구독 알림 전송 완료 - 관심사:{}, 구독자 수:{}", interest.getName(), subscribers.size());
         } catch (Exception e) {
+            log.error("구독 알림 전송 실패 - 관심사:{}, 구독자 수:{}", interest.getName(), subscribers.size());
             throw new NotificationSendException("구독 알림 전송에 실패하였습니다");
         }
 
