@@ -15,6 +15,7 @@ public interface SubscriptionActivityMapper {
     @Mapping(target = "interestName", source = "interest.name")
     @Mapping(target = "interestKeywords", source = "interest.keywords", qualifiedByName = "mapKeywords")
     @Mapping(target = "interestSubscriberCount", source = "interest.subscriberCount")
+    @Mapping(target = "id", source = "user.id")
     SubscriptionActivityDto toDto(Subscription entity);
 
     @Named("mapKeywords")

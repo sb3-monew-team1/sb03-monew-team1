@@ -16,5 +16,6 @@ public interface CommentLikeActivityMapper {
     @Mapping(target = "commentContent", source = "comment.content")
     @Mapping(target = "commentLikeCount", source = "comment.likeCount")
     @Mapping(target = "commentCreatedAt", source = "comment.createdAt")
+    @Mapping(target = "id", source = "user.id")
     CommentLikeActivityDto toDto(CommentLike entity);
 }
