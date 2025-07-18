@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.event.listener;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
@@ -55,5 +56,18 @@ public class NotificationEventListener {
     @EventListener
     public void handleCommentLike(CommentLikeEvent event) {
 
+        User user = event.getUser();
+        Comment comment = event.getComment();
+
+        log.info("좋아요 등록 이벤트 요청 - user={}, comment={}", user.getId(), comment.getId());
+
+        try {
+            log.debug("좋아요 알림 전송 요청 - user={}, comment={}", user.getId(), comment.getId());
+            notificationService.createCommentLikeNotification(user, comment);
+            log.info("좋아요 알림 전송 완료 - user={}, comment={}", user.getId(), comment.getId());
+        } catch (Exception e) {
+            log.error("좋아요 알림 전송 실패: {}", e.getMessage(), e);
+            throw new NotificationSendException("좋아요 알림 전송에 실패하였습니다.");
+        }
     }
 }
