@@ -13,6 +13,7 @@ import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -303,6 +304,10 @@ public class CommentServiceImpl implements CommentService {
         comment.decreaseLikeCount();
 
         log.info("댓글 좋아요 취소 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        CommentLikeActivityDeleteEvent event = new CommentLikeActivityDeleteEvent(userId, commentId);
+        eventPublisher.publishEvent(event);
+        log.debug("댓글 좋아요 활동 삭제 이벤트 발행 완료: {}", event);
     }
 
     private void validateAuthor(Comment comment, UUID userId) {
