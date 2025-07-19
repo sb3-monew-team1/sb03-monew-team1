@@ -82,9 +82,8 @@ public class ArticleServiceImpl implements ArticleService {
         ArticleView savedArticleView = articleViewRepository.save(articleView);
 
         ArticleViewActivityDto event = articleViewActivityMapper.toDto(savedArticleView);
-        eventPublisher.publishEvent(new ArticleViewActivityCreateEvent(event));
+        eventPublisher.publishEvent(new ArticleViewActivityCreateEvent(userId, event));
         log.debug("기사 뷰 활동 내역 이벤트 발행 완료: {}", event);
-
 
         ArticleViewDto result = articleViewMapper.toDto(savedArticleView);
         log.info("기사 뷰 등록 완료 - id: {}", result.id());

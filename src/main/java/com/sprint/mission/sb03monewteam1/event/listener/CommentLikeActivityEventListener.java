@@ -26,11 +26,6 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
     private final CommentLikeActivityRepository repository;
 
     @Override
-    protected UUID getUserId(CommentLikeActivityDto dto) {
-        return dto.id();
-    }
-
-    @Override
     protected UUID getActivityId(CommentLikeActivityDto dto) {
         return dto.commentId();
     }
@@ -57,13 +52,15 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCreateEvent(CommentLikeActivityCreateEvent event) {
         log.debug("CommentLikeActivityCreateEvent 리스너 실행: {}", event);
-        saveUserActivity(event.commentLikeActivityDto());
+
+        saveUserActivity(event.userId(), event.commentLikeActivityDto());
     }
+
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDeleteEvent(CommentLikeActivityDeleteEvent event) {
         log.debug("CommentLikeActivityDeleteEvent 리스너 실행: {}", event);
-        deleteUserActivity(event.id(), event.commentId());
+        deleteUserActivity(event.userId(), event.commentId());
     }
 }

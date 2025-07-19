@@ -5,6 +5,8 @@ import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMI
 import com.sprint.mission.sb03monewteam1.document.CommentActivity;
 import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.CommentActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
@@ -24,11 +27,6 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
     CommentActivityRepository> {
 
     private final CommentActivityRepository repository;
-
-    @Override
-    protected UUID getUserId(CommentActivityDto dto) {
-        return dto.userId();
-    }
 
     @Override
     protected UUID getActivityId(CommentActivityDto dto) {
@@ -58,7 +56,14 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
     @TransactionalEventListener(phase = AFTER_COMMIT)
     public void handleCreateEvent(CommentActivityCreateEvent event) {
         log.debug("리스너 실행: {}", event);
-        saveUserActivity(event.commentActivityDto());
+        saveUserActivity(event.userId(), event.commentActivityDto());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleDeleteEvent(CommentActivityDeleteEvent event) {
+        log.debug("CommentActivityDeleteEvent 리스너 실행: {}", event);
+        deleteUserActivity(event.userId(), event.commentId());
     }
 }
 

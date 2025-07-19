@@ -8,14 +8,12 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 @Slf4j
 public abstract class AbstractActivityEventListener<T, D, R extends MongoRepository<D, UUID>> {
 
-    protected abstract UUID getUserId(T dto);
     protected abstract UUID getActivityId(T dto);
     protected abstract R getRepository();
     protected abstract List<T> getActivityList(D document);
     protected abstract D createNewDocument(UUID userId);
 
-    public void saveUserActivity(T dto) {
-        UUID userId = getUserId(dto);
+    public void saveUserActivity(UUID userId, T dto) {
         UUID activityId = getActivityId(dto);
 
         log.debug("ActivityCreate 요청: userId: {}, activityId: {}, dto: {}", userId, activityId, dto);

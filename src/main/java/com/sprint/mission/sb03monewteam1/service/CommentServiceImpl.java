@@ -84,7 +84,7 @@ public class CommentServiceImpl implements CommentService {
         article.increaseCommentCount();
 
         CommentActivityDto event = commentActivityMapper.toDto(savedComment);
-        eventPublisher.publishEvent(new CommentActivityCreateEvent(event));
+        eventPublisher.publishEvent(new CommentActivityCreateEvent(userId, event));
         log.debug("댓글 작성 활동 내역 이벤트 발행 완료: {}", event);
 
         return commentMapper.toDto(savedComment);
@@ -285,7 +285,7 @@ public class CommentServiceImpl implements CommentService {
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
 
         CommentLikeActivityDto event = commentLikeActivityMapper.toDto(commentLike);
-        eventPublisher.publishEvent(new CommentLikeActivityCreateEvent(event));
+        eventPublisher.publishEvent(new CommentLikeActivityCreateEvent(userId, event));
         log.debug("댓글 좋아요 사용 기록 이벤트 발행 완료: {}", event);
 
         return commentLikeMapper.toDto(commentLike);
@@ -310,7 +310,7 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 좋아요 취소 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
-        CommentLikeActivityDeleteEvent event = new CommentLikeActivityDeleteEvent(userId, commentId);
+        CommentLikeActivityDeleteEvent event = new CommentLikeActivityDeleteEvent(userId, comment.getId());
         eventPublisher.publishEvent(event);
         log.debug("댓글 좋아요 활동 삭제 이벤트 발행 완료: {}", event);
     }

@@ -1,10 +1,10 @@
 package com.sprint.mission.sb03monewteam1.event;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewActivityDto;
-import lombok.Builder;
+import java.util.UUID;
 
-@Builder
 public record ArticleViewActivityCreateEvent(
+    UUID userId,
     ArticleViewActivityDto articleViewActivityDto
 ) {
 

@@ -97,9 +97,6 @@ public class CommentServiceTest {
     @InjectMocks
     private CommentServiceImpl commentService;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     @BeforeEach
     void setUp() {
 

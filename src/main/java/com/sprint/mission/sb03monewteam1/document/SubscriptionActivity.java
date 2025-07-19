@@ -1,6 +1,5 @@
 package com.sprint.mission.sb03monewteam1.document;
 
-import com.sprint.mission.sb03monewteam1.dto.SubscriptionActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class SubscriptionActivity {
     private UUID userId;
 
     @Builder.Default
-    private List<SubscriptionActivityDto> subscriptions = new ArrayList<>();
+    private List<SubscriptionDto> subscriptions = new ArrayList<>();
 
     @Builder.Default
     private Instant createdAt = Instant.now();

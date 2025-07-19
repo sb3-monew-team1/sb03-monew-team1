@@ -25,11 +25,6 @@ public class ArticleViewActivityEventListener extends AbstractActivityEventListe
     private final ArticleViewActivityRepository repository;
 
     @Override
-    protected UUID getUserId(ArticleViewActivityDto dto) {
-        return dto.viewedBy();
-    }
-
-    @Override
     protected UUID getActivityId(ArticleViewActivityDto dto) {
         return dto.articleId();
     }
@@ -56,6 +51,6 @@ public class ArticleViewActivityEventListener extends AbstractActivityEventListe
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCreateEvent(ArticleViewActivityCreateEvent event) {
         log.debug("ArticleViewActivityCreateEvent 리스너 실행: {}", event);
-        saveUserActivity(event.articleViewActivityDto());
+        saveUserActivity(event.userId(), event.articleViewActivityDto());
     }
 }

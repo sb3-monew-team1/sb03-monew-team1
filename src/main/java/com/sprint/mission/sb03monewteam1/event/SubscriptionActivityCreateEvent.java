@@ -1,11 +1,11 @@
 package com.sprint.mission.sb03monewteam1.event;
 
-import com.sprint.mission.sb03monewteam1.dto.SubscriptionActivityDto;
-import lombok.Builder;
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
+import java.util.UUID;
 
-@Builder
 public record SubscriptionActivityCreateEvent(
-    SubscriptionActivityDto subscriptionActivityDto
+    UUID userId,
+    SubscriptionDto subscriptionDto
 ) {
 
 }
