@@ -63,7 +63,17 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationDto confirm(UUID notificationId) {
-        return null;
+    public NotificationDto markAsRead(UUID notificationId) {
+
+        log.info("알림 개별 확인 시작: notificationId={}", notificationId);
+
+        Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(() -> new NotificationNotFoundException(notificationId));
+
+        notification.markAsChecked();
+
+        log.info("알림 개별 확인 완료: notificationId={}", notificationId);
+
+        return notificationMapper.toDto(notification);
     }
 }

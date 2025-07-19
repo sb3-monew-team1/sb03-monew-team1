@@ -127,7 +127,7 @@ public class NotificationServiceTest {
             given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
 
             // when
-            notificationService.confirm(notificationId);
+            notificationService.markAsRead(notificationId);
 
             // then
             assertThat(notification.isChecked()).isTrue();
@@ -143,7 +143,7 @@ public class NotificationServiceTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                notificationService.confirm(invalidNotificationId);
+                notificationService.markAsRead(invalidNotificationId);
             }).isInstanceOf(NotificationNotFoundException.class);
 
             then(notificationRepository).should().findById(invalidNotificationId);
