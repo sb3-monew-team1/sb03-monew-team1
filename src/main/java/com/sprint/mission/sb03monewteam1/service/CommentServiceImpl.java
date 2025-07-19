@@ -74,7 +74,9 @@ public class CommentServiceImpl implements CommentService {
         Comment savedComment = commentRepository.save(comment);
         article.increaseCommentCount();
 
-        return commentMapper.toDto(savedComment);
+        return commentMapper.toDto(savedComment).toBuilder()
+            .likedByMe(false)
+            .build();
     }
 
     @Override
