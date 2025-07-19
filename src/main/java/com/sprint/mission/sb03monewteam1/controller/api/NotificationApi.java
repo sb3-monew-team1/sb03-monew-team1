@@ -26,7 +26,7 @@ public interface NotificationApi {
             description = "알림 조회 성공",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = UserDto.class)
+                schema = @Schema(implementation = CursorPageResponse.class)
             )
         ),
         @ApiResponse(
