@@ -98,8 +98,7 @@ public class NotificationServiceImpl implements NotificationService {
             nextAfter = lastNotification.getCreatedAt();
         }
 
-        Long totalElements = (long) contents.size();
-
+        Long totalElements = notificationRepository.countByUserIdAndIsCheckedFalse(userId);
 
         return CursorPageResponse.<NotificationDto>builder()
             .content(contents)
