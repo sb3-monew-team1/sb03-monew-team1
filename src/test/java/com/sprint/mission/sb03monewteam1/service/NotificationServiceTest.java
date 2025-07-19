@@ -3,12 +3,15 @@ package com.sprint.mission.sb03monewteam1.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
@@ -22,7 +25,9 @@ import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +62,7 @@ public class NotificationServiceTest {
     public void setup() {
         assertNotNull(notificationRepository);
         assertNotNull(notificationService);
+        assertNotNull(notificationMapper);
     }
 
     @Nested
@@ -115,6 +121,164 @@ public class NotificationServiceTest {
     }
 
     @Nested
+    @DisplayName("미확인 알림 목록 테스트")
+    class UnreadNotificationListTest {
+        @Test
+        void 미확인_알림_목록을_조회하면_CursorPageResponse를_반환한다() {
+            // Given
+            UUID userId = UserFixture.getDefaultId();
+            String cursor = "2024-01-01T12:00:00Z";
+            Instant after = Instant.parse("2024-01-01T12:00:00Z");
+            int limit = 10;
+
+            User user = UserFixture.createUser();
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(user, 5);
+            List<NotificationDto> notificationDtos = List.of(
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 1", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 2", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 3", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 4", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 5", false)
+            );
+
+            given(notificationRepository.findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1))).willReturn(notifications);
+            given(notificationMapper.toDto(any(Notification.class)))
+                .willReturn(notificationDtos.get(0), notificationDtos.get(1),
+                    notificationDtos.get(2), notificationDtos.get(3), notificationDtos.get(4));
+            given(notificationRepository.countByUserIdAndIsCheckedFalse(eq(userId)))
+                .willReturn(5L);
+
+            // When
+            CursorPageResponse<NotificationDto> result = notificationService.getUncheckedNotifications(
+                userId, cursor, after, limit);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(5);
+            assertThat(result.hasNext()).isFalse();
+            assertThat(result.size()).isEqualTo(5);
+            assertThat(result.totalElements()).isEqualTo(5L);
+
+            then(notificationRepository).should().findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1));
+            then(notificationMapper).should(times(5)).toDto(any(Notification.class));
+        }
+
+        @Test
+        void 한_페이지보다_많은_알림이_있으면_hasNext가_true이다() {
+            // Given
+            UUID userId = UserFixture.getDefaultId();
+            String cursor = "2024-01-01T12:00:00Z";
+            Instant after = Instant.parse("2024-01-01T12:00:00Z");
+            int limit = 5;
+
+            User user = UserFixture.createUser();
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(user, 6); // limit + 1
+
+            notifications.forEach(n -> ReflectionTestUtils.setField(n, "createdAt", Instant.now()));
+
+            List<NotificationDto> notificationDtos = List.of(
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 1", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 2", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 3", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 4", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 5", false)
+            );
+
+            given(notificationRepository.findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1))).willReturn(notifications);
+            given(notificationMapper.toDto(any(Notification.class)))
+                .willReturn(notificationDtos.get(0), notificationDtos.get(1),
+                    notificationDtos.get(2), notificationDtos.get(3), notificationDtos.get(4));
+
+            // When
+            CursorPageResponse<NotificationDto> result = notificationService.getUncheckedNotifications(
+                userId, cursor, after, limit);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(5);
+            assertThat(result.hasNext()).isTrue();
+            assertThat(result.size()).isEqualTo(5);
+            assertThat(result.nextCursor()).isNotNull();
+            assertThat(result.nextAfter()).isNotNull();
+
+            then(notificationRepository).should().findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1));
+            then(notificationMapper).should(times(5)).toDto(any(Notification.class));
+        }
+
+        @Test
+        void 커서가_null이면_첫_페이지를_조회한다() {
+            // Given
+            UUID userId = UserFixture.getDefaultId();
+            String cursor = null;
+            Instant after = null;
+            int limit = 10;
+
+            User user = UserFixture.createUser();
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(user, 3);
+            List<NotificationDto> notificationDtos = List.of(
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 1", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 2", false),
+                NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 3", false)
+            );
+
+            given(notificationRepository.findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1))).willReturn(notifications);
+            given(notificationMapper.toDto(any(Notification.class)))
+                .willReturn(notificationDtos.get(0), notificationDtos.get(1), notificationDtos.get(2));
+
+            // When
+            CursorPageResponse<NotificationDto> result = notificationService.getUncheckedNotifications(
+                userId, cursor, after, limit);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(3);
+            assertThat(result.hasNext()).isFalse();
+            assertThat(result.nextCursor()).isNull();
+            assertThat(result.nextAfter()).isNull();
+
+            then(notificationRepository).should().findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1));
+            then(notificationMapper).should(times(3)).toDto(any(Notification.class));
+        }
+
+        @Test
+        void 알림이_없으면_빈_목록을_반환한다() {
+            // Given
+            UUID userId = UserFixture.getDefaultId();
+            String cursor = "2024-01-01T12:00:00Z";
+            Instant after = Instant.parse("2024-01-01T12:00:00Z");
+            int limit = 10;
+
+            List<Notification> notifications = List.of();
+
+            given(notificationRepository.findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1))).willReturn(notifications);
+
+            // When
+            CursorPageResponse<NotificationDto> result = notificationService.getUncheckedNotifications(
+                userId, cursor, after, limit);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).isEmpty();
+            assertThat(result.hasNext()).isFalse();
+            assertThat(result.size()).isZero();
+            assertThat(result.totalElements()).isZero();
+            assertThat(result.nextCursor()).isNull();
+            assertThat(result.nextAfter()).isNull();
+
+            then(notificationRepository).should().findUncheckedNotificationsWithCursor(
+                eq(userId), eq(cursor), eq(after), eq(limit + 1));
+            then(notificationMapper).shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
     @DisplayName("알림 수정 테스트")
     class NotificationUpdateTests {
 
@@ -130,9 +294,11 @@ public class NotificationServiceTest {
             Notification notification = NotificationFixture.createNewArticleNotification(user);
             ReflectionTestUtils.setField(notification, "id", notificationId);
 
-            NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(notification, true);
+            NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(
+                notification, true);
 
-            given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
+            given(notificationRepository.findById(notificationId)).willReturn(
+                Optional.of(notification));
             given(notificationMapper.toDto(any(Notification.class))).willReturn(expectedDto);
 
             // when
@@ -149,7 +315,8 @@ public class NotificationServiceTest {
             UUID invalidNotificationId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
 
-            given(notificationRepository.findById(invalidNotificationId)).willReturn(Optional.empty());
+            given(notificationRepository.findById(invalidNotificationId)).willReturn(
+                Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
@@ -173,7 +340,8 @@ public class NotificationServiceTest {
 
             UUID invalidUserId = UUID.randomUUID();
 
-            given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
+            given(notificationRepository.findById(notificationId)).willReturn(
+                Optional.of(notification));
 
             // when & then
             Assertions.assertThatThrownBy(() -> {

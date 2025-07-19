@@ -1,8 +1,9 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -22,17 +23,18 @@ import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.SubscriptionFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import com.sprint.mission.sb03monewteam1.service.CommentServiceImpl;
 import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,18 +45,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @LoadTestEnv
 @SpringBootTest
 @AutoConfigureMockMvc
 @EnableAsync
 @ActiveProfiles("test")
-@DisplayName("InterestIntegration 테스트")
+@DisplayName("NotificationIntegration 테스트")
 public class NotificationIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -82,12 +92,6 @@ public class NotificationIntegrationTest {
 
     @Autowired
     private EntityManager em;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setup() {
@@ -220,32 +224,109 @@ public class NotificationIntegrationTest {
     }
 
     @Nested
-    @DisplayName("알림 수정 테스트")
-    class NotificationUpdateTests {
+    @DisplayName("알림 목록 조회 테스트")
+    class NotificationListTest {
 
         @Test
-        @Transactional
-        void 알림을_확인하면_200과_확인여부가_true로_수정되어야_한다() throws Exception {
+        void 미확인_알림_목록_조회_시_200이_반환되어야_한다() throws Exception {
+            // Given
+            User user = UserFixture.createUser();
+            User savedUser = userRepository.save(user);
+            UUID userId = savedUser.getId();
 
-            // given
-            User user = userRepository.save(
-                User.builder()
-                    .email("author@codeit.com")
-                    .nickname("author")
-                    .password("author1234!")
-                    .build()
-            );
-            Notification notification = notificationRepository.save(
-                NotificationFixture.createNewArticleNotification(user)
-            );
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(
+                savedUser, 5);
+            notificationRepository.saveAll(notifications);
 
-            // when & then
-            mockMvc.perform(patch("/api/notifications/" + notification.getId())
-                    .header("Monew-Request-User-ID", user.getId().toString()))
+            // When & Then
+            mockMvc.perform(get("/api/notifications")
+                    .header("Monew-Request-User-ID", userId)
+                    .param("limit", "10")
+                    .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(notification.getId().toString()))
-                .andExpect(jsonPath("$.confirmed").value(true))
-                .andExpect(jsonPath("$.userId").value(user.getId().toString()));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(5))
+                .andExpect(jsonPath("$.hasNext").value(false))
+                .andExpect(jsonPath("$.size").value(5));
+        }
+
+        @Test
+        void 다른_사용자의_알림_목록_조회_시_빈_목록이_반환되어야_한다() throws Exception {
+            // Given
+            User user1 = UserFixture.createUser();
+            User savedUser1 = userRepository.save(user1);
+
+            User user2 = UserFixture.createUser("other@example.com", "otherUser", "Password123!");
+            User savedUser2 = userRepository.save(user2);
+
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(
+                savedUser1, 3);
+            notificationRepository.saveAll(notifications);
+
+            // When & Then
+            mockMvc.perform(get("/api/notifications")
+                    .header("Monew-Request-User-ID", savedUser2.getId())
+                    .param("limit", "10")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false))
+                .andExpect(jsonPath("$.size").value(0));
+        }
+
+        @Test
+        void 알림_목록_조회_시_limit_파라미터가_정상적으로_적용되어야_한다() throws Exception {
+            // Given
+            User user = UserFixture.createUser();
+            User savedUser = userRepository.save(user);
+            UUID userId = savedUser.getId();
+
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(
+                savedUser, 15);
+            notificationRepository.saveAll(notifications);
+
+            // When & Then
+            mockMvc.perform(get("/api/notifications")
+                    .header("Monew-Request-User-ID", userId)
+                    .param("limit", "10")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(10))
+                .andExpect(jsonPath("$.hasNext").value(true))
+                .andExpect(jsonPath("$.size").value(10));
+
+        }
+
+        @Nested
+        @DisplayName("알림 수정 테스트")
+        class NotificationUpdateTests {
+
+            @Test
+            @Transactional
+            void 알림을_확인하면_200과_확인여부가_true로_수정되어야_한다() throws Exception {
+
+                // given
+                User user = userRepository.save(
+                    User.builder()
+                        .email("author@codeit.com")
+                        .nickname("author")
+                        .password("author1234!")
+                        .build()
+                );
+                Notification notification = notificationRepository.save(
+                    NotificationFixture.createNewArticleNotification(user)
+                );
+
+                // when & then
+                mockMvc.perform(patch("/api/notifications/" + notification.getId())
+                        .header("Monew-Request-User-ID", user.getId().toString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(notification.getId().toString()))
+                    .andExpect(jsonPath("$.confirmed").value(true))
+                    .andExpect(jsonPath("$.userId").value(user.getId().toString()));
+            }
         }
     }
 }

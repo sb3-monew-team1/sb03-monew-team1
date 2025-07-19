@@ -27,9 +27,9 @@ import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
