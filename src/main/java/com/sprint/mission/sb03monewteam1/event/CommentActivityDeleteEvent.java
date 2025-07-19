@@ -2,7 +2,9 @@ package com.sprint.mission.sb03monewteam1.event;
 
 import java.util.UUID;
 
-public record SubscriptionActivityDeleteEvent(
+public record CommentActivityDeleteEvent(
     UUID userId,
-    UUID interestId
-) {}
+    UUID commentId
+){
+
+}
