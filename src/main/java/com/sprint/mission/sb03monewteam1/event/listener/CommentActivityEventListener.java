@@ -6,7 +6,7 @@ import com.sprint.mission.sb03monewteam1.document.CommentActivity;
 import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
-import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.CommentActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,6 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
         activity.setUserId(userId);
         activity.setComments(new ArrayList<>());
         return activity;
-
     }
 
     @Async
@@ -65,5 +64,12 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
         log.debug("CommentActivityDeleteEvent 리스너 실행: {}", event);
         deleteUserActivity(event.userId(), event.commentId());
     }
-}
 
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUpdateEvent(CommentActivityUpdateEvent event) {
+        log.debug("CommentActivityUpdateEvent 리스너 실행: {}", event);
+
+        updateUserActivity(event.userId(), event.commentId(), event.commentActivityDto());
+    }
+}

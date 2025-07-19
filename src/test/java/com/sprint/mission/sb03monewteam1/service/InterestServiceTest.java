@@ -27,7 +27,6 @@ import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
-import com.sprint.mission.sb03monewteam1.mapper.SubscriptionActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
@@ -66,9 +65,6 @@ class InterestServiceTest {
 
     @Mock
     private SubscriptionMapper subscriptionMapper;
-
-    @Mock
-    private SubscriptionActivityMapper subscriptionActivityMapper;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;

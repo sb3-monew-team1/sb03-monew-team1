@@ -13,6 +13,7 @@ import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
@@ -71,15 +72,15 @@ public class CommentServiceImpl implements CommentService {
         log.info("댓글 등록 시작: 기사 = {}, 작성자 = {}, 내용 = {}", articleId, userId, content);
 
         User user = userRepository.findByIdAndIsDeletedFalse(userId)
-                .orElseThrow(() -> new CommentException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new CommentException(ErrorCode.USER_NOT_FOUND));
         Article article = articleRepository.findByIdAndIsDeletedFalse(articleId)
-                .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
+            .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
         Comment comment = Comment.builder()
-                .content(content)
-                .article(article)
-                .author(user)
-                .build();
+            .content(content)
+            .article(article)
+            .author(user)
+            .build();
 
         Comment savedComment = commentRepository.save(comment);
         article.increaseCommentCount();
@@ -211,6 +212,10 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
+        CommentActivityDto newContentActivity = commentActivityMapper.toDto(comment);
+        CommentActivityUpdateEvent event = new CommentActivityUpdateEvent(userId, commentId, newContentActivity);
+        eventPublisher.publishEvent(event);
+
         return toCommentDtoWithLikedByMe(comment, userId);
     }
 
@@ -243,7 +248,7 @@ public class CommentServiceImpl implements CommentService {
         log.info("댓글 물리 삭제 시작 : 댓글 ID = {}", commentId);
 
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CommentNotFoundException(commentId));
+            .orElseThrow(() -> new CommentNotFoundException(commentId));
 
         // 논리 삭제 되지 않은 댓글이면 기사의 댓글수 감소
         if (!comment.getIsDeleted()) {

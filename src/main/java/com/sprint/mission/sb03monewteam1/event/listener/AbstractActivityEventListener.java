@@ -25,6 +25,23 @@ public abstract class AbstractActivityEventListener<T, D, R extends MongoReposit
         log.debug("ActivityCreate 성공 userId: {}", userId);
     }
 
+    public void updateUserActivity(UUID userId, UUID activityId, T updatedDto) {
+        log.debug("ActivityUpdate 요청: userId: {}, activityId: {}", userId, activityId);
+
+        D document = getRepository().findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("Document not found for userId: " + userId));
+
+        List<T> activities = getActivityList(document);
+
+        activities.removeIf(activity -> getActivityId(activity).equals(activityId));
+
+        activities.add(updatedDto);
+
+        getRepository().save(document);
+
+        log.debug("ActivityUpdate 성공 userId: {}, activityId: {}", userId, activityId);
+    }
+
     public void deleteUserActivity(UUID userId, UUID activityId) {
         log.debug("ActivityDelete 요청: userId: {}, activityId: {}", userId, activityId);
 

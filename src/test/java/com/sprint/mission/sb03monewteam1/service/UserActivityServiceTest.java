@@ -62,7 +62,7 @@ class UserActivityServiceTest {
 
             SubscriptionActivity subscriptionActivity = SubscriptionActivity.builder()
                 .userId(userId)
-                .subscriptions(List.of(SubscriptionActivityDto.builder().interestId(UUID.randomUUID()).build()))
+                .subscriptions(List.of(SubscriptionDto.builder().interestId(UUID.randomUUID()).build()))
                 .build();
 
             CommentActivity commentActivity = CommentActivity.builder()
