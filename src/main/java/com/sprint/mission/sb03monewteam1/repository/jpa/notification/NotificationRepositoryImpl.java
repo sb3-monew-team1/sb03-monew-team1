@@ -6,6 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.QNotification;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,12 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
         where.and(qNotification.isChecked.isFalse());
 
         if (cursor != null && !cursor.isBlank()) {
-            Instant createdAt = Instant.parse(cursor);
-            where.and(qNotification.createdAt.lt(createdAt));
+            try {
+                Instant createdAt = Instant.parse(cursor);
+                where.and(qNotification.createdAt.lt(createdAt));
+            } catch (DateTimeParseException e) {
+                log.warn("잘못된 커서 포맷: {}", cursor);
+            }
         }
 
         OrderSpecifier<?> orderSpecifier = qNotification.createdAt.desc();
@@ -43,7 +48,7 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
 
         return queryFactory
             .selectFrom(qNotification)
-            .leftJoin(qNotification).fetchJoin()
+            .leftJoin(qNotification.user).fetchJoin()
             .where(where)
             .orderBy(orderSpecifier, idOrderSpecifier)
             .limit(limit)

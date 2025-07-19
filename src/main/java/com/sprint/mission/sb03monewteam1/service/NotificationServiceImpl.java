@@ -85,7 +85,7 @@ public class NotificationServiceImpl implements NotificationService {
             notifications = notifications.subList(0, limit);
         }
 
-        List<NotificationDto> content = notifications.stream()
+        List<NotificationDto> contents = notifications.stream()
             .map(notificationMapper::toDto)
             .toList();
 
@@ -98,14 +98,14 @@ public class NotificationServiceImpl implements NotificationService {
             nextAfter = lastNotification.getCreatedAt();
         }
 
-        Long totalElements = (long) content.size();
+        Long totalElements = (long) contents.size();
 
 
         return CursorPageResponse.<NotificationDto>builder()
-            .content(content)
+            .content(contents)
             .nextCursor(nextCursor)
             .nextAfter(nextAfter)
-            .size(content.size())
+            .size(contents.size())
             .totalElements(totalElements)
             .hasNext(hasNext)
             .build();
