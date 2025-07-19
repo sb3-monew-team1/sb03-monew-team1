@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +51,7 @@ public interface NotificationApi {
     ResponseEntity<CursorPageResponse<NotificationDto>> getNotifications(
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false) Instant after,
-        @RequestParam(defaultValue = "50") int limit,
+        @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit,
         @RequestHeader("Monew-Request-User-ID") UUID userId
     );
 
