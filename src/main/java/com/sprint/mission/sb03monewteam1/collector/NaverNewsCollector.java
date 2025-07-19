@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleParseException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -39,12 +37,11 @@ public class NaverNewsCollector {
 
     public List<CollectedArticleDto> collect(String keyword) {
         try {
-            String query = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
             String response = naverApiWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder
                     .path("/v1/search/news.json")
-                    .queryParam("query", query)
+                    .queryParam("query", keyword)
                     .queryParam("display", 10)
                     .queryParam("start", 1)
                     .queryParam("sim", "sim")

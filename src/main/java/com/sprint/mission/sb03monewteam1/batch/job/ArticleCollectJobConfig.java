@@ -2,16 +2,14 @@ package com.sprint.mission.sb03monewteam1.batch.job;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Article;
-import com.sprint.mission.sb03monewteam1.entity.QInterestKeyword;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -31,16 +29,23 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Slf4j
 public class ArticleCollectJobConfig {
 
-    private final InterestKeywordRepository interestKeywordRepository;
-    private final ArticleRepository articleRepository;
     private final ArticleService articleService;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Bean
+    public JobExecutionListener naverNewsCollectJobExecutionListener() {
+        return new NewsCollectJobCompletionListener(eventPublisher, "naverNewsCollectJob");
+    }
+
+    @Bean
+    public JobExecutionListener hankyungNewsCollectJobExecutionListener() {
+        return new NewsCollectJobCompletionListener(eventPublisher, "hankyungNewsCollectJob");
+    }
 
     @Bean
     @StepScope
     public JpaPagingItemReader<String> distinctKeywordReader(
         EntityManagerFactory entityManagerFactory) {
-        QInterestKeyword qInterestKeyword = QInterestKeyword.interestKeyword;
 
         return new JpaPagingItemReaderBuilder<String>()
             .name("distinctKeywordReader")
@@ -72,10 +77,12 @@ public class ArticleCollectJobConfig {
     @Bean
     public Job naverNewsCollectJob(
         JobRepository jobRepository,
-        Step naverNewsCollectStep
+        Step naverNewsCollectStep,
+        JobExecutionListener naverNewsCollectJobExecutionListener
     ) {
         return new JobBuilder("naverNewsCollectJob", jobRepository)
             .start(naverNewsCollectStep)
+            .listener(naverNewsCollectJobExecutionListener)
             .build();
     }
 
@@ -110,10 +117,12 @@ public class ArticleCollectJobConfig {
     @Bean
     public Job hankyungNewsCollectJob(
         JobRepository jobRepository,
-        Step hankyungNewsCollectStep
+        Step hankyungNewsCollectStep,
+        JobExecutionListener hankyungNewsCollectJobExecutionListener
     ) {
         return new JobBuilder("hankyungNewsCollectJob", jobRepository)
             .start(hankyungNewsCollectStep)
+            .listener(hankyungNewsCollectJobExecutionListener)
             .build();
     }
 

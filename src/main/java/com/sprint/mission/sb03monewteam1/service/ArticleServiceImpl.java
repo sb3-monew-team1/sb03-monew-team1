@@ -1,18 +1,5 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
@@ -24,7 +11,6 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
-import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -36,9 +22,19 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleViewRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
-
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -230,7 +226,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional(readOnly = true)
     public List<Article> collectNaverArticles(String keyword) {
-        log.debug("네이버 기사 수집(엔티티 변환) 시작: 관심사={}, 키워드={}", keyword);
+        log.debug("네이버 기사 수집(엔티티 변환) 시작: 키워드={}", keyword);
         List<CollectedArticleDto> collectedArticles = naverNewsCollector.collect(keyword);
 
         List<String> allSourceUrls = collectedArticles.stream()
@@ -249,7 +245,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional(readOnly = true)
     public List<Article> collectHankyungArticles(String keyword) {
-        log.debug("한국경제 기사 수집(엔티티 변환) 시작: 관심사={}, 키워드={}", keyword);
+        log.debug("한국경제 기사 수집(엔티티 변환) 시작: 키워드={}", keyword);
         List<CollectedArticleDto> collectedArticles = hankyungNewsCollector.collect(keyword);
 
         List<String> allSourceUrls = collectedArticles.stream()
@@ -313,7 +309,8 @@ public class ArticleServiceImpl implements ArticleService {
 
         articleRepository.saveAll(articles);
 
-        List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(keyword);
+        List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
+            keyword);
         for (InterestKeyword ik : interestKeywords) {
             for (Article article : articles) {
                 ArticleInterest articleInterest = ArticleInterest.builder()
@@ -322,12 +319,6 @@ public class ArticleServiceImpl implements ArticleService {
                     .build();
                 articleInterestRepository.save(articleInterest);
             }
-
-            List<ArticleDto> articleDtos = articles.stream()
-                .map(articleMapper::toDto)
-                .toList();
-            eventPublisher.publishEvent(
-                new NewArticleCollectEvent(ik.getInterest(), articleDtos));
         }
     }
 }

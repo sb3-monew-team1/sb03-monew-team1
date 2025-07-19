@@ -20,12 +20,14 @@ public class ArticleCollectScheduler {
     private final Job naverNewsCollectJob;
     private final Job hankyungNewsCollectJob;
 
-    @Scheduled(cron = "0 0 * * * *")
+    //    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void runNaverNewsCollectJob() {
         runJobIfNotRunning("naverNewsCollectJob", naverNewsCollectJob);
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    //    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void runHankyungNewsCollectJob() {
         runJobIfNotRunning("hankyungNewsCollectJob", hankyungNewsCollectJob);
     }
