@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.event.listener;
 import com.sprint.mission.sb03monewteam1.document.SubscriptionActivity;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionActivityDto;
 import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.SubscriptionActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,14 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(SubscriptionActivityCreateEvent event) {
-        log.debug("리스너 실행: {}", event);
+        log.debug("SubscriptionActivityCreateEvent 리스너 실행: {}", event);
         saveUserActivity(event.subscriptionActivityDto());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleDeleteEvent(SubscriptionActivityDeleteEvent event) {
+        log.debug("SubscriptionActivityDeleteEven 리스너 실행: {}", event);
+        deleteUserActivity(event.id(), event.interestId());
     }
 }

@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.event.listener;
 import com.sprint.mission.sb03monewteam1.document.CommentLikeActivity;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.CommentLikeActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
 
     @Override
     protected UUID getActivityId(CommentLikeActivityDto dto) {
-        return dto.id();
+        return dto.commentId();
     }
 
     @Override
@@ -54,8 +55,15 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(CommentLikeActivityCreateEvent event) {
-        log.debug("리스너 실행: {}", event);
+    public void handleCreateEvent(CommentLikeActivityCreateEvent event) {
+        log.debug("CommentLikeActivityCreateEvent 리스너 실행: {}", event);
         saveUserActivity(event.commentLikeActivityDto());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleDeleteEvent(CommentLikeActivityDeleteEvent event) {
+        log.debug("CommentLikeActivityDeleteEvent 리스너 실행: {}", event);
+        deleteUserActivity(event.id(), event.commentId());
     }
 }

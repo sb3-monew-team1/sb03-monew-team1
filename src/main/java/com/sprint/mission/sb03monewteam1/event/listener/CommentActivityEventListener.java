@@ -56,7 +56,7 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
 
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
-    public void handle(CommentActivityCreateEvent event) {
+    public void handleCreateEvent(CommentActivityCreateEvent event) {
         log.debug("리스너 실행: {}", event);
         saveUserActivity(event.commentActivityDto());
     }

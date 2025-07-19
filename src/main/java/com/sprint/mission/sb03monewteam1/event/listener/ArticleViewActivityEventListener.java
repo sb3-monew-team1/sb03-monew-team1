@@ -54,8 +54,8 @@ public class ArticleViewActivityEventListener extends AbstractActivityEventListe
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(ArticleViewActivityCreateEvent event) {
-        log.debug("리스너 실행: {}", event);
+    public void handleCreateEvent(ArticleViewActivityCreateEvent event) {
+        log.debug("ArticleViewActivityCreateEvent 리스너 실행: {}", event);
         saveUserActivity(event.articleViewActivityDto());
     }
 }
