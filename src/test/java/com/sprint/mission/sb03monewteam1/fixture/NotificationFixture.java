@@ -62,7 +62,7 @@ public class NotificationFixture {
             .resourceId(notification.getResourceId())
             .resourceType(String.valueOf(notification.getResourceType()))
             .userId(notification.getUser().getId())
-            .updateAt(notification.getUpdatedAt())
+            .updatedAt(notification.getUpdatedAt())
             .build();
     }
 }

@@ -8,6 +8,8 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {
 
-    @Mapping(target = "resourceId", source = "user.id")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "resourceType", expression = "java(notification.getResourceType().name())")
+    @Mapping(target = "confirmed", source = "checked")
     NotificationDto toDto(Notification notification);
 }
