@@ -1,11 +1,17 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+
+    private final NotificationMapper notificationMapper;
 
     @Override
     public void createNewArticleNotification(User user, Interest interest, int articleCount) {
@@ -41,7 +49,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void createCommentLikeNotification(User user, Comment comment) {
 
-        log.info("좋아요 알림 등록 시작: comment={}, likedBy={}, author={}", comment.getId(), user.getId(), comment.getAuthor().getId());
+        log.info("좋아요 알림 등록 시작: comment={}, likedBy={}, author={}", comment.getId(), user.getId(),
+            comment.getAuthor().getId());
 
         Notification notification = Notification.builder()
             .content(String.format("%s님이 나의 댓글을 좋아합니다.", user.getNickname()))
@@ -52,6 +61,55 @@ public class NotificationServiceImpl implements NotificationService {
 
         notificationRepository.save(notification);
 
-        log.info("좋아요 알림 등록 완료: comment={}, likedBy={}, author={}", comment.getId(), user.getId(), comment.getAuthor().getId());
+        log.info("좋아요 알림 등록 완료: comment={}, likedBy={}, author={}", comment.getId(), user.getId(),
+            comment.getAuthor().getId());
     }
+
+    @Override
+    public CursorPageResponse<NotificationDto> getUncheckedNotifications(
+        UUID userId,
+        String cursor,
+        Instant after,
+        int limit
+    ) {
+        List<Notification> notifications = notificationRepository
+            .findUncheckedNotificationsWithCursor(
+                userId,
+                cursor,
+                after,
+                limit + 1
+            );
+
+        boolean hasNext = notifications.size() > limit;
+        if (hasNext) {
+            notifications = notifications.subList(0, limit);
+        }
+
+        List<NotificationDto> content = notifications.stream()
+            .map(notificationMapper::toDto)
+            .toList();
+
+        String nextCursor = null;
+        Instant nextAfter = null;
+
+        if (hasNext && !notifications.isEmpty()) {
+            Notification lastNotification = notifications.get(notifications.size() - 1);
+            nextCursor = lastNotification.getCreatedAt().toString();
+            nextAfter = lastNotification.getCreatedAt();
+        }
+
+        Long totalElements = (long) content.size();
+
+
+        return CursorPageResponse.<NotificationDto>builder()
+            .content(content)
+            .nextCursor(nextCursor)
+            .nextAfter(nextAfter)
+            .size(content.size())
+            .totalElements(totalElements)
+            .hasNext(hasNext)
+            .build();
+
+    }
+
 }
