@@ -1,7 +1,9 @@
 package com.sprint.mission.sb03monewteam1.fixture;
 
+import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public class ArticleFixture {
@@ -95,4 +97,52 @@ public class ArticleFixture {
         article.setIdForTest(id); // 테스트 전용 id 세팅
         return article;
     }
+
+    // ArticleDto 생성 메서드들
+    public static ArticleDto createArticleDto() {
+        return ArticleDto.builder()
+            .id(UUID.randomUUID())
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(DEFAULT_TITLE)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .interests(List.of("테스트 관심사"))
+            .createdAt(Instant.now())
+            .build();
+    }
+
+    public static ArticleDto createArticleDto(String title, List<String> interests) {
+        return ArticleDto.builder()
+            .id(UUID.randomUUID())
+            .source(DEFAULT_SOURCE)
+            .sourceUrl(DEFAULT_SOURCE_URL)
+            .title(title)
+            .publishDate(DEFAULT_PUBLISH_DATE)
+            .summary(DEFAULT_SUMMARY)
+            .viewCount(DEFAULT_VIEW_COUNT)
+            .commentCount(DEFAULT_COMMENT_COUNT)
+            .interests(interests)
+            .createdAt(Instant.now())
+            .build();
+    }
+
+    public static List<ArticleDto> createArticleDtoList() {
+        return List.of(
+            createArticleDto("첫 번째 테스트 기사", List.of("기술", "IT")),
+            createArticleDto("두 번째 테스트 기사", List.of("경제", "비즈니스")),
+            createArticleDto("세 번째 테스트 기사", List.of("스포츠", "축구"))
+        );
+    }
+
+    public static List<ArticleDto> createArticleDtoListWithInterests(List<String> interests) {
+        return List.of(
+            createArticleDto("관심사 관련 기사 1", interests),
+            createArticleDto("관심사 관련 기사 2", interests),
+            createArticleDto("관심사 관련 기사 3", interests)
+        );
+    }
+
 }

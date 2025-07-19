@@ -30,6 +30,8 @@ spring:
   batch:
     jdbc:
       initialize-schema: always
+    job:
+      enabled: false
 
 logging:
   level:
@@ -40,7 +42,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,loggers  # 엔드포인트 노출
+        include: health,info,metrics,prometheus,loggers  # 엔드포인트 노출
       base-path: /actuator  # Actuator 엔드포인트 기본 경로
   endpoint:
     health:

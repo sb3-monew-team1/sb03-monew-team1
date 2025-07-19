@@ -24,6 +24,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -418,6 +419,7 @@ class ArticleServiceTest {
         // then
         verify(articleRepository).saveAll(anyList());
         verify(articleInterestRepository).saveAll(anyList());
+        verify(eventPublisher).publishEvent(any(NewArticleCollectEvent.class));
     }
 
     @Test

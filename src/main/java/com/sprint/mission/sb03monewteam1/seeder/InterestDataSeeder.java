@@ -2,8 +2,8 @@ package com.sprint.mission.sb03monewteam1.seeder;
 
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -40,7 +40,9 @@ public class InterestDataSeeder implements DataSeeder {
     }
 
     private List<Interest> createInterests() {
-        List<String> names = List.of("Football", "Soccer", "Basketball", "Baseball", "Tennis", "Hockey", "Golf", "Cricket", "Rugby", "Badminton");
+        List<String> names = List.of(
+            "정치", "경제", "사회", "문화", "스포츠", "과학", "기술", "건강", "교육", "연예"
+        );
         List<Interest> interests = new ArrayList<>();
 
         for (int i = 0; i <= 70; i++) {
@@ -74,11 +76,15 @@ public class InterestDataSeeder implements DataSeeder {
     }
 
     private List<String> generateRandomKeywords(String interestName, int count) {
-        List<String> adjectives = List.of("popular", "exciting", "challenging", "relaxing", "creative", "social", "active", "peaceful");
-        List<String> descriptors = List.of("community", "beginner", "advanced", "fun", "serious", "casual", "professional");
+        List<String> adjectives = List.of(
+            "속보", "분석", "이슈", "현장", "전망", "심층", "특집", "인터뷰"
+        );
+        List<String> descriptors = List.of(
+            "정책", "사건", "트렌드", "핫이슈", "전문가", "여론", "현상"
+        );
 
         List<String> keywords = new ArrayList<>();
-        keywords.add(interestName.toLowerCase());
+        keywords.add(interestName.replaceAll(" \\d+$", "")); // 숫자 제거 후 관심사명 추가
 
         Random random = new Random();
         while (keywords.size() < count) {

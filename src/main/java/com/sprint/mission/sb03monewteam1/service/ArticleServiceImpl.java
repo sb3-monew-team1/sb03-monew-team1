@@ -13,6 +13,7 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -333,6 +334,13 @@ public class ArticleServiceImpl implements ArticleService {
 
             log.info("기사 배치 저장 완료: {}개", filtered.size());
             filtered.forEach(article -> log.debug("저장된 기사: {}", article.getTitle()));
+
+            List<ArticleDto> filteredArticles = filtered.stream()
+                .map(articleMapper::toDto)
+                .toList();
+
+            eventPublisher.publishEvent(new NewArticleCollectEvent(interest, filteredArticles));
+            log.info("기사 알림 이벤트 발행: {}", interest.getName());
         }
     }
 }

@@ -14,6 +14,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -156,8 +157,8 @@ public class CommentServiceImpl implements CommentService {
         }
 
         Long totalElements = (articleId == null)
-            ? commentRepository.count()
-            : commentRepository.countByArticleId(articleId);
+            ? commentRepository.countByIsDeletedFalse()
+            : commentRepository.countByArticleIdAndIsDeletedFalse(articleId);
 
         comments = hasNext ? comments.subList(0, size) : comments;
 
@@ -276,6 +277,10 @@ public class CommentServiceImpl implements CommentService {
 
         // 댓글의 좋아요수 +1
         comment.increaseLikeCount();
+
+        // 이벤트 발행
+        eventPublisher.publishEvent(new CommentLikeEvent(user, comment));
+        log.info("좋아요 등록 알림 이벤트 발행: likedBy={}, comment={}", user.getId(), comment.getId());
 
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
 

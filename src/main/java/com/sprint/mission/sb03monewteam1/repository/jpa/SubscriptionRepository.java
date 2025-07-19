@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.repository.jpa;
 
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     @Transactional
     void deleteByUserId(UUID userId);
+
+    Optional<Subscription> findByInterestId(UUID interestId);
+
+    @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.user WHERE s.interest.id = :interestId")
+    List<Subscription> findAllByInterestIdFetchUser(@Param("interestId") UUID interestId);
 }
