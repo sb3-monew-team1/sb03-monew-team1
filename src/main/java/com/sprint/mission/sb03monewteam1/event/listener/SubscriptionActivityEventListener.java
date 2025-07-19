@@ -1,7 +1,8 @@
 package com.sprint.mission.sb03monewteam1.event.listener;
 
 import com.sprint.mission.sb03monewteam1.document.SubscriptionActivity;
-import com.sprint.mission.sb03monewteam1.dto.SubscriptionActivityDto;
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.SubscriptionActivityRepository;
@@ -19,19 +20,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 public class SubscriptionActivityEventListener extends AbstractActivityEventListener<
-    SubscriptionActivityDto,
+    SubscriptionDto,
     SubscriptionActivity,
     SubscriptionActivityRepository> {
 
     private final SubscriptionActivityRepository repository;
 
     @Override
-    protected UUID getUserId(SubscriptionActivityDto dto) {
-        return dto.id();
-    }
-
-    @Override
-    protected UUID getActivityId(SubscriptionActivityDto dto) {
+    protected UUID getActivityId(SubscriptionDto dto) {
         return dto.interestId();
     }
 
@@ -41,7 +37,7 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
     }
 
     @Override
-    protected List<SubscriptionActivityDto> getActivityList(SubscriptionActivity document) {
+    protected List<SubscriptionDto> getActivityList(SubscriptionActivity document) {
         return document.getSubscriptions();
     }
 
@@ -57,13 +53,13 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(SubscriptionActivityCreateEvent event) {
         log.debug("SubscriptionActivityCreateEvent 리스너 실행: {}", event);
-        saveUserActivity(event.subscriptionActivityDto());
+        saveUserActivity(event.userId(), event.subscriptionDto());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDeleteEvent(SubscriptionActivityDeleteEvent event) {
         log.debug("SubscriptionActivityDeleteEven 리스너 실행: {}", event);
-        deleteUserActivity(event.id(), event.interestId());
+        deleteUserActivity(event.userId(), event.interestId());
     }
 }

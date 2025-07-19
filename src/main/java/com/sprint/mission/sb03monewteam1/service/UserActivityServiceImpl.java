@@ -27,7 +27,7 @@ public class UserActivityServiceImpl implements UserActivityService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
-        List<SubscriptionActivityDto> subscriptions = subscriptionActivityRepository.findById(userId)
+        List<SubscriptionDto> subscriptions = subscriptionActivityRepository.findById(userId)
             .map(SubscriptionActivity::getSubscriptions)
             .orElse(List.of());
 
