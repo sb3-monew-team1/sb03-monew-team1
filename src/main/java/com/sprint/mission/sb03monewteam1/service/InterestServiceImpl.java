@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.SubscriptionActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
@@ -8,6 +9,7 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
@@ -16,6 +18,7 @@ import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundExce
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
+import com.sprint.mission.sb03monewteam1.mapper.SubscriptionActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,8 +46,12 @@ public class InterestServiceImpl implements InterestService {
     private final InterestRepository interestRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
+
     private final InterestMapper interestMapper;
+    private final SubscriptionActivityMapper subscriptionActivityMapper;
     private final SubscriptionMapper subscriptionMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public InterestDto create(InterestRegisterRequest request) {
@@ -169,6 +177,10 @@ public class InterestServiceImpl implements InterestService {
 
         log.info("구독 생성 완료: subscriptionId={}, userId={}, interestId={}",
             savedSubscription.getId(), user.getId(), interest.getId());
+
+        SubscriptionActivityDto eventDto = subscriptionActivityMapper.toDto(savedSubscription);
+        eventPublisher.publishEvent(new SubscriptionActivityCreateEvent(eventDto));
+        log.debug("구독 활동 내역 이벤트 발행 완료: {}", eventDto);
 
         return subscriptionMapper.toDto(savedSubscription);
     }

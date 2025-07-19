@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
+import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
@@ -11,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -20,6 +22,8 @@ import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAc
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
+import com.sprint.mission.sb03monewteam1.mapper.CommentActivityMapper;
+import com.sprint.mission.sb03monewteam1.mapper.CommentLikeActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
@@ -50,6 +54,8 @@ public class CommentServiceImpl implements CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final CommentMapper commentMapper;
     private final CommentLikeMapper commentLikeMapper;
+    private final CommentActivityMapper commentActivityMapper;
+    private final CommentLikeActivityMapper commentLikeActivityMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -74,6 +80,10 @@ public class CommentServiceImpl implements CommentService {
 
         Comment savedComment = commentRepository.save(comment);
         article.increaseCommentCount();
+
+        CommentActivityDto event = commentActivityMapper.toDto(savedComment);
+        eventPublisher.publishEvent(new CommentActivityCreateEvent(event));
+        log.debug("댓글 작성 활동 내역 이벤트 발행 완료: {}", event);
 
         return commentMapper.toDto(savedComment);
     }
@@ -267,6 +277,10 @@ public class CommentServiceImpl implements CommentService {
         comment.increaseLikeCount();
 
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
+
+        CommentLikeActivityDto event = commentLikeActivityMapper.toDto(commentLike);
+        eventPublisher.publishEvent(new CommentLikeActivityCreateEvent(event));
+        log.debug("댓글 좋아요 사용 기록 이벤트 발행 완료: {}", event);
 
         return commentLikeMapper.toDto(commentLike);
     }
