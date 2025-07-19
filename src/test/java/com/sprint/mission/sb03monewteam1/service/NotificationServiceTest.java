@@ -143,6 +143,8 @@ public class NotificationServiceTest {
             given(notificationMapper.toDto(any(Notification.class)))
                 .willReturn(notificationDtos.get(0), notificationDtos.get(1),
                     notificationDtos.get(2), notificationDtos.get(3), notificationDtos.get(4));
+            given(notificationRepository.countByUserIdAndIsCheckedFalse(eq(userId)))
+                .willReturn(5L);
 
             // When
             CursorPageResponse<NotificationDto> result = notificationService.getUncheckedNotifications(
