@@ -63,7 +63,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationDto markAsRead(UUID notificationId) {
+    public NotificationDto confirm(UUID notificationId) {
 
         log.info("알림 개별 확인 시작: notificationId={}", notificationId);
 

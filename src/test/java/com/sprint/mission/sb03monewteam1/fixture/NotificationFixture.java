@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.fixture;
 
+import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
@@ -52,5 +53,16 @@ public class NotificationFixture {
             .build();
     }
 
-
+    public static NotificationDto createNotificationDtoWithConfirmed(Notification notification, boolean confirmed) {
+        return NotificationDto.builder()
+            .id(notification.getId())
+            .content(notification.getContent())
+            .createdAt(notification.getCreatedAt())
+            .confirmed(confirmed)
+            .resourceId(notification.getResourceId())
+            .resourceType(String.valueOf(notification.getResourceType()))
+            .userId(notification.getUser().getId())
+            .updateAt(notification.getUpdatedAt())
+            .build();
+    }
 }

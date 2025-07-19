@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
 
+import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
@@ -19,6 +20,7 @@ import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +44,9 @@ public class NotificationServiceTest {
 
     @Mock
     private NotificationRepository notificationRepository;
+
+    @Mock
+    private NotificationMapper notificationMapper;
 
     @InjectMocks
     private NotificationServiceImpl notificationService;
@@ -124,13 +129,16 @@ public class NotificationServiceTest {
             Notification notification = NotificationFixture.createNewArticleNotification(user);
             ReflectionTestUtils.setField(notification, "id", notificationId);
 
+            NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(notification, true);
+
             given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
+            given(notificationMapper.toDto(any(Notification.class))).willReturn(expectedDto);
 
             // when
-            notificationService.markAsRead(notificationId);
+            NotificationDto result = notificationService.confirm(notificationId);
 
             // then
-            assertThat(notification.isChecked()).isTrue();
+            assertThat(result.confirmed()).isTrue();
         }
 
         @Test
@@ -143,7 +151,7 @@ public class NotificationServiceTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                notificationService.markAsRead(invalidNotificationId);
+                notificationService.confirm(invalidNotificationId);
             }).isInstanceOf(NotificationNotFoundException.class);
 
             then(notificationRepository).should().findById(invalidNotificationId);

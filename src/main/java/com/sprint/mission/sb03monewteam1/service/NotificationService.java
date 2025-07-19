@@ -12,5 +12,5 @@ public interface NotificationService {
 
     void createCommentLikeNotification(User user, Comment comment);
 
-    NotificationDto markAsRead(UUID notificationId);
+    NotificationDto confirm(UUID notificationId);
 }
