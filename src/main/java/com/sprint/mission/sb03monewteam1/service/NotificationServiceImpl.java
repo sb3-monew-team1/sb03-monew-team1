@@ -10,9 +10,7 @@ import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAcce
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
-import java.util.Optional;
 import java.util.UUID;
-import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -66,7 +64,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public NotificationDto confirm(UUID notificationId, UUID requestUserId) {
 
-        log.info("알림 개별 확인 시작: notificationId={}", notificationId);
+        log.info("알림 개별 확인 시작: notificationId={}, userId={}", notificationId, requestUserId);
 
         Notification notification = notificationRepository.findById(notificationId)
             .orElseThrow(() -> new NotificationNotFoundException(notificationId));
@@ -77,7 +75,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         notification.markAsChecked();
 
-        log.info("알림 개별 확인 완료: notificationId={}", notificationId);
+        log.info("알림 개별 확인 완료: notificationId={}, userId={}", notificationId, requestUserId);
 
         return notificationMapper.toDto(notification);
     }
