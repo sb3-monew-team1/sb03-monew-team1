@@ -13,6 +13,7 @@ import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
@@ -95,6 +96,31 @@ public class NotificationControllerTest {
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(ErrorCode.NOTIFICATION_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 대상자가_아닌_유저가_알림을_확인하면_403이_반환되어야_한다() throws Exception {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            UUID invalidUserId = UUID.randomUUID();
+
+            given(notificationService.confirm(notificationId, invalidUserId))
+                .willThrow(new NotificationAccessDeniedException(invalidUserId));
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications/" + notificationId)
+                    .header("Monew-Request-User-ID", invalidUserId.toString()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
                 .andExpect(jsonPath("$.message").exists());
         }
     }
