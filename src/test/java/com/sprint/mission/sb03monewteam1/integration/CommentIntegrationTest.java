@@ -605,7 +605,6 @@ public class CommentIntegrationTest {
             MvcResult result = mockMvc.perform(post("/api/comments/{commentId}/comment-likes", commentId)
                     .header("Monew-Request-User-ID", savedUser.getId().toString()))
                 .andExpect(status().isOk())
-                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.likedBy").value(userId.toString()))
                 .andExpect(jsonPath("$.commentId").value(commentId.toString()))
                 .andExpect(jsonPath("$.commentLikeCount").value(1L))
@@ -651,14 +650,13 @@ public class CommentIntegrationTest {
             CommentLike savedCommentLike = commentLikeRepository.save(CommentLikeFixture.createCommentLike(savedUser, savedComment));
             UUID commentId = savedComment.getId();
             UUID userId = savedUser.getId();
-            UUID articleId = savedArticle.getId();
 
             // when & then
             mockMvc.perform(delete("/api/comments/{commentId}/comment-likes", commentId)
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isNoContent());
 
-            boolean existsCommentLike = commentLikeRepository.existsById(commentId);
+            boolean existsCommentLike = commentLikeRepository.existsById(savedCommentLike.getId());
             assertThat(existsCommentLike).isFalse();
         }
 
