@@ -70,7 +70,7 @@ public class NotificationControllerTest {
 
             NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(notification, true);
 
-            given(notificationService.confirm(notificationId)).willReturn(expectedDto);
+            given(notificationService.confirm(notificationId, userId)).willReturn(expectedDto);
 
             // When & Then
             mockMvc.perform(patch("/api/notifications/" + notificationId)
@@ -87,7 +87,7 @@ public class NotificationControllerTest {
             UUID invalidNotificationId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
 
-            given(notificationService.confirm(invalidNotificationId))
+            given(notificationService.confirm(invalidNotificationId, userId))
                 .willThrow(new NotificationNotFoundException(invalidNotificationId));
 
             // when & then

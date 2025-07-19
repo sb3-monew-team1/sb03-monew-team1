@@ -14,6 +14,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
@@ -135,7 +136,7 @@ public class NotificationServiceTest {
             given(notificationMapper.toDto(any(Notification.class))).willReturn(expectedDto);
 
             // when
-            NotificationDto result = notificationService.confirm(notificationId);
+            NotificationDto result = notificationService.confirm(notificationId, userId);
 
             // then
             assertThat(result.confirmed()).isTrue();
@@ -146,15 +147,40 @@ public class NotificationServiceTest {
 
             // given
             UUID invalidNotificationId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
 
             given(notificationRepository.findById(invalidNotificationId)).willReturn(Optional.empty());
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                notificationService.confirm(invalidNotificationId);
+                notificationService.confirm(invalidNotificationId, userId);
             }).isInstanceOf(NotificationNotFoundException.class);
 
             then(notificationRepository).should().findById(invalidNotificationId);
+        }
+
+        @Test
+        void 알림_대상자가_아닌_유저가_알림을_확인하면_예외가_발생한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            UUID invalidUserId = UUID.randomUUID();
+
+            given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                notificationService.confirm(notificationId, invalidUserId);
+            }).isInstanceOf(NotificationAccessDeniedException.class);
+
+            then(notificationRepository).should().findById(notificationId);
         }
     }
 }

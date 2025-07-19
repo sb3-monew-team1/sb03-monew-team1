@@ -6,6 +6,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
@@ -63,12 +64,16 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationDto confirm(UUID notificationId) {
+    public NotificationDto confirm(UUID notificationId, UUID requestUserId) {
 
         log.info("알림 개별 확인 시작: notificationId={}", notificationId);
 
         Notification notification = notificationRepository.findById(notificationId)
             .orElseThrow(() -> new NotificationNotFoundException(notificationId));
+
+        if (!notification.getUser().getId().equals(requestUserId)) {
+            throw new NotificationAccessDeniedException(requestUserId);
+        }
 
         notification.markAsChecked();
 
