@@ -8,7 +8,7 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

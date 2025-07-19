@@ -23,7 +23,7 @@ import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

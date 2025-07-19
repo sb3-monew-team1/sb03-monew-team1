@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.repository.jpa;
+package com.sprint.mission.sb03monewteam1.repository.jpa.notification;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;

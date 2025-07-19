@@ -17,11 +17,11 @@ import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundExcept
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleInterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleViewRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleView.ArticleViewRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;

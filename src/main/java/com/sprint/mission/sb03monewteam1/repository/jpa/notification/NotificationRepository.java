@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.repository.jpa;
+package com.sprint.mission.sb03monewteam1.repository.jpa.notification;
 
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import java.util.UUID;

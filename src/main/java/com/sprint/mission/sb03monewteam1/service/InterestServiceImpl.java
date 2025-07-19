@@ -17,9 +17,9 @@ import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityEx
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
