@@ -9,6 +9,8 @@ import com.sprint.mission.sb03monewteam1.document.CommentLikeActivity;
 import com.sprint.mission.sb03monewteam1.document.SubscriptionActivity;
 import com.sprint.mission.sb03monewteam1.dto.*;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.user.UserException;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.ArticleViewActivityRepository;
@@ -107,8 +109,8 @@ class UserActivityServiceTest {
 
             // Then
             assertThat(thrown)
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("User not found");
+                .isInstanceOf(UserException.class) // 수정된 예외 클래스 검증
+                .hasMessageContaining("사용자를 찾을 수 없습니다.");
         }
 
         @Test
