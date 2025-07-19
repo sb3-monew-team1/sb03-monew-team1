@@ -9,12 +9,10 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
@@ -87,6 +85,9 @@ class ArticleServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private MonewMetrics monewMetrics;
 
     @InjectMocks
     private ArticleServiceImpl articleService;
@@ -421,6 +422,7 @@ class ArticleServiceTest {
         when(articleRepository.findAllBySourceUrlIn(anyList())).thenReturn(List.of());
         when(articleRepository.saveAll(anyList())).thenReturn(List.of(article));
         when(interestKeywordRepository.findAllByKeyword(keyword)).thenReturn(List.of(ik1, ik2));
+        when(monewMetrics.getArticleCreatedCounter()).thenReturn(mock(io.micrometer.core.instrument.Counter.class));
 
         List<Article> articles = articleService.collectNaverArticles(keyword);
         articleService.saveArticles(articles, keyword);

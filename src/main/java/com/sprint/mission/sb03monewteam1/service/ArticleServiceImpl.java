@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
@@ -11,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -56,6 +58,8 @@ public class ArticleServiceImpl implements ArticleService {
     private final HankyungNewsCollector hankyungNewsCollector;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private final MonewMetrics monewMetrics;
 
     @Override
     @Transactional
@@ -309,8 +313,14 @@ public class ArticleServiceImpl implements ArticleService {
 
         articleRepository.saveAll(articles);
 
-        List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
-            keyword);
+        monewMetrics.getArticleCreatedCounter().increment(articles.size());
+
+        List<ArticleDto> articleDtos = articles.stream()
+            .map(articleMapper::toDto)
+            .toList();
+
+        List<InterestKeyword> interestKeywords =
+            interestKeywordRepository.findAllByKeyword(keyword);
         for (InterestKeyword ik : interestKeywords) {
             for (Article article : articles) {
                 ArticleInterest articleInterest = ArticleInterest.builder()
@@ -319,6 +329,12 @@ public class ArticleServiceImpl implements ArticleService {
                     .build();
                 articleInterestRepository.save(articleInterest);
             }
+
+            eventPublisher.publishEvent(
+                new NewArticleCollectEvent(
+                    ik.getInterest().getId(),
+                    ik.getInterest().getName(),
+                    articleDtos));
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import jakarta.persistence.EntityManagerFactory;
@@ -31,15 +33,18 @@ public class ArticleCollectJobConfig {
 
     private final ArticleService articleService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MonewMetrics monewMetrics;
 
     @Bean
     public JobExecutionListener naverNewsCollectJobExecutionListener() {
-        return new NewsCollectJobCompletionListener(eventPublisher, "naverNewsCollectJob");
+        return new NewsCollectJobCompletionListener(eventPublisher, monewMetrics,
+            "naverNewsCollectJob");
     }
 
     @Bean
     public JobExecutionListener hankyungNewsCollectJobExecutionListener() {
-        return new NewsCollectJobCompletionListener(eventPublisher, "hankyungNewsCollectJob");
+        return new NewsCollectJobCompletionListener(eventPublisher, monewMetrics,
+            "hankyungNewsCollectJob");
     }
 
     @Bean
@@ -130,7 +135,7 @@ public class ArticleCollectJobConfig {
     public ItemProcessor<String, ArticleWithKeyword> hankyungNewsCollectProcessor() {
         return keyword -> {
             Thread.sleep(100);
-            List<Article> articles = articleService.collectNaverArticles(keyword);
+            List<Article> articles = articleService.collectHankyungArticles(keyword);
             return new ArticleWithKeyword(articles, keyword);
         };
     }
