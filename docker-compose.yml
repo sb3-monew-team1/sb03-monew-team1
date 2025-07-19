@@ -90,6 +90,9 @@ services:
       - prometheus
     networks:
       - monew-network
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/data:/var/lib/grafana
 
 # 볼륨 정의
 volumes:
