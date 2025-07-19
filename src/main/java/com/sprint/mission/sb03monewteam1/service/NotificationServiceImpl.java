@@ -1,11 +1,17 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
 import com.sprint.mission.sb03monewteam1.dto.ResourceType;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
+import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import java.util.Optional;
+import java.util.UUID;
+import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationMapper notificationMapper;
 
     @Override
     public void createNewArticleNotification(User user, Interest interest, int articleCount) {
@@ -53,5 +60,10 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
 
         log.info("좋아요 알림 등록 완료: comment={}, likedBy={}, author={}", comment.getId(), user.getId(), comment.getAuthor().getId());
+    }
+
+    @Override
+    public NotificationDto confirm(UUID notificationId) {
+        return null;
     }
 }

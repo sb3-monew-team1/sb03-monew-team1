@@ -13,14 +13,17 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.jpa.NotificationRepository;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -102,6 +105,48 @@ public class NotificationServiceTest {
             assertThat(saved.getResourceType()).isEqualTo(ResourceType.comment);
             assertThat(saved.getResourceId()).isEqualTo(commentId);
             assertThat(saved.getContent()).isEqualTo(expectedContent);
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 수정 테스트")
+    class NotificationUpdateTests {
+
+        @Test
+        void 알림을_확인하면_확인여부가_수정되어야_한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            given(notificationRepository.findById(notificationId)).willReturn(Optional.of(notification));
+
+            // when
+            notificationService.confirm(notificationId);
+
+            // then
+            assertThat(notification.isChecked()).isTrue();
+        }
+
+        @Test
+        void 존재하지_않는_알림을_확인하면_예외가_발생한다() {
+
+            // given
+            UUID invalidNotificationId = UUID.randomUUID();
+
+            given(notificationRepository.findById(invalidNotificationId)).willReturn(Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                notificationService.confirm(invalidNotificationId);
+            }).isInstanceOf(NotificationNotFoundException.class);
+
+            then(notificationRepository).should().findById(invalidNotificationId);
         }
     }
 }
