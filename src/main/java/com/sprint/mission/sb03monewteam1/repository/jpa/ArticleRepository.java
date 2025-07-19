@@ -1,5 +1,7 @@
 package com.sprint.mission.sb03monewteam1.repository.jpa;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,6 +14,8 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 public interface ArticleRepository extends JpaRepository<Article, UUID>, ArticleRepositoryCustom {
 
     Optional<Article> findByIdAndIsDeletedFalse(UUID id);
+
+    List<String> findAllBySourceUrlIn(Collection<String> urls);
 
     boolean existsBySourceUrl(String sourceUrl);
 }

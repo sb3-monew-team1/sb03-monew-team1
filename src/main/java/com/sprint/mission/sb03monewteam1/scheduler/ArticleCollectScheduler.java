@@ -16,23 +16,33 @@ import org.springframework.stereotype.Component;
 public class ArticleCollectScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job articleCollectJob;
     private final JobExplorer jobExplorer;
+    private final Job naverNewsCollectJob;
+    private final Job hankyungNewsCollectJob;
 
     @Scheduled(cron = "0 0 * * * *")
-    public void runArticleCollectJob() {
-        boolean isRunning = jobExplorer.findRunningJobExecutions("articleCollectJob").size() > 0;
+    public void runNaverNewsCollectJob() {
+        runJobIfNotRunning("naverNewsCollectJob", naverNewsCollectJob);
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void runHankyungNewsCollectJob() {
+        runJobIfNotRunning("hankyungNewsCollectJob", hankyungNewsCollectJob);
+    }
+
+    private void runJobIfNotRunning(String jobName, Job job) {
+        boolean isRunning = jobExplorer.findRunningJobExecutions(jobName).size() > 0;
         if (isRunning) {
-            log.warn("이전 배치 작업이 아직 실행 중이므로 이번 실행은 건너뜁니다.");
+            log.warn("{}이(가) 아직 실행 중이므로 이번 실행은 건너뜁니다.", jobName);
             return;
         }
         try {
             JobParameters params = new JobParametersBuilder()
                 .addLong("timestamp", System.currentTimeMillis())
                 .toJobParameters();
-            jobLauncher.run(articleCollectJob, params);
+            jobLauncher.run(job, params);
         } catch (Exception e) {
-            log.error("Article 수집 배치 실행 실패", e);
+            log.error("{} 실행 실패", jobName, e);
         }
     }
 }

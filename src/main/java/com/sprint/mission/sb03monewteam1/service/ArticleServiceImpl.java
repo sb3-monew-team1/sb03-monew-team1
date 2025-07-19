@@ -1,5 +1,18 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
@@ -10,6 +23,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -21,20 +35,10 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleViewRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -47,6 +51,7 @@ public class ArticleServiceImpl implements ArticleService {
     private final ArticleInterestRepository articleInterestRepository;
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final InterestKeywordRepository interestKeywordRepository;
 
     private final ArticleMapper articleMapper;
     private final ArticleViewMapper articleViewMapper;
@@ -223,19 +228,41 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    @Transactional
-    public void collectAndSaveNaverArticles(String keyword) {
-        log.info("네이버 기사 수집 시작: 관심사={}, 키워드={}", keyword);
+    @Transactional(readOnly = true)
+    public List<Article> collectNaverArticles(String keyword) {
+        log.debug("네이버 기사 수집(엔티티 변환) 시작: 관심사={}, 키워드={}", keyword);
         List<CollectedArticleDto> collectedArticles = naverNewsCollector.collect(keyword);
-        saveCollectedArticles(collectedArticles, keyword);
+
+        List<String> allSourceUrls = collectedArticles.stream()
+            .map(CollectedArticleDto::sourceUrl)
+            .toList();
+
+        List<String> existingUrls = articleRepository.findAllBySourceUrlIn(allSourceUrls);
+
+        return collectedArticles.stream()
+            .filter(dto -> shouldIncludeArticle(dto, keyword))
+            .filter(dto -> !existingUrls.contains(dto.sourceUrl()))
+            .map(articleMapper::toEntity)
+            .toList();
     }
 
     @Override
-    @Transactional
-    public void collectAndSaveHankyungArticles(String keyword) {
-        log.info("한국경제 기사 수집 시작: 관심사={}, 키워드={}", keyword);
+    @Transactional(readOnly = true)
+    public List<Article> collectHankyungArticles(String keyword) {
+        log.debug("한국경제 기사 수집(엔티티 변환) 시작: 관심사={}, 키워드={}", keyword);
         List<CollectedArticleDto> collectedArticles = hankyungNewsCollector.collect(keyword);
-        saveCollectedArticles(collectedArticles, keyword);
+
+        List<String> allSourceUrls = collectedArticles.stream()
+            .map(CollectedArticleDto::sourceUrl)
+            .toList();
+
+        List<String> existingUrls = articleRepository.findAllBySourceUrlIn(allSourceUrls);
+
+        return collectedArticles.stream()
+            .filter(dto -> shouldIncludeArticle(dto, keyword))
+            .filter(dto -> !existingUrls.contains(dto.sourceUrl()))
+            .map(articleMapper::toEntity)
+            .toList();
     }
 
     @Override
@@ -277,58 +304,30 @@ public class ArticleServiceImpl implements ArticleService {
             || (dto.summary() != null && dto.summary().toLowerCase().contains(kw));
     }
 
-    private Article createArticleFromDto(CollectedArticleDto dto) {
-        return Article.builder()
-            .source(dto.source())
-            .sourceUrl(dto.sourceUrl())
-            .title(dto.title())
-            .publishDate(dto.publishDate())
-            .summary(dto.summary())
-            .viewCount(0L)
-            .commentCount(0L)
-            .isDeleted(false)
-            .build();
-    }
-
-    private void saveCollectedArticles(List<CollectedArticleDto> collectedArticles,
-        String keyword) {
-        List<Article> filtered = new ArrayList<>();
-        List<ArticleInterest> articleInterests = new ArrayList<>();
-        for (CollectedArticleDto dto : collectedArticles) {
-            if (!shouldIncludeArticle(dto, keyword)) {
-                continue;
-            }
-
-            if (articleRepository.existsBySourceUrl(dto.sourceUrl())) {
-                log.info("중복 기사: {}", dto.sourceUrl());
-                continue;
-            }
-
-            Article article = createArticleFromDto(dto);
-            filtered.add(article);
+    @Override
+    @Transactional
+    public void saveArticles(List<Article> articles, String keyword) {
+        if (articles == null || articles.isEmpty()) {
+            return;
         }
 
-        if (!filtered.isEmpty()) {
-            articleRepository.saveAll(filtered);
+        articleRepository.saveAll(articles);
 
-            for (Article article : filtered) {
+        List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(keyword);
+        for (InterestKeyword ik : interestKeywords) {
+            for (Article article : articles) {
                 ArticleInterest articleInterest = ArticleInterest.builder()
                     .article(article)
-                    .interest(interest)
+                    .interest(ik.getInterest())
                     .build();
-                articleInterests.add(articleInterest);
+                articleInterestRepository.save(articleInterest);
             }
-            articleInterestRepository.saveAll(articleInterests);
 
-            log.info("기사 배치 저장 완료: {}개", filtered.size());
-            filtered.forEach(article -> log.debug("저장된 기사: {}", article.getTitle()));
-
-            List<ArticleDto> filteredArticles = filtered.stream()
+            List<ArticleDto> articleDtos = articles.stream()
                 .map(articleMapper::toDto)
                 .toList();
-
-            eventPublisher.publishEvent(new NewArticleCollectEvent(interest, filteredArticles));
-            log.info("기사 알림 이벤트 발행: {}", interest.getName());
+            eventPublisher.publishEvent(
+                new NewArticleCollectEvent(ik.getInterest(), articleDtos));
         }
     }
 }
