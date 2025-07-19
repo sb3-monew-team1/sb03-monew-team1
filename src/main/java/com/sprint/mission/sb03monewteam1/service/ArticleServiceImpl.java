@@ -10,7 +10,6 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
-import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -225,19 +224,18 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    public void collectAndSaveNaverArticles(Interest interest, String keyword) {
-        log.info("네이버 기사 수집 시작: 관심사={}, 키워드={}", interest.getName(), keyword);
-        List<CollectedArticleDto> collectedArticles = naverNewsCollector.collect(interest, keyword);
-        saveCollectedArticles(collectedArticles, interest, keyword);
+    public void collectAndSaveNaverArticles(String keyword) {
+        log.info("네이버 기사 수집 시작: 관심사={}, 키워드={}", keyword);
+        List<CollectedArticleDto> collectedArticles = naverNewsCollector.collect(keyword);
+        saveCollectedArticles(collectedArticles, keyword);
     }
 
     @Override
     @Transactional
-    public void collectAndSaveHankyungArticles(Interest interest, String keyword) {
-        log.info("한국경제 기사 수집 시작: 관심사={}, 키워드={}", interest.getName(), keyword);
-        List<CollectedArticleDto> collectedArticles = hankyungNewsCollector.collect(interest,
-            keyword);
-        saveCollectedArticles(collectedArticles, interest, keyword);
+    public void collectAndSaveHankyungArticles(String keyword) {
+        log.info("한국경제 기사 수집 시작: 관심사={}, 키워드={}", keyword);
+        List<CollectedArticleDto> collectedArticles = hankyungNewsCollector.collect(keyword);
+        saveCollectedArticles(collectedArticles, keyword);
     }
 
     @Override
@@ -293,7 +291,6 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     private void saveCollectedArticles(List<CollectedArticleDto> collectedArticles,
-        Interest interest,
         String keyword) {
         List<Article> filtered = new ArrayList<>();
         List<ArticleInterest> articleInterests = new ArrayList<>();

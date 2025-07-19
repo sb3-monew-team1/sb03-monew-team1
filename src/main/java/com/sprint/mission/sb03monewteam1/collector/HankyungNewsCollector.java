@@ -4,7 +4,6 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
-import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +30,7 @@ public class HankyungNewsCollector {
     @Value("${news.api.hankyung.source-name:HANKYUNG}")
     private String sourceName;
 
-    public List<CollectedArticleDto> collect(Interest interest, String keyword) {
+    public List<CollectedArticleDto> collect(String keyword) {
         try {
             String rawXml = generalWebClient.get()
                 .uri(hankyungRssUrl)

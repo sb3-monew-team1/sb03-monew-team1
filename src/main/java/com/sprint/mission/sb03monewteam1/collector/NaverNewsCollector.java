@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
-import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleParseException;
 import java.net.URLEncoder;
@@ -38,7 +37,7 @@ public class NaverNewsCollector {
     @Value("${news.api.naver.source-name:NAVER}")
     private String sourceName;
 
-    public List<CollectedArticleDto> collect(Interest interest, String keyword) {
+    public List<CollectedArticleDto> collect(String keyword) {
         try {
             String query = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
             String response = naverApiWebClient

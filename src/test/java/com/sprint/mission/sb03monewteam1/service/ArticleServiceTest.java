@@ -22,6 +22,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
@@ -38,6 +39,7 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleViewRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -75,6 +77,9 @@ class ArticleServiceTest {
 
     @Mock
     private CommentLikeRepository commentLikeRepository;
+
+    @Mock
+    private InterestKeywordRepository interestKeywordRepository;
 
     @Mock
     private NaverNewsCollector naverNewsCollector;
@@ -395,6 +400,10 @@ class ArticleServiceTest {
         // given
         Interest interest = Interest.builder().name("IT").build();
         String keyword = "테스트";
+        InterestKeyword ik = InterestKeyword.builder()
+            .interest(interest)
+            .keyword(keyword)
+            .build();
         CollectedArticleDto dto = CollectedArticleDto.builder()
             .source("네이버뉴스")
             .sourceUrl("http://test.com/1")
@@ -404,11 +413,12 @@ class ArticleServiceTest {
             .build();
         List<CollectedArticleDto> collectedArticles = List.of(dto);
 
-        when(naverNewsCollector.collect(interest, keyword)).thenReturn(collectedArticles);
+        when(naverNewsCollector.collect(keyword)).thenReturn(collectedArticles);
         when(articleRepository.existsBySourceUrl(any())).thenReturn(false);
+        when(interestKeywordRepository.findAllByKeyword(keyword)).thenReturn(List.of(ik));
 
         // when
-        articleService.collectAndSaveNaverArticles(interest, keyword);
+        articleService.collectAndSaveNaverArticles(keyword);
 
         // then
         verify(articleRepository).saveAll(anyList());
