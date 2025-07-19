@@ -6,6 +6,7 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
+import io.micrometer.core.instrument.Timer;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -144,10 +145,15 @@ public class ArticleCollectJobConfig {
     @Bean
     public ItemWriter<ArticleWithKeyword> articleWithKeywordWriter() {
         return items -> {
-            for (ArticleWithKeyword aw : items) {
-                if (aw.articles() != null && !aw.articles().isEmpty()) {
-                    articleService.saveArticles(aw.articles(), aw.keyword());
+            Timer.Sample sample = Timer.start(monewMetrics.getMeterRegistry());
+            try {
+                for (ArticleWithKeyword aw : items) {
+                    if (aw.articles() != null && !aw.articles().isEmpty()) {
+                        articleService.saveArticles(aw.articles(), aw.keyword());
+                    }
                 }
+            } finally {
+                sample.stop(monewMetrics.getBatchJobTimer("newsCollectJob"));
             }
         };
     }

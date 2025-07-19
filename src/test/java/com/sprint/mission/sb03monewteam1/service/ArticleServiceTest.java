@@ -9,7 +9,11 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
@@ -39,6 +43,7 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleViewRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
+import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -422,14 +427,17 @@ class ArticleServiceTest {
         when(articleRepository.findAllBySourceUrlIn(anyList())).thenReturn(List.of());
         when(articleRepository.saveAll(anyList())).thenReturn(List.of(article));
         when(interestKeywordRepository.findAllByKeyword(keyword)).thenReturn(List.of(ik1, ik2));
-        when(monewMetrics.getArticleCreatedCounter()).thenReturn(mock(io.micrometer.core.instrument.Counter.class));
+        when(monewMetrics.getArticleCreatedCounter()).thenReturn(
+            mock(io.micrometer.core.instrument.Counter.class));
+        when(monewMetrics.getInterestArticleMappedCounter(any(), any())).thenReturn(
+            mock(Counter.class));
 
         List<Article> articles = articleService.collectNaverArticles(keyword);
         articleService.saveArticles(articles, keyword);
 
         // then
         verify(articleRepository).saveAll(anyList());
-        verify(articleInterestRepository, times(2)).save(any(ArticleInterest.class));
+        verify(articleInterestRepository, times(2)).saveAll(anyList());
     }
 
     @Test

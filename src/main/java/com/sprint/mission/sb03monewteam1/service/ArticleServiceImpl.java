@@ -29,12 +29,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -311,7 +313,11 @@ public class ArticleServiceImpl implements ArticleService {
             return;
         }
 
-        articleRepository.saveAll(articles);
+        try {
+            articleRepository.saveAll(articles);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("중복 기사 URL로 인한 저장 실패: {}", e.getMessage());
+        }
 
         monewMetrics.getArticleCreatedCounter().increment(articles.size());
 
@@ -321,14 +327,23 @@ public class ArticleServiceImpl implements ArticleService {
 
         List<InterestKeyword> interestKeywords =
             interestKeywordRepository.findAllByKeyword(keyword);
+
         for (InterestKeyword ik : interestKeywords) {
+            List<ArticleInterest> articleInterestList = new ArrayList<>();
+
             for (Article article : articles) {
                 ArticleInterest articleInterest = ArticleInterest.builder()
                     .article(article)
                     .interest(ik.getInterest())
                     .build();
-                articleInterestRepository.save(articleInterest);
+                articleInterestList.add(articleInterest);
             }
+
+            articleInterestRepository.saveAll(articleInterestList);
+
+            monewMetrics.getInterestArticleMappedCounter(ik.getInterest().getId(),
+                    ik.getInterest().getName())
+                .increment(articles.size());
 
             eventPublisher.publishEvent(
                 new NewArticleCollectEvent(
