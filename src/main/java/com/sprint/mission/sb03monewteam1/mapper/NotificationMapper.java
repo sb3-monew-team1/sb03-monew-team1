@@ -13,5 +13,4 @@ public interface NotificationMapper {
     @Mapping(target = "confirmed", source = "checked")
     @Mapping(target = "updatedAt", source = "updatedAt")
     NotificationDto toDto(Notification notification);
-
 }
