@@ -16,6 +16,7 @@ import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
@@ -26,6 +27,7 @@ import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
+import com.sprint.mission.sb03monewteam1.mapper.SubscriptionActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +66,12 @@ class InterestServiceTest {
 
     @Mock
     private SubscriptionMapper subscriptionMapper;
+
+    @Mock
+    private SubscriptionActivityMapper subscriptionActivityMapper;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private InterestServiceImpl interestService;
@@ -327,6 +336,7 @@ class InterestServiceTest {
             assertThat(result.interestSubscriberCount()).isEqualTo(expectedDto.interestSubscriberCount());
             assertThat(result.createdAt()).isEqualTo(expectedDto.createdAt());
             verify(interestRepository).findById(interest.getId());
+            verify(eventPublisher).publishEvent(any(SubscriptionActivityCreateEvent.class));
         }
 
 
