@@ -12,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
@@ -227,6 +228,11 @@ public class CommentServiceImpl implements CommentService {
         comment.getArticle().decreaseCommentCount();
 
         log.info("댓글 논리 삭제 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
+
+        CommentActivityDeleteEvent event = new CommentActivityDeleteEvent(userId, commentId);
+        eventPublisher.publishEvent(event);
+
+        log.debug("댓글 작성 활동 내역 삭제 이벤트 발행 완료: {}", event);
 
         return comment;
     }
