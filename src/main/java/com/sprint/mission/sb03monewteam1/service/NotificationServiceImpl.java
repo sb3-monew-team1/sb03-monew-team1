@@ -73,6 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
         Instant after,
         int limit
     ) {
+        log.info("알림 목록 조회 요청 - userId:{}, cursor:{}, limit:{}", userId, cursor, limit);
         List<Notification> notifications = notificationRepository
             .findUncheckedNotificationsWithCursor(
                 userId,
@@ -100,6 +101,8 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         Long totalElements = notificationRepository.countByUserIdAndIsCheckedFalse(userId);
+
+        log.info("알림 목록 조회 완료 - userId:{}, cursor:{}, limit:{}", userId, cursor, limit);
 
         return CursorPageResponse.<NotificationDto>builder()
             .content(contents)

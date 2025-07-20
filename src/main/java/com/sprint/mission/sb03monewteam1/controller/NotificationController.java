@@ -42,6 +42,9 @@ public class NotificationController implements NotificationApi {
         CursorPageResponse<NotificationDto> result = notificationService
             .getUncheckedNotifications(userId, cursor, after, limit);
 
+        log.info("미확인 알림 목록 조회 요청 완료 - userId: {}, cursor: {}, limit: {}",
+            userId, cursor, limit);
+
         return ResponseEntity.ok(result);
     }
 
