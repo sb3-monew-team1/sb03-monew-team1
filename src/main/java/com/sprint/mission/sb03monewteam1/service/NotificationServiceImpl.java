@@ -66,6 +66,7 @@ public class NotificationServiceImpl implements NotificationService {
             comment.getAuthor().getId());
     }
 
+    @Override
     public CursorPageResponse<NotificationDto> getUncheckedNotifications(
         UUID userId,
         String cursor,
