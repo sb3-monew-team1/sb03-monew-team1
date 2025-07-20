@@ -332,7 +332,7 @@ public class NotificationServiceTest {
                 Optional.empty());
 
             // when & then
-            Assertions.assertThatThrownBy(() -> {
+            assertThatThrownBy(() -> {
                 notificationService.confirm(invalidNotificationId, userId);
             }).isInstanceOf(NotificationNotFoundException.class);
 
