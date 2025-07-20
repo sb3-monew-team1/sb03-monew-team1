@@ -133,6 +133,17 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public List<NotificationDto> confirmAll(UUID userId) {
-        return List.of();
+
+        log.info("알림 전체 확인 시작: userId={}", userId);
+
+        List<Notification> notifications = notificationRepository.findByUserIdAndIsCheckedFalse(userId);
+
+        notifications.forEach(Notification::markAsChecked);
+
+        log.info("알림 전체 확인 완료: userId={}", userId);
+
+        return notifications.stream()
+            .map(notificationMapper::toDto)
+            .toList();
     }
 }
