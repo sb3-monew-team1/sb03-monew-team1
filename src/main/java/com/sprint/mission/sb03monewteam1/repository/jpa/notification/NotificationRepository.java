@@ -16,5 +16,5 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Modifying
     @Transactional
     @Query("DELETE FROM Notification n WHERE n.isChecked = true AND n.createdAt < :threshold")
-    void deleteCheckedNotificationsBefore(@Param("threshold") Instant threshold);
+    int deleteCheckedNotificationsBefore(@Param("threshold") Instant threshold);
 }

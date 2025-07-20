@@ -137,7 +137,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void deleteOldCheckedNotifications() {
         log.info("자동 확인 알림 삭제 요청");
         Instant threshold = Instant.now().minus(7, ChronoUnit.DAYS);
-        notificationRepository.deleteCheckedNotificationsBefore(threshold);
-        log.info("자동 확인 알림 삭제 완료");
+        int deleted = notificationRepository.deleteCheckedNotificationsBefore(threshold);
+        log.info("자동 확인 알림 삭제 완료 - 삭제된 알림 갯수: {}", deleted);
     }
 }
