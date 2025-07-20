@@ -47,19 +47,19 @@ public class NotificationController implements NotificationApi {
 
     @Override
     @PatchMapping(path = "/{notificationId}")
-    public ResponseEntity<NotificationDto> confirm(
+    public ResponseEntity<Void> confirm(
         @PathVariable UUID notificationId,
         @RequestHeader("Monew-Request-User-ID") UUID userId
     ) {
 
         log.info("알림 개별 확인 요청: notificationId={}, userId={}", notificationId, userId);
 
-        NotificationDto result = notificationService.confirm(notificationId, userId);
+        notificationService.confirm(notificationId, userId);
 
         log.info("알림 개별 확인 완료: notificationId={}, userId={}", notificationId, userId);
 
         return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(result);
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 }

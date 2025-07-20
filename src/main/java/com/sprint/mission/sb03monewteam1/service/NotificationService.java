@@ -14,7 +14,7 @@ public interface NotificationService {
 
     void createCommentLikeNotification(User user, Comment comment);
 
-    NotificationDto confirm(UUID notificationId, UUID userId);
+    void confirm(UUID notificationId, UUID userId);
 
     CursorPageResponse<NotificationDto> getUncheckedNotifications(
         UUID userId,

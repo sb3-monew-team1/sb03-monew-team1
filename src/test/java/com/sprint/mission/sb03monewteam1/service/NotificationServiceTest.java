@@ -294,18 +294,14 @@ public class NotificationServiceTest {
             Notification notification = NotificationFixture.createNewArticleNotification(user);
             ReflectionTestUtils.setField(notification, "id", notificationId);
 
-            NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(
-                notification, true);
-
             given(notificationRepository.findById(notificationId)).willReturn(
                 Optional.of(notification));
-            given(notificationMapper.toDto(any(Notification.class))).willReturn(expectedDto);
 
             // when
-            NotificationDto result = notificationService.confirm(notificationId, userId);
+            notificationService.confirm(notificationId, userId);
 
             // then
-            assertThat(result.confirmed()).isTrue();
+            assertThat(notification.isChecked()).isTrue();
         }
 
         @Test

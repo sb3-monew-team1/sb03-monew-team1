@@ -2,8 +2,8 @@ package com.sprint.mission.sb03monewteam1.integration;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -298,35 +298,34 @@ public class NotificationIntegrationTest {
                 .andExpect(jsonPath("$.size").value(10));
 
         }
+    }
 
-        @Nested
-        @DisplayName("알림 수정 테스트")
-        class NotificationUpdateTests {
+    @Nested
+    @DisplayName("알림 수정 테스트")
+    class NotificationUpdateTests {
 
-            @Test
-            @Transactional
-            void 알림을_확인하면_200과_확인여부가_true로_수정되어야_한다() throws Exception {
+        @Test
+        @Transactional
+        void 알림을_확인하면_204와_확인여부가_true로_수정되어야_한다() throws Exception {
 
-                // given
-                User user = userRepository.save(
-                    User.builder()
-                        .email("author@codeit.com")
-                        .nickname("author")
-                        .password("author1234!")
-                        .build()
-                );
-                Notification notification = notificationRepository.save(
-                    NotificationFixture.createNewArticleNotification(user)
-                );
+            // given
+            User user = userRepository.save(
+                User.builder()
+                    .email("author@codeit.com")
+                    .nickname("author")
+                    .password("author1234!")
+                    .build()
+            );
+            Notification notification = notificationRepository.save(
+                NotificationFixture.createNewArticleNotification(user)
+            );
 
-                // when & then
-                mockMvc.perform(patch("/api/notifications/" + notification.getId())
-                        .header("Monew-Request-User-ID", user.getId().toString()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(notification.getId().toString()))
-                    .andExpect(jsonPath("$.confirmed").value(true))
-                    .andExpect(jsonPath("$.userId").value(user.getId().toString()));
-            }
+            // when & then
+            mockMvc.perform(patch("/api/notifications/" + notification.getId())
+                    .header("Monew-Request-User-ID", user.getId().toString()))
+                .andExpect(status().isNoContent());
+
+            assertThat(notification.isChecked()).isTrue();
         }
     }
 }
