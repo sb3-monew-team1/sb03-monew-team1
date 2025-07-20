@@ -35,6 +35,16 @@ public class InterestController implements InterestApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * 사용자의 관심사 목록을 페이징 및 정렬 조건에 따라 조회합니다.
+     *
+     * @param keyword   관심사 이름 또는 설명에 대한 검색 키워드
+     * @param cursor    다음 페이지 조회를 위한 커서 값
+     * @param limit     한 페이지에 조회할 관심사 개수
+     * @param orderBy   정렬 기준 필드명 (예: subscriberCount)
+     * @param direction 정렬 방향 ("ASC" 또는 "DESC")
+     * @return          조회된 관심사 목록과 페이징 정보를 담은 응답
+     */
     @GetMapping
     public ResponseEntity<CursorPageResponse<InterestDto>> getInterests(
         @RequestHeader("Monew-Request-User-ID") UUID userId,
@@ -56,6 +66,13 @@ public class InterestController implements InterestApi {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 사용자가 특정 관심사를 구독하도록 구독 정보를 생성합니다.
+     *
+     * @param interestId 구독할 관심사의 UUID
+     * @param userId 구독을 요청하는 사용자의 UUID
+     * @return 생성된 구독 정보를 포함한 ResponseEntity (HTTP 201 Created)
+     */
     @PostMapping("/{interestId}/subscriptions")
     public ResponseEntity<SubscriptionDto> createSubscription(
         @PathVariable UUID interestId,
@@ -71,6 +88,12 @@ public class InterestController implements InterestApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(subscriptionDto);
     }
 
+    /**
+     * 지정된 관심사를 삭제합니다.
+     *
+     * @param interestId 삭제할 관심사의 UUID
+     * @return 삭제가 성공적으로 완료되면 204 No Content 응답을 반환합니다.
+     */
     @DeleteMapping("/{interestId}")
     public ResponseEntity<Void> deleteInterest(@PathVariable UUID interestId) {
 

@@ -21,8 +21,19 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     Optional<Subscription> findByInterestId(UUID interestId);
 
+    /**
+     * 지정된 관심사 ID에 해당하는 모든 구독 엔티티를 조회하며, 관련된 사용자 정보를 함께 즉시 로딩합니다.
+     *
+     * @param interestId 조회할 관심사(Interest)의 ID
+     * @return 관심사 ID에 연결된 구독(Subscription) 목록
+     */
     @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.user WHERE s.interest.id = :interestId")
     List<Subscription> findAllByInterestIdFetchUser(@Param("interestId") UUID interestId);
 
-    void deleteByInterestId(UUID interestId);
+    /**
+ * 지정된 관심사 ID와 연관된 모든 구독 엔티티를 삭제합니다.
+ *
+ * @param interestId 삭제할 구독의 기준이 되는 관심사 ID
+ */
+void deleteByInterestId(UUID interestId);
 }

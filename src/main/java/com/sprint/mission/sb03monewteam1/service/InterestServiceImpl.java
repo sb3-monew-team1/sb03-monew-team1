@@ -147,6 +147,15 @@ public class InterestServiceImpl implements InterestService {
         return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements, hasNext);
     }
 
+    /**
+     * 사용자가 특정 관심사를 구독하도록 구독 정보를 생성하고 반환합니다.
+     *
+     * @param userId 구독을 생성할 사용자 ID
+     * @param interestId 구독할 관심사 ID
+     * @return 생성된 구독 정보를 담은 SubscriptionDto
+     * @throws InterestNotFoundException 해당 관심사가 존재하지 않을 때 발생
+     * @throws UserNotFoundException 해당 사용자가 존재하지 않을 때 발생
+     */
     @Transactional
     public SubscriptionDto createSubscription(UUID userId, UUID interestId) {
         log.info("구독 생성 요청: userId={}, interestId={}", userId, interestId);
@@ -175,6 +184,12 @@ public class InterestServiceImpl implements InterestService {
         return subscriptionMapper.toDto(savedSubscription);
     }
 
+    /**
+     * 지정된 관심사와 관련된 모든 구독 및 키워드를 삭제한 후 관심사 엔티티를 삭제합니다.
+     *
+     * @param interestId 삭제할 관심사의 UUID
+     * @throws InterestNotFoundException 해당 ID의 관심사가 존재하지 않을 경우 발생
+     */
     @Override
     public void deleteInterest(UUID interestId) {
         log.info("관심사 삭제 요청: interestId={}", interestId);
@@ -190,6 +205,15 @@ public class InterestServiceImpl implements InterestService {
         log.info("관심사 삭제 완료: interestId={}", interestId);
     }
 
+    /**
+     * 현재 페이지의 마지막 관심사 엔티티를 기준으로 다음 페이지 조회를 위한 커서 값을 계산합니다.
+     *
+     * @param interests  조회된 관심사 엔티티 목록
+     * @param orderBy    정렬 기준 필드명 ("subscriberCount", "name", "createdAt", "updatedAt")
+     * @param limit      페이지당 조회 개수
+     * @return           다음 페이지 조회를 위한 커서 값, 더 이상 페이지가 없으면 null 반환
+     * @throws InvalidSortOptionException 지원하지 않는 정렬 기준이 입력된 경우 발생
+     */
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
         if (interests.size() <= limit) {
             return null;
