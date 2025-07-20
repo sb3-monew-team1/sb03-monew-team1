@@ -19,6 +19,7 @@ import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.event.NewsCollectJobCompletedEvent;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
@@ -207,7 +208,10 @@ public class NotificationIntegrationTest {
             List<ArticleDto> articles = ArticleFixture.createArticleDtoList();
 
             // When
-            eventPublisher.publishEvent(new NewArticleCollectEvent(savedInterest, articles));
+            eventPublisher.publishEvent(new NewArticleCollectEvent(
+                savedInterest.getId(), savedInterest.getName(), articles));
+            eventPublisher.publishEvent(new NewsCollectJobCompletedEvent("naverNewsCollectJob"));
+            eventPublisher.publishEvent(new NewsCollectJobCompletedEvent("hankyungNewsCollectJob"));
 
             // Then
             Awaitility.await()

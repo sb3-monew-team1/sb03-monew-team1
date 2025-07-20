@@ -3,7 +3,7 @@ package com.sprint.mission.sb03monewteam1.service;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
-import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.Article;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -26,9 +26,11 @@ public interface ArticleService {
 
     List<String> getSources();
 
-    void collectAndSaveNaverArticles(Interest interest, String keyword);
+    List<Article> collectNaverArticles(String keyword);
 
-    void collectAndSaveHankyungArticles(Interest interest, String keyword);
+    List<Article> collectHankyungArticles(String keyword);
+
+    void saveArticles(List<Article> articles, String keyword);
 
     void delete(UUID articleId);
 

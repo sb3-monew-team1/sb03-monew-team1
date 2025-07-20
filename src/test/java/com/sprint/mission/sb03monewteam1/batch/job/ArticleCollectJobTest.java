@@ -1,11 +1,7 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.*;
 
-import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
-import com.sprint.mission.sb03monewteam1.config.TestConfig;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -21,6 +17,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
+import com.sprint.mission.sb03monewteam1.config.TestConfig;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @ActiveProfiles("test")
 @SpringBootTest
@@ -32,7 +33,6 @@ class ArticleCollectJobTest {
 
     @TestConfiguration
     static class BatchTestConfig {
-
         @Bean
         public JobLauncherTestUtils jobLauncherTestUtils() {
             return new JobLauncherTestUtils();
@@ -43,46 +43,31 @@ class ArticleCollectJobTest {
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
-    private Job articleCollectJob;
+    private Job naverNewsCollectJob;
+
+    @Autowired
+    private Job hankyungNewsCollectJob;
 
     @Autowired
     private JobLauncher jobLauncher;
 
     @BeforeEach
     void setUp() {
-        jobLauncherTestUtils.setJob(articleCollectJob);
+        // 필요할 때마다 Job을 지정해서 사용
         jobLauncherTestUtils.setJobLauncher(jobLauncher);
     }
 
     @Test
-    void articleCollectJob_실행_테스트() throws Exception {
-        // when
+    void naverNewsCollectJob_실행_테스트() throws Exception {
+        jobLauncherTestUtils.setJob(naverNewsCollectJob);
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-
-        // then
         assertThat(jobExecution.getExitStatus().getExitCode()).isEqualTo("COMPLETED");
     }
 
     @Test
-    void articleCollectJob_각_Step_실행_테스트() throws Exception {
-        // when
+    void hankyungNewsCollectJob_실행_테스트() throws Exception {
+        jobLauncherTestUtils.setJob(hankyungNewsCollectJob);
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-
-        // then
         assertThat(jobExecution.getExitStatus().getExitCode()).isEqualTo("COMPLETED");
-
-        assertThat(jobExecution.getStepExecutions())
-            .extracting("stepName", "exitStatus.exitCode")
-            .containsExactlyInAnyOrder(
-                tuple("naverNewsCollectStep", "COMPLETED"),
-                tuple("hankyungNewsCollectStep", "COMPLETED")
-            );
-
-        jobExecution.getStepExecutions().forEach(stepExecution -> {
-            log.info("Step: " + stepExecution.getStepName());
-            log.info("ReadCount: " + stepExecution.getReadCount());
-            log.info("WriteCount: " + stepExecution.getWriteCount());
-            log.info("SkipCount: " + stepExecution.getSkipCount());
-        });
     }
 }
