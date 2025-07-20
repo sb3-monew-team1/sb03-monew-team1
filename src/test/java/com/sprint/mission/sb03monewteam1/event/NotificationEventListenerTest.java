@@ -3,10 +3,10 @@ package com.sprint.mission.sb03monewteam1.event;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.BDDMockito.doThrow;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.verify;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
@@ -20,9 +20,11 @@ import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.SubscriptionFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +42,8 @@ public class NotificationEventListenerTest {
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
+    @Mock
+    private InterestRepository interestRepository;
     @Mock
     private NotificationService notificationService;
 
@@ -87,6 +91,7 @@ public class NotificationEventListenerTest {
             NewArticleCollectEvent event = new NewArticleCollectEvent(
                 interest.getId(), interest.getName(), articles);
 
+            given(interestRepository.findById(interest.getId())).willReturn(Optional.of(interest));
             given(subscriptionRepository.findAllByInterestIdFetchUser(interest.getId())).willReturn(
                 subscription);
 
@@ -116,14 +121,16 @@ public class NotificationEventListenerTest {
             NewArticleCollectEvent event = new NewArticleCollectEvent(
                 interest.getId(), interest.getName(), articles);
 
+            given(interestRepository.findById(interest.getId())).willReturn(Optional.of(interest));
             given(subscriptionRepository.findAllByInterestIdFetchUser(interest.getId())).willReturn(
                 subscription);
 
             doThrow(new RuntimeException("강제 실패")).when(notificationService)
                 .createNewArticleNotification(any(), any(), anyInt());
 
-            // When & Then
             listener.handleCollectArticle(event);
+
+            // When & Then
             assertThatThrownBy(() -> {
                 listener.handleCollectJobCompleted(
                     new NewsCollectJobCompletedEvent("naverNewsCollectJob"));
