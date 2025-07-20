@@ -20,6 +20,7 @@ public class NotificationCleanupScheduler {
         try {
             notificationService.deleteOldCheckedNotifications();
         } catch (Exception e) {
+            log.error("확인된 알림 삭제 중 오류 발생");
             throw new NotificationCleanupException("확인된 알림 삭제에 실패하였습니다.");
         }
     }
