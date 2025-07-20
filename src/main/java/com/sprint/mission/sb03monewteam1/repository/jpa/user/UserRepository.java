@@ -1,4 +1,4 @@
-package com.sprint.mission.sb03monewteam1.repository.jpa;
+package com.sprint.mission.sb03monewteam1.repository.jpa.user;
 
 import com.sprint.mission.sb03monewteam1.entity.User;
 import java.util.Optional;

@@ -13,11 +13,11 @@ import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

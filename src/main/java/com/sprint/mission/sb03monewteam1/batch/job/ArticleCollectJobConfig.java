@@ -5,6 +5,8 @@ import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
+import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import io.micrometer.core.instrument.Timer;
 import jakarta.persistence.EntityManagerFactory;
