@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -27,6 +28,7 @@ import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -345,6 +347,22 @@ public class NotificationServiceTest {
             }).isInstanceOf(NotificationAccessDeniedException.class);
 
             then(notificationRepository).should().findById(notificationId);
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 자동 배치 삭제 테스트")
+    class NotificationAutoDeleteTests {
+
+        @Test
+        void 확인된_알림을_삭제할_수_있다() {
+            // Given
+            Instant threshold = Instant.now().minus(7, ChronoUnit.DAYS);
+
+            willDoNothing().given(notificationRepository).deleteCheckedNotificationsBefore(threshold);
+
+            // When
+            notificationService.deleteOldCheckedNotifications();
         }
     }
 }
