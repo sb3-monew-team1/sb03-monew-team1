@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface InterestKeywordRepository extends JpaRepository<InterestKeyword, UUID> {
 
@@ -14,4 +15,7 @@ public interface InterestKeywordRepository extends JpaRepository<InterestKeyword
     List<String> findAllDistinct();
 
     List<InterestKeyword> findAllByKeyword(String keyword);
+
+    @Transactional
+    void deleteByInterestId(UUID interestId);
 }
