@@ -12,6 +12,7 @@ import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotF
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -130,5 +131,13 @@ public class NotificationServiceImpl implements NotificationService {
         notification.markAsChecked();
 
         log.info("알림 개별 확인 완료: notificationId={}, userId={}", notificationId, requestUserId);
+    }
+
+    @Override
+    public void deleteOldCheckedNotifications() {
+        log.info("자동 확인 알림 삭제 요청");
+        Instant threshold = Instant.now().minus(7, ChronoUnit.DAYS);
+        notificationRepository.deleteCheckedNotificationsBefore(threshold);
+        log.info("자동 확인 알림 삭제 완료");
     }
 }
