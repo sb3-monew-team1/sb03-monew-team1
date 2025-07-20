@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
@@ -417,6 +418,72 @@ class InterestControllerTest {
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 키워드 수정 테스트")
+    class InterestUpdateKeywordsTests {
+
+        @Test
+        void 관심사_키워드를_수정하면_수정된_관심사_응답_DTO를_반환한다() throws Exception {
+            // Given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> newKeywords = Arrays.asList("keyword1", "keyword2");
+
+            InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
+
+            InterestDto expectedResponse = new InterestDto(
+                interestId,
+                "Interest 1",
+                newKeywords,
+                0L,
+                true
+            );
+
+            given(interestService.updateInterestKeywords(eq(interestId), eq(request), eq(userId)))
+                .willReturn(expectedResponse);
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(interestId.toString()))
+                .andExpect(jsonPath("$.name").value("Interest 1"))
+                .andExpect(jsonPath("$.keywords").isArray())
+                .andExpect(jsonPath("$.keywords.length()").value(2))
+                .andExpect(jsonPath("$.keywords[0]").value("keyword1"))
+                .andExpect(jsonPath("$.keywords[1]").value("keyword2"))
+                .andExpect(jsonPath("$.subscribedByMe").value(true));
+
+            verify(interestService).updateInterestKeywords(eq(interestId), eq(request), eq(userId));
+        }
+
+        @Test
+        void 관심사_키워드_수정시_존재하지_않는_관심사_수정하려하면_404를_반환한다() throws Exception {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> newKeywords = Arrays.asList("keyword1", "keyword2");
+
+            InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
+
+            given(interestService.updateInterestKeywords(eq(nonExistentInterestId), eq(request), eq(userId)))
+                .willThrow(new InterestNotFoundException(nonExistentInterestId));
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", nonExistentInterestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+
+            verify(interestService).updateInterestKeywords(eq(nonExistentInterestId), eq(request), eq(userId));
         }
     }
 
