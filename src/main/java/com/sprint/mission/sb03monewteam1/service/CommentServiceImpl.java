@@ -85,14 +85,13 @@ public class CommentServiceImpl implements CommentService {
         Comment savedComment = commentRepository.save(comment);
         article.increaseCommentCount();
 
-        return commentMapper.toDto(savedComment).toBuilder()
-            .likedByMe(false)
-            .build();
         CommentActivityDto event = commentActivityMapper.toDto(savedComment);
         eventPublisher.publishEvent(new CommentActivityCreateEvent(userId, event));
         log.debug("댓글 작성 활동 내역 이벤트 발행 완료: {}", event);
 
-        return commentMapper.toDto(savedComment);
+        return commentMapper.toDto(savedComment).toBuilder()
+            .likedByMe(false)
+            .build();
     }
 
     @Override

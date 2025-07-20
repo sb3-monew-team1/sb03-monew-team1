@@ -5,7 +5,7 @@ import com.sprint.mission.sb03monewteam1.exception.user.UserException;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.document.*;
 import com.sprint.mission.sb03monewteam1.dto.*;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

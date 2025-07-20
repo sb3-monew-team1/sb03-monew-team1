@@ -7,7 +7,7 @@ import com.sprint.mission.sb03monewteam1.dto.ArticleViewActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.entity.User;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
