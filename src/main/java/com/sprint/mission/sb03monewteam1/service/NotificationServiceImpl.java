@@ -130,4 +130,9 @@ public class NotificationServiceImpl implements NotificationService {
 
         return notificationMapper.toDto(notification);
     }
+
+    @Override
+    public List<NotificationDto> confirmAll(UUID userId) {
+        return List.of();
+    }
 }

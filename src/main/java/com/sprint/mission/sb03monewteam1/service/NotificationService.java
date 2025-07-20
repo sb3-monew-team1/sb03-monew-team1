@@ -6,6 +6,7 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public interface NotificationService {
@@ -15,6 +16,8 @@ public interface NotificationService {
     void createCommentLikeNotification(User user, Comment comment);
 
     NotificationDto confirm(UUID notificationId, UUID userId);
+
+    List<NotificationDto> confirmAll(UUID userId);
 
     CursorPageResponse<NotificationDto> getUncheckedNotifications(
         UUID userId,

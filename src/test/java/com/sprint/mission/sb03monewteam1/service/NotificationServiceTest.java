@@ -27,6 +27,7 @@ import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -349,6 +350,58 @@ public class NotificationServiceTest {
             }).isInstanceOf(NotificationAccessDeniedException.class);
 
             then(notificationRepository).should().findById(notificationId);
+        }
+
+        @Test
+        void 알림을_전체_확인하면_모든_알림의_확인여부가_수정되어야_한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            List<Notification> notifications = new ArrayList<>();
+            List<NotificationDto> notificationDtos = new ArrayList<>();
+
+            for (int i=0; i<5; i++) {
+                UUID notificationId = UUID.randomUUID();
+                Notification notification = NotificationFixture.createNewArticleNotification(user);
+                ReflectionTestUtils.setField(notification, "id", notificationId);
+                notifications.add(notification);
+
+                NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(notification, true);
+                notificationDtos.add(expectedDto);
+            }
+
+            given(notificationRepository.findByUserIdAndIsCheckedFalse(userId)).willReturn(notifications);
+
+            given(notificationMapper.toDto(any(Notification.class)))
+                .willAnswer(invocation -> {
+                    Notification n = invocation.getArgument(0);
+                    return NotificationFixture.createNotificationDtoWithConfirmed(n, true);
+                });
+
+            // when
+            List<NotificationDto> result = notificationService.confirmAll(userId);
+
+            // then
+            assertThat(result).hasSize(5);
+            assertThat(result).allMatch(NotificationDto::confirmed);
+            assertThat(notifications).allMatch(Notification::isChecked);
+        }
+
+        @Test
+        void 확인되지_않은_알림이_없는_경우_빈_리스트를_반환한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            given(notificationRepository.findByUserIdAndIsCheckedFalse(userId)).willReturn(List.of());
+
+            // when
+            List<NotificationDto> result = notificationService.confirmAll(userId);
+
+            // then
+            assertThat(result).isEmpty();
         }
     }
 }
