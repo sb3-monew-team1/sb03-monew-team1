@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -18,6 +19,7 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
@@ -303,6 +305,22 @@ public class NotificationControllerTest {
             mockMvc.perform(patch("/api/notifications/")
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 존재하지_않는_유저가_알림을_전체_확인하면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID invalidUserId = UUID.randomUUID();
+
+            willThrow(new UserNotFoundException(invalidUserId))
+                .given(notificationService)
+                .confirmAll(invalidUserId);
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications/")
+                    .header("Monew-Request-User-ID", invalidUserId.toString()))
+                .andExpect(status().isNotFound());
         }
     }
 }
