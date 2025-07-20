@@ -17,7 +17,7 @@ public interface NotificationService {
 
     NotificationDto confirm(UUID notificationId, UUID userId);
 
-    List<NotificationDto> confirmAll(UUID userId);
+    void confirmAll(UUID userId);
 
     CursorPageResponse<NotificationDto> getUncheckedNotifications(
         UUID userId,

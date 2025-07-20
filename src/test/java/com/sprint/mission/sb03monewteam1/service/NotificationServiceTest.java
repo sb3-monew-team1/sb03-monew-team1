@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -375,18 +376,10 @@ public class NotificationServiceTest {
 
             given(notificationRepository.findByUserIdAndIsCheckedFalse(userId)).willReturn(notifications);
 
-            given(notificationMapper.toDto(any(Notification.class)))
-                .willAnswer(invocation -> {
-                    Notification n = invocation.getArgument(0);
-                    return NotificationFixture.createNotificationDtoWithConfirmed(n, true);
-                });
-
             // when
-            List<NotificationDto> result = notificationService.confirmAll(userId);
+            notificationService.confirmAll(userId);
 
             // then
-            assertThat(result).hasSize(5);
-            assertThat(result).allMatch(NotificationDto::confirmed);
             assertThat(notifications).allMatch(Notification::isChecked);
         }
 
@@ -398,10 +391,8 @@ public class NotificationServiceTest {
             given(notificationRepository.findByUserIdAndIsCheckedFalse(userId)).willReturn(List.of());
 
             // when
-            List<NotificationDto> result = notificationService.confirmAll(userId);
-
-            // then
-            assertThat(result).isEmpty();
+            assertThatCode(() -> notificationService.confirmAll(userId))
+                .doesNotThrowAnyException();
         }
     }
 }
