@@ -33,6 +33,11 @@ spring:
     job:
       enabled: false
 
+  task:
+    scheduling:
+      pool:
+        size: 2
+
 logging:
   level:
     root: info
