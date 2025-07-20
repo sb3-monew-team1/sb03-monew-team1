@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +28,7 @@ import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
@@ -53,6 +55,9 @@ class InterestServiceTest {
     private InterestRepository interestRepository;
 
     @Mock
+    private InterestKeywordRepository interestKeywordRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -76,7 +81,7 @@ class InterestServiceTest {
 
             // Given
             InterestRegisterRequest request = InterestFixture.createInterestRegisterRequest();
-            Interest savedInterest = new Interest();
+            Interest savedInterest = InterestFixture.createInterest();
             InterestDto expectedResponse = InterestFixture.createInterestResponseDto();
 
             given(interestRepository.existsByName(request.name())).willReturn(false);
@@ -121,7 +126,7 @@ class InterestServiceTest {
             InterestRegisterRequest request = InterestFixture.createInterestRegisterRequest();
             InterestRegisterRequest similarRequest = InterestFixture.createInterestRegisterRequestWithSimilarName();
 
-            Interest existingInterest = new Interest();
+            Interest existingInterest = InterestFixture.createInterest();
             existingInterest.setName(request.name());
             given(interestRepository.findAll()).willReturn(List.of(existingInterest));
 
@@ -348,6 +353,45 @@ class InterestServiceTest {
             assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
 
             verify(interestRepository).findById(nonExistentInterestId);
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 삭제 테스트")
+    class InterestDeleteTests {
+
+        @Test
+        void 관심사를_삭제하면_삭제가_성공한다() {
+            // Given
+            Interest interest = InterestFixture.createInterest();
+
+            when(interestRepository.findById(interest.getId())).thenReturn(Optional.of(interest));
+
+            // When
+            interestService.deleteInterest(interest.getId());
+
+            // Then
+            verify(interestRepository).findById(interest.getId());
+            verify(interestRepository).delete(interest);
+            verify(interestKeywordRepository).deleteByInterestId(interest.getId());
+            verify(subscriptionRepository).deleteByInterestId(interest.getId());
+        }
+
+        @Test
+        void 존재하지_않는_관심사를_삭제하면_InterestNotFoundException이_발생한다() {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
+
+            // When & Then
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
+                interestService.deleteInterest(nonExistentInterestId);
+            });
+
+            assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
+
+            verify(interestRepository).findById(nonExistentInterestId);
+            verify(interestRepository, times(0)).delete(any());
         }
     }
 }

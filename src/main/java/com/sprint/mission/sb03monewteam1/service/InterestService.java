@@ -19,4 +19,6 @@ public interface InterestService {
         String sortDirection);
 
     SubscriptionDto createSubscription(UUID interestId, UUID userId);
+
+    void deleteInterest(UUID interestId);
 }
