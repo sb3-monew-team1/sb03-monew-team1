@@ -28,6 +28,7 @@ import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
@@ -54,6 +55,9 @@ class InterestServiceTest {
     private InterestRepository interestRepository;
 
     @Mock
+    private InterestKeywordRepository interestKeywordRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -77,7 +81,7 @@ class InterestServiceTest {
 
             // Given
             InterestRegisterRequest request = InterestFixture.createInterestRegisterRequest();
-            Interest savedInterest = new Interest();
+            Interest savedInterest = InterestFixture.createInterest();
             InterestDto expectedResponse = InterestFixture.createInterestResponseDto();
 
             given(interestRepository.existsByName(request.name())).willReturn(false);
@@ -122,7 +126,7 @@ class InterestServiceTest {
             InterestRegisterRequest request = InterestFixture.createInterestRegisterRequest();
             InterestRegisterRequest similarRequest = InterestFixture.createInterestRegisterRequestWithSimilarName();
 
-            Interest existingInterest = new Interest();
+            Interest existingInterest = InterestFixture.createInterest();
             existingInterest.setName(request.name());
             given(interestRepository.findAll()).willReturn(List.of(existingInterest));
 
@@ -369,6 +373,8 @@ class InterestServiceTest {
             // Then
             verify(interestRepository).findById(interest.getId());
             verify(interestRepository).delete(interest);
+            verify(interestKeywordRepository).deleteByInterestId(interest.getId());
+            verify(subscriptionRepository).deleteByInterestId(interest.getId());
         }
 
         @Test

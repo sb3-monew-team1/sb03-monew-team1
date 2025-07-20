@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.entity;
 
 import com.sprint.mission.sb03monewteam1.entity.base.BaseUpdatableEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,9 +16,9 @@ import java.util.List;
 @Table(name = "interests")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Interest extends BaseUpdatableEntity {
 
     @Column(nullable = false)

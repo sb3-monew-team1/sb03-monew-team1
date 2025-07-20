@@ -17,6 +17,7 @@ import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityEx
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
@@ -41,6 +42,7 @@ public class InterestServiceImpl implements InterestService {
 
     private final InterestRepository interestRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final InterestKeywordRepository interestKeywordRepository;
     private final UserRepository userRepository;
     private final InterestMapper interestMapper;
     private final SubscriptionMapper subscriptionMapper;
@@ -175,12 +177,17 @@ public class InterestServiceImpl implements InterestService {
 
     @Override
     public void deleteInterest(UUID interestId) {
+        log.info("관심사 삭제 요청: interestId={}", interestId);
         Interest interest = interestRepository.findById(interestId)
             .orElseThrow(() -> new InterestNotFoundException(interestId));
 
         subscriptionRepository.deleteByInterestId(interestId);
 
+        interestKeywordRepository.deleteByInterestId(interestId);
+
         interestRepository.delete(interest);
+
+        log.info("관심사 삭제 완료: interestId={}", interestId);
     }
 
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {

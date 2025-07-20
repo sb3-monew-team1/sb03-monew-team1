@@ -435,14 +435,13 @@ class InterestControllerTest {
             mockMvc.perform(delete("/api/interests/{interestId}", interestId)
                     .header("Monew-Request-User-ID", UUID.randomUUID().toString())
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());  // 204 No Content (성공적으로 삭제된 경우)
+                .andExpect(status().isNoContent());
 
-            // Verify that the interest was deleted
             verify(interestService).deleteInterest(interestId);
         }
 
         @Test
-        void 존재하지_않는_관심사를_삭제하려고_하면_InterestNotFoundException이_발생한다() throws Exception {
+        void 존재하지_않는_관심사를_삭제하려고_하면_404를_반환한다() throws Exception {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
 
@@ -456,7 +455,6 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
 
-            // Verify that the service method was called
             verify(interestService).deleteInterest(nonExistentInterestId);
         }
     }

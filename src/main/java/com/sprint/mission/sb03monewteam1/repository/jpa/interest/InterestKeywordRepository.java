@@ -14,4 +14,6 @@ public interface InterestKeywordRepository extends JpaRepository<InterestKeyword
     List<String> findAllDistinct();
 
     List<InterestKeyword> findAllByKeyword(String keyword);
+
+    void deleteByInterestId(UUID interestId);
 }
