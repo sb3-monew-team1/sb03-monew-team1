@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -22,6 +23,7 @@ import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -287,6 +289,20 @@ public class NotificationControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
                 .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 알림을_전체_확인하면_204가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID userId = UUID.randomUUID();
+
+            willDoNothing().given(notificationService).confirmAll(userId);
+
+            // when & Then
+            mockMvc.perform(patch("/api/notifications/")
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNoContent());
         }
     }
 }
