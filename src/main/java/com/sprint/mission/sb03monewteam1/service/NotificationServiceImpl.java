@@ -116,7 +116,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationDto confirm(UUID notificationId, UUID requestUserId) {
+    public void confirm(UUID notificationId, UUID requestUserId) {
 
         log.info("알림 개별 확인 시작: notificationId={}, userId={}", notificationId, requestUserId);
 
@@ -130,8 +130,6 @@ public class NotificationServiceImpl implements NotificationService {
         notification.markAsChecked();
 
         log.info("알림 개별 확인 완료: notificationId={}, userId={}", notificationId, requestUserId);
-
-        return notificationMapper.toDto(notification);
     }
 
     @Override

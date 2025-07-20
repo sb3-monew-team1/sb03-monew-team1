@@ -94,12 +94,8 @@ public interface NotificationApi {
     @Operation(summary = "알림 확인")
     @ApiResponses({
         @ApiResponse(
-            responseCode = "200",
-            description = "알림 확인 성공",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class)
-            )
+            responseCode = "204",
+            description = "알림 확인 성공"
         ),
         @ApiResponse(
             responseCode = "400",
@@ -126,7 +122,7 @@ public interface NotificationApi {
             )
         )
     })
-    ResponseEntity<NotificationDto> confirm(
+    ResponseEntity<Void> confirm(
         @Parameter(description = "알림 ID", required = true) @PathVariable UUID notificationId,
         @Parameter(description = "요청자 ID", required = true) @RequestHeader("Monew-Request-User-ID") UUID userId
     );

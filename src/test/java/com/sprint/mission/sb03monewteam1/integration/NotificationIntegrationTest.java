@@ -2,8 +2,8 @@ package com.sprint.mission.sb03monewteam1.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -307,7 +307,7 @@ public class NotificationIntegrationTest {
 
         @Test
         @Transactional
-        void 알림을_확인하면_200과_확인여부가_true로_수정되어야_한다() throws Exception {
+        void 알림을_확인하면_204와_확인여부가_true로_수정되어야_한다() throws Exception {
 
             // given
             User user = userRepository.save(
@@ -324,10 +324,9 @@ public class NotificationIntegrationTest {
             // when & then
             mockMvc.perform(patch("/api/notifications/" + notification.getId())
                     .header("Monew-Request-User-ID", user.getId().toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(notification.getId().toString()))
-                .andExpect(jsonPath("$.confirmed").value(true))
-                .andExpect(jsonPath("$.userId").value(user.getId().toString()));
+                .andExpect(status().isNoContent());
+
+            assertThat(notification.isChecked()).isTrue();
         }
 
         @Test

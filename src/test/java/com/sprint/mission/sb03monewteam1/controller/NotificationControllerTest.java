@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -17,6 +18,7 @@ import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
@@ -226,7 +228,7 @@ public class NotificationControllerTest {
     class NotificationUpdateTests {
 
         @Test
-        void 알림을_확인하면_200과_확인여부가_수정된_DTO가_반환되어야_한다() throws Exception {
+        void 알림을_확인하면_204가_반환되어야_한다() throws Exception {
 
             // given
             UUID userId = UUID.randomUUID();
@@ -237,17 +239,14 @@ public class NotificationControllerTest {
             Notification notification = NotificationFixture.createNewArticleNotification(user);
             ReflectionTestUtils.setField(notification, "id", notificationId);
 
-            NotificationDto expectedDto = NotificationFixture.createNotificationDtoWithConfirmed(
-                notification, true);
-
-            given(notificationService.confirm(notificationId, userId)).willReturn(expectedDto);
+            willDoNothing()
+                .given(notificationService)
+                .confirm(notificationId, userId);
 
             // When & Then
             mockMvc.perform(patch("/api/notifications/" + notificationId)
                     .header("Monew-Request-User-ID", userId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(notificationId.toString()))
-                .andExpect(jsonPath("$.confirmed").value(true));
+                .andExpect(status().isNoContent());
         }
 
         @Test
@@ -257,8 +256,9 @@ public class NotificationControllerTest {
             UUID invalidNotificationId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
 
-            given(notificationService.confirm(invalidNotificationId, userId))
-                .willThrow(new NotificationNotFoundException(invalidNotificationId));
+            willThrow(new NotificationNotFoundException(invalidNotificationId))
+                .given(notificationService)
+                .confirm(invalidNotificationId, userId);
 
             // when & then
             mockMvc.perform(patch("/api/notifications/" + invalidNotificationId)
@@ -282,8 +282,9 @@ public class NotificationControllerTest {
 
             UUID invalidUserId = UUID.randomUUID();
 
-            given(notificationService.confirm(notificationId, invalidUserId))
-                .willThrow(new NotificationAccessDeniedException(invalidUserId));
+            willThrow(new NotificationAccessDeniedException(invalidUserId))
+                .given(notificationService)
+                .confirm(notificationId, invalidUserId);
 
             // when & then
             mockMvc.perform(patch("/api/notifications/" + notificationId)
