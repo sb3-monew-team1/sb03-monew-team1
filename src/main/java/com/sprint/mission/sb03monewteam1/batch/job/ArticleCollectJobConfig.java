@@ -1,16 +1,7 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
-import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
-import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
-import com.sprint.mission.sb03monewteam1.entity.Article;
-import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
-import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
-import com.sprint.mission.sb03monewteam1.service.ArticleService;
-import io.micrometer.core.instrument.Timer;
-import jakarta.persistence.EntityManagerFactory;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
@@ -26,6 +17,17 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
+import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
+import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
+import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
+import com.sprint.mission.sb03monewteam1.service.ArticleService;
+
+import jakarta.persistence.EntityManagerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @RequiredArgsConstructor
@@ -144,15 +146,10 @@ public class ArticleCollectJobConfig {
     @Bean
     public ItemWriter<ArticleWithKeyword> articleWithKeywordWriter() {
         return items -> {
-            Timer.Sample sample = Timer.start(monewMetrics.getMeterRegistry());
-            try {
-                for (ArticleWithKeyword aw : items) {
-                    if (aw.articles() != null && !aw.articles().isEmpty()) {
-                        articleService.saveArticles(aw.articles(), aw.keyword());
-                    }
+            for (ArticleWithKeyword aw : items) {
+                if (aw.articles() != null && !aw.articles().isEmpty()) {
+                    articleService.saveArticles(aw.articles(), aw.keyword());
                 }
-            } finally {
-                sample.stop(monewMetrics.getBatchJobTimer("newsCollectJob"));
             }
         };
     }
