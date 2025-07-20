@@ -173,6 +173,16 @@ public class InterestServiceImpl implements InterestService {
         return subscriptionMapper.toDto(savedSubscription);
     }
 
+    @Override
+    public void deleteInterest(UUID interestId) {
+        Interest interest = interestRepository.findById(interestId)
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
+
+        subscriptionRepository.deleteByInterestId(interestId);
+
+        interestRepository.delete(interest);
+    }
+
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
         if (interests.size() <= limit) {
             return null;

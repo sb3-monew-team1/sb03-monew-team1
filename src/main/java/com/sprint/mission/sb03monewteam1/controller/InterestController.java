@@ -57,7 +57,6 @@ public class InterestController implements InterestApi {
     }
 
     @PostMapping("/{interestId}/subscriptions")
-
     public ResponseEntity<SubscriptionDto> createSubscription(
         @PathVariable UUID interestId,
         @RequestHeader("Monew-Request-User-ID") UUID userId) {
@@ -70,5 +69,17 @@ public class InterestController implements InterestApi {
             userId, interestId, subscriptionDto.interestName());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(subscriptionDto);
+    }
+
+    @DeleteMapping("/{interestId}")
+    public ResponseEntity<Void> deleteInterest(@PathVariable UUID interestId) {
+
+        log.info("관심사 삭제 요청: interestId={}", interestId);
+
+        interestService.deleteInterest(interestId);
+
+        log.info("관심사 삭제 완료: interestId={}", interestId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
