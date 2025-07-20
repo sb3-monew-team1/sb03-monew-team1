@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.service;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -174,6 +176,31 @@ public class InterestServiceImpl implements InterestService {
 
         return subscriptionMapper.toDto(savedSubscription);
     }
+
+    @Override
+    public InterestDto updateInterestKeywords(UUID interestId, InterestUpdateRequest request, UUID userId) {
+        Interest interest = interestRepository.findById(interestId)
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
+
+        List<String> newKeywords = request.keywords();
+
+        interest.getKeywords().clear();
+
+        for (String keyword : newKeywords) {
+            InterestKeyword interestKeyword = InterestKeyword.builder()
+                .keyword(keyword)
+                .interest(interest)
+                .build();
+            interest.getKeywords().add(interestKeyword);
+        }
+
+        boolean subscribedByMe = subscriptionRepository.existsByUserIdAndInterestId(userId, interestId);
+
+        Interest updatedInterest = interestRepository.save(interest);
+
+        return interestMapper.toDto(updatedInterest, subscribedByMe);
+    }
+
 
     @Override
     public void deleteInterest(UUID interestId) {
