@@ -1,15 +1,9 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
-import com.sprint.mission.sb03monewteam1.entity.Article;
-import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
-import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
-import com.sprint.mission.sb03monewteam1.service.ArticleService;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -17,49 +11,70 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
+import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
+import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
+import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
+import com.sprint.mission.sb03monewteam1.service.ArticleService;
+
+import jakarta.persistence.EntityManagerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
 public class ArticleCollectJobConfig {
 
-    private final InterestKeywordRepository interestKeywordRepository;
-    private final ArticleRepository articleRepository;
     private final ArticleService articleService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final MonewMetrics monewMetrics;
 
     @Bean
-    public Job articleCollectJob(
-        JobRepository jobRepository,
-        Step naverNewsCollectStep,
-        Step hankyungNewsCollectStep
-    ) {
-        return new JobBuilder("articleCollectJob", jobRepository)
-            .start(naverNewsCollectStep)
-            .next(hankyungNewsCollectStep)
-            .build();
+    public JobExecutionListener naverNewsCollectJobExecutionListener() {
+        return new NewsCollectJobCompletionListener(eventPublisher, monewMetrics,
+            "naverNewsCollectJob");
+    }
+
+    @Bean
+    public JobExecutionListener hankyungNewsCollectJobExecutionListener() {
+        return new NewsCollectJobCompletionListener(eventPublisher, monewMetrics,
+            "hankyungNewsCollectJob");
     }
 
     @Bean
     @StepScope
-    public ListItemReader<String> distinctKeywordReader() {
-        List<String> keywords = interestKeywordRepository.findAllDistinct();
-        return new ListItemReader<>(keywords);
+    public JpaPagingItemReader<String> distinctKeywordReader(
+        EntityManagerFactory entityManagerFactory) {
+
+        return new JpaPagingItemReaderBuilder<String>()
+            .name("distinctKeywordReader")
+            .entityManagerFactory(entityManagerFactory)
+            .pageSize(100)
+            .queryString("SELECT DISTINCT k.keyword FROM InterestKeyword k ORDER BY k.keyword ASC")
+            .build();
     }
 
+    // Naver
     @Bean
-    public Step naverNewsCollectStep(JobRepository jobRepository,
-        PlatformTransactionManager transactionManager) {
+    public Step naverNewsCollectStep(
+        JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        EntityManagerFactory entityManagerFactory
+    ) {
         return new StepBuilder("naverNewsCollectStep", jobRepository)
-            .<String, List<Article>>chunk(10, transactionManager)
-            .reader(distinctKeywordReader())
+            .<String, ArticleWithKeyword>chunk(10, transactionManager)
+            .reader(distinctKeywordReader(entityManagerFactory))
             .processor(naverNewsCollectProcessor())
-            .writer(articleListWriter())
+            .writer(articleWithKeywordWriter())
             .faultTolerant()
             .skipLimit(10)
             .skip(ArticleCollectException.class)
@@ -68,67 +83,74 @@ public class ArticleCollectJobConfig {
     }
 
     @Bean
-    public Step hankyungNewsCollectStep(JobRepository jobRepository,
-        PlatformTransactionManager transactionManager) {
+    public Job naverNewsCollectJob(
+        JobRepository jobRepository,
+        Step naverNewsCollectStep,
+        JobExecutionListener naverNewsCollectJobExecutionListener
+    ) {
+        return new JobBuilder("naverNewsCollectJob", jobRepository)
+            .start(naverNewsCollectStep)
+            .listener(naverNewsCollectJobExecutionListener)
+            .build();
+    }
+
+
+    @Bean
+    public ItemProcessor<String, ArticleWithKeyword> naverNewsCollectProcessor() {
+        return keyword -> {
+            List<Article> articles = articleService.collectNaverArticles(keyword);
+            return new ArticleWithKeyword(articles, keyword);
+        };
+    }
+
+    // Hankyung
+    @Bean
+    public Step hankyungNewsCollectStep(
+        JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        EntityManagerFactory entityManagerFactory
+    ) {
         return new StepBuilder("hankyungNewsCollectStep", jobRepository)
-            .<String, List<Article>>chunk(10, transactionManager)
-            .reader(distinctKeywordReader())
+            .<String, ArticleWithKeyword>chunk(10, transactionManager)
+            .reader(distinctKeywordReader(entityManagerFactory))
             .processor(hankyungNewsCollectProcessor())
-            .writer(articleListWriter())
+            .writer(articleWithKeywordWriter())
             .faultTolerant()
             .skipLimit(10)
             .skip(ArticleCollectException.class)
+            .skip(NullPointerException.class)
             .build();
     }
 
     @Bean
-    public ItemProcessor<String, List<Article>> naverNewsCollectProcessor() {
-        return keyword -> {
-            List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
-                keyword);
-
-            for (InterestKeyword ik : interestKeywords) {
-                articleService.collectAndSaveNaverArticles(ik.getInterest(), ik.getKeyword());
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("다음 작업을 위해 Thread.sleep", e);
-            }
-            return List.of();
-        };
+    public Job hankyungNewsCollectJob(
+        JobRepository jobRepository,
+        Step hankyungNewsCollectStep,
+        JobExecutionListener hankyungNewsCollectJobExecutionListener
+    ) {
+        return new JobBuilder("hankyungNewsCollectJob", jobRepository)
+            .start(hankyungNewsCollectStep)
+            .listener(hankyungNewsCollectJobExecutionListener)
+            .build();
     }
 
     @Bean
-    public ItemProcessor<String, List<Article>> hankyungNewsCollectProcessor() {
+    public ItemProcessor<String, ArticleWithKeyword> hankyungNewsCollectProcessor() {
         return keyword -> {
-            List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
-                keyword);
-
-            for (InterestKeyword ik : interestKeywords) {
-                articleService.collectAndSaveHankyungArticles(ik.getInterest(), ik.getKeyword());
-            }
-            return List.of();
+            List<Article> articles = articleService.collectHankyungArticles(keyword);
+            return new ArticleWithKeyword(articles, keyword);
         };
     }
 
+    // 저장 공통
     @Bean
-    public ItemWriter<List<Article>> articleListWriter() {
+    public ItemWriter<ArticleWithKeyword> articleWithKeywordWriter() {
         return items -> {
-            for (List<Article> articles : items) {
-                if (!articles.isEmpty()) {
-                    articleRepository.saveAll(articles);
+            for (ArticleWithKeyword aw : items) {
+                if (aw.articles() != null && !aw.articles().isEmpty()) {
+                    articleService.saveArticles(aw.articles(), aw.keyword());
                 }
             }
         };
-    }
-
-    @Bean
-    public TaskExecutor taskExecutor() {
-        // 멀티 스레드 실행을 위한 TaskExecutor 설정
-        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("batch-task-");
-        executor.setConcurrencyLimit(10);
-        return executor;
     }
 }

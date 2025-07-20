@@ -30,10 +30,10 @@ import com.sprint.mission.sb03monewteam1.mapper.CommentActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentLikeRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.CommentRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
@@ -85,6 +85,9 @@ public class CommentServiceImpl implements CommentService {
         Comment savedComment = commentRepository.save(comment);
         article.increaseCommentCount();
 
+        return commentMapper.toDto(savedComment).toBuilder()
+            .likedByMe(false)
+            .build();
         CommentActivityDto event = commentActivityMapper.toDto(savedComment);
         eventPublisher.publishEvent(new CommentActivityCreateEvent(userId, event));
         log.debug("댓글 작성 활동 내역 이벤트 발행 완료: {}", event);

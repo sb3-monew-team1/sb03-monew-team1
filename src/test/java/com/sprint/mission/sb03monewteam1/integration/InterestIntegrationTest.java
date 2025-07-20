@@ -7,10 +7,10 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestKeywordRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.InterestRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.SubscriptionRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.UserRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -371,6 +371,38 @@ class InterestIntegrationTest {
             mockMvc.perform(post("/api/interests/{interestId}/subscriptions", nonExistentInterestId)
                     .header("Monew-Request-User-ID", testUser.getId())
                     .contentType("application/json"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 삭제 테스트")
+    class InterestDeleteTests {
+
+        @Test
+        void 관심사를_삭제하면_204를_반환한다() throws Exception {
+            // Given
+            Interest testInterest = InterestFixture.createInterest();
+            interestRepository.save(testInterest);
+
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}", testInterest.getId())
+                    .header("Monew-Request-User-ID", UUID.randomUUID().toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 존재하지_않는_관심사를_삭제하려고_하면_404를_반환한다() throws Exception {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}", nonExistentInterestId)
+                    .header("Monew-Request-User-ID", UUID.randomUUID().toString())
+                    .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));

@@ -2,7 +2,6 @@ package com.sprint.mission.sb03monewteam1.fixture;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +27,12 @@ public class InterestFixture {
             .name(name)
             .subscriberCount(subscriberCount)
             .build();
+    }
+
+    public static Interest createInterestWithId() {
+        Interest interest = createInterest(DEFAULT_NAME, DEFAULT_SUBSCRIBER_COUNT);
+        interest.setIdForTest(UUID.randomUUID());
+        return interest;
     }
 
     // 기본 요청 DTO
@@ -56,10 +61,14 @@ public class InterestFixture {
 
     // 여러 DTO를 한 번에 생성
     public static List<InterestDto> createInterestDtoList() {
-        InterestDto interestDto1 = createInterestResponseDto("football club", List.of("sports", "club"), 150L);
-        InterestDto interestDto2 = createInterestResponseDto("soccer", List.of("football", "ball"), 200L);
-        InterestDto interestDto3 = createInterestResponseDto("aesthetic", List.of("spa", "cosmetics"), 100L);
-        InterestDto interestDto4 = createInterestResponseDto("beauty", List.of("massage", "spa"), 50L);
+        InterestDto interestDto1 = createInterestResponseDto("football club",
+            List.of("sports", "club"), 150L);
+        InterestDto interestDto2 = createInterestResponseDto("soccer", List.of("football", "ball"),
+            200L);
+        InterestDto interestDto3 = createInterestResponseDto("aesthetic",
+            List.of("spa", "cosmetics"), 100L);
+        InterestDto interestDto4 = createInterestResponseDto("beauty", List.of("massage", "spa"),
+            50L);
 
         return List.of(interestDto1, interestDto2, interestDto3, interestDto4);
     }

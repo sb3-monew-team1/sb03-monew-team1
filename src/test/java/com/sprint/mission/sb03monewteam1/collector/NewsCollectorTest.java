@@ -26,7 +26,7 @@ class NewsCollectorTest {
         log.info("테스트 시작: Naver API 뉴스 수집, 키워드: {}", keyword);
 
         // when
-        var result = naverNewsCollector.collect(null, keyword);
+        var result = naverNewsCollector.collect(keyword);
 
         // then
         assertThat(result).isNotNull();
@@ -38,7 +38,7 @@ class NewsCollectorTest {
     @Test
     void 한국경제_RSS로_뉴스_데이터를_수집할_수_있다() {
         log.info("테스트 시작: 한국경제 RSS 뉴스 수집");
-        var result = hankyungNewsCollector.collect(null, null);
+        var result = hankyungNewsCollector.collect(null);
         assertThat(result).isNotNull();
         assertThat(result).isNotEmpty();
         log.info("테스트 성공: 한국경제 RSS 기사 개수 = {}", result.size());

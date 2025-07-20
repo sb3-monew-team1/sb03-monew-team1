@@ -65,6 +65,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // 재시도, RateLimiter(에: API 요청 개수 제한) 등 다양한 내결함 제어릃 지원하는 경량 라이브러리
+    implementation 'dev.failsafe:failsafe:3.3.2'
+
     // Swagger UI 활성화
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 

@@ -1,9 +1,12 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
-import com.sprint.mission.sb03monewteam1.repository.jpa.ArticleRepositoryCustom;
+import com.sprint.mission.sb03monewteam1.event.listener.JobCompletionMetricsListener;
+import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepositoryCustom;
 import com.sprint.mission.sb03monewteam1.util.S3Util;
+import io.micrometer.core.instrument.Timer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -32,6 +35,7 @@ public class ArticleBackupJobConfig {
     private final ArticleRepositoryCustom articleRepositoryCustom;
     private final ObjectMapper objectMapper;
     private final S3Util s3Util;
+    private final MonewMetrics monewMetrics;
 
     @Value("${aws.s3.bucket:}")
     private String backupBucket;
@@ -40,9 +44,16 @@ public class ArticleBackupJobConfig {
     private String backupPrefix;
 
     @Bean
-    public Job articleBackupJob(JobRepository jobRepository, Step articleBackupStep) {
+    public org.springframework.batch.core.JobExecutionListener articleBackupJobExecutionListener() {
+        return new JobCompletionMetricsListener("articleBackupJob", monewMetrics);
+    }
+
+    @Bean
+    public Job articleBackupJob(JobRepository jobRepository, Step articleBackupStep,
+        org.springframework.batch.core.JobExecutionListener articleBackupJobExecutionListener) {
         return new JobBuilder("articleBackupJob", jobRepository)
             .start(articleBackupStep)
+            .listener(articleBackupJobExecutionListener)
             .build();
     }
 
@@ -72,6 +83,7 @@ public class ArticleBackupJobConfig {
     @Bean
     public ItemWriter<ArticleDto> writer() {
         return articles -> {
+            Timer.Sample sample = Timer.start(monewMetrics.getMeterRegistry());
             String key = backupPrefix + "backup-articles-" +
                 LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1) + ".json";
             try {
@@ -91,6 +103,8 @@ public class ArticleBackupJobConfig {
             } catch (Exception e) {
                 log.error("백업 파일 업로드 중 오류 발생", e);
                 throw new RuntimeException(e);
+            } finally {
+                sample.stop(monewMetrics.getBatchJobTimer("articleBackupJob"));
             }
         };
     }
