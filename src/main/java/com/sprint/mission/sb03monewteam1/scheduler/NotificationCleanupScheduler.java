@@ -14,7 +14,7 @@ public class NotificationCleanupScheduler {
 
     private final NotificationService notificationService;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 15 0 * * *")
     public void runNotificationCleanupBatch() {
         log.info("확인된 알림 삭제 시작");
         try {
