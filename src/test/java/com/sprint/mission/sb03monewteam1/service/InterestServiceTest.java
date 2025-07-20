@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -348,6 +349,43 @@ class InterestServiceTest {
             assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
 
             verify(interestRepository).findById(nonExistentInterestId);
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 삭제 테스트")
+    class InterestDeleteTests {
+
+        @Test
+        void 관심사를_삭제하면_삭제가_성공한다() {
+            // Given
+            Interest interest = InterestFixture.createInterest();
+
+            when(interestRepository.findById(interest.getId())).thenReturn(Optional.of(interest));
+
+            // When
+            interestService.deleteInterest(interest.getId());
+
+            // Then
+            verify(interestRepository).findById(interest.getId());
+            verify(interestRepository).delete(interest);
+        }
+
+        @Test
+        void 존재하지_않는_관심사를_삭제하면_InterestNotFoundException이_발생한다() {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
+
+            // When & Then
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
+                interestService.deleteInterest(nonExistentInterestId);
+            });
+
+            assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
+
+            verify(interestRepository).findById(nonExistentInterestId);
+            verify(interestRepository, times(0)).delete(any());
         }
     }
 }
