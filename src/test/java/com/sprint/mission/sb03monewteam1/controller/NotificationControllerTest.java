@@ -302,7 +302,7 @@ public class NotificationControllerTest {
             willDoNothing().given(notificationService).confirmAll(userId);
 
             // when & Then
-            mockMvc.perform(patch("/api/notifications/")
+            mockMvc.perform(patch("/api/notifications")
                     .header("Monew-Request-User-ID", userId.toString()))
                 .andExpect(status().isNoContent());
         }
@@ -318,7 +318,7 @@ public class NotificationControllerTest {
                 .confirmAll(invalidUserId);
 
             // when & then
-            mockMvc.perform(patch("/api/notifications/")
+            mockMvc.perform(patch("/api/notifications")
                     .header("Monew-Request-User-ID", invalidUserId.toString()))
                 .andExpect(status().isNotFound());
         }

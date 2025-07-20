@@ -62,4 +62,20 @@ public class NotificationController implements NotificationApi {
             .status(HttpStatus.OK)
             .body(result);
     }
+
+    @Override
+    @PatchMapping
+    public ResponseEntity<Void> confirmAll(
+        @RequestHeader("Monew-Request-User-ID") UUID userId
+    ) {
+        log.info("알림 전체 확인 요청: userId={}", userId);
+
+        notificationService.confirmAll(userId);
+
+        log.info("알림 전체 확인 완료: userId={}", userId);
+
+        return ResponseEntity
+            .status(HttpStatus.NO_CONTENT)
+            .build();
+    }
 }
