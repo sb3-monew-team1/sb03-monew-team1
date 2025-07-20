@@ -1,6 +1,6 @@
 package com.sprint.mission.sb03monewteam1.integration;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -18,6 +18,7 @@ import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.event.NewsCollectJobCompletedEvent;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
@@ -330,6 +331,41 @@ public class NotificationIntegrationTest {
                 .andExpect(status().isNoContent());
 
             assertThat(notification.isChecked()).isTrue();
+        }
+
+        @Test
+        void 알림을_전체_확인하면_204와_확인여부가_true로_수정되어야_한다() throws Exception {
+
+            // given
+            User user = userRepository.save(UserFixture.createUser());
+            List<Notification> notifications = notificationRepository.saveAll(NotificationFixture.createUncheckedNotifications(user, 5));
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications")
+                    .header("Monew-Request-User-ID", user.getId().toString()))
+                .andExpect(status().isNoContent());
+
+            List<Notification> updatedNotifications = notificationRepository.findAllById(
+                notifications.stream().map(Notification::getId).toList()
+            );
+
+            assertThat(updatedNotifications)
+                .hasSize(5)
+                .allMatch(Notification::isChecked);
+        }
+
+        @Test
+        void 존재하지_않는_유저가_알림을_전체_확인하면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID invalidUserId = UUID.randomUUID();
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications")
+                .header("Monew-Request-User-ID", invalidUserId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
         }
     }
 }
