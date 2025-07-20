@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.integration;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,13 +49,15 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @LoadTestEnv
 @SpringBootTest
 @AutoConfigureMockMvc
 @EnableAsync
 @ActiveProfiles("test")
-@DisplayName("InterestIntegration 테스트")
+@DisplayName("NotificationIntegration 테스트")
 public class NotificationIntegrationTest {
 
     @Autowired
@@ -295,7 +298,34 @@ public class NotificationIntegrationTest {
                 .andExpect(jsonPath("$.size").value(10));
 
         }
+    }
 
+    @Nested
+    @DisplayName("알림 수정 테스트")
+    class NotificationUpdateTests {
 
+        @Test
+        @Transactional
+        void 알림을_확인하면_204와_확인여부가_true로_수정되어야_한다() throws Exception {
+
+            // given
+            User user = userRepository.save(
+                User.builder()
+                    .email("author@codeit.com")
+                    .nickname("author")
+                    .password("author1234!")
+                    .build()
+            );
+            Notification notification = notificationRepository.save(
+                NotificationFixture.createNewArticleNotification(user)
+            );
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications/" + notification.getId())
+                    .header("Monew-Request-User-ID", user.getId().toString()))
+                .andExpect(status().isNoContent());
+
+            assertThat(notification.isChecked()).isTrue();
+        }
     }
 }

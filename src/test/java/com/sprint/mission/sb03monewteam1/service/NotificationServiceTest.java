@@ -17,6 +17,8 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
@@ -26,8 +28,10 @@ import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -49,7 +53,6 @@ public class NotificationServiceTest {
 
     @Mock
     private NotificationMapper notificationMapper;
-
 
     @InjectMocks
     private NotificationServiceImpl notificationService;
@@ -273,6 +276,75 @@ public class NotificationServiceTest {
                 eq(userId), eq(cursor), eq(after), eq(limit + 1));
             then(notificationMapper).shouldHaveNoInteractions();
         }
+    }
 
+    @Nested
+    @DisplayName("알림 수정 테스트")
+    class NotificationUpdateTests {
+
+        @Test
+        void 알림을_확인하면_확인여부가_수정되어야_한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            given(notificationRepository.findById(notificationId)).willReturn(
+                Optional.of(notification));
+
+            // when
+            notificationService.confirm(notificationId, userId);
+
+            // then
+            assertThat(notification.isChecked()).isTrue();
+        }
+
+        @Test
+        void 존재하지_않는_알림을_확인하면_예외가_발생한다() {
+
+            // given
+            UUID invalidNotificationId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(notificationRepository.findById(invalidNotificationId)).willReturn(
+                Optional.empty());
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                notificationService.confirm(invalidNotificationId, userId);
+            }).isInstanceOf(NotificationNotFoundException.class);
+
+            then(notificationRepository).should().findById(invalidNotificationId);
+        }
+
+        @Test
+        void 알림_대상자가_아닌_유저가_알림을_확인하면_예외가_발생한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            UUID invalidUserId = UUID.randomUUID();
+
+            given(notificationRepository.findById(notificationId)).willReturn(
+                Optional.of(notification));
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                notificationService.confirm(notificationId, invalidUserId);
+            }).isInstanceOf(NotificationAccessDeniedException.class);
+
+            then(notificationRepository).should().findById(notificationId);
+        }
     }
 }

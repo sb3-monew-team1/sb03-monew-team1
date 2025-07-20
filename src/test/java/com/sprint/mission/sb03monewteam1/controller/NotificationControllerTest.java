@@ -1,20 +1,30 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
-import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static java.util.UUID.randomUUID;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.NotificationDto;
-import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
+import com.sprint.mission.sb03monewteam1.entity.Notification;
+import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
+import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
+import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +38,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @ActiveProfiles("test")
@@ -208,6 +219,77 @@ public class NotificationControllerTest {
                 .andExpect(jsonPath("$.nextAfter").value("2024-01-01T10:00:00Z"))
                 .andExpect(jsonPath("$.size").value(5));
         }
+    }
 
+    @Nested
+    @DisplayName("알림 수정 테스트")
+    class NotificationUpdateTests {
+
+        @Test
+        void 알림을_확인하면_204가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            willDoNothing()
+                .given(notificationService)
+                .confirm(notificationId, userId);
+
+            // When & Then
+            mockMvc.perform(patch("/api/notifications/" + notificationId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 존재하지_않는_알림을_확인하면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID invalidNotificationId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            willThrow(new NotificationNotFoundException(invalidNotificationId))
+                .given(notificationService)
+                .confirm(invalidNotificationId, userId);
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications/" + invalidNotificationId)
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.NOTIFICATION_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 대상자가_아닌_유저가_알림을_확인하면_403이_반환되어야_한다() throws Exception {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            UUID notificationId = UUID.randomUUID();
+            Notification notification = NotificationFixture.createNewArticleNotification(user);
+            ReflectionTestUtils.setField(notification, "id", notificationId);
+
+            UUID invalidUserId = UUID.randomUUID();
+
+            willThrow(new NotificationAccessDeniedException(invalidUserId))
+                .given(notificationService)
+                .confirm(notificationId, invalidUserId);
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications/" + notificationId)
+                    .header("Monew-Request-User-ID", invalidUserId.toString()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
+                .andExpect(jsonPath("$.message").exists());
+        }
     }
 }
