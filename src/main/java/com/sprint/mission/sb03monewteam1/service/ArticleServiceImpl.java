@@ -18,25 +18,23 @@ import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundExcept
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.articleView.ArticleViewRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -313,15 +311,25 @@ public class ArticleServiceImpl implements ArticleService {
             return;
         }
 
-        try {
-            articleRepository.saveAll(articles);
-        } catch (DataIntegrityViolationException e) {
-            log.warn("중복 기사 URL로 인한 저장 실패: {}", e.getMessage());
+        // 수집 시 이미 필터링을 하지만 트랜잭션으로 인한 중복 저장을 방지합니다.
+        List<String> sourceUrls = articles.stream()
+            .map(Article::getSourceUrl)
+            .toList();
+        List<String> existingUrls = articleRepository.findAllBySourceUrlIn(sourceUrls);
+
+        List<Article> filteredArticles = articles.stream()
+            .filter(article -> !existingUrls.contains(article.getSourceUrl()))
+            .toList();
+
+        if (filteredArticles.isEmpty()) {
+            log.info("저장할 신규 기사가 없습니다.");
+            return;
         }
 
-        monewMetrics.getArticleCreatedCounter().increment(articles.size());
+        articleRepository.saveAll(filteredArticles);
+        monewMetrics.getArticleCreatedCounter().increment(filteredArticles.size());
 
-        List<ArticleDto> articleDtos = articles.stream()
+        List<ArticleDto> articleDtos = filteredArticles.stream()
             .map(articleMapper::toDto)
             .toList();
 
@@ -329,21 +337,18 @@ public class ArticleServiceImpl implements ArticleService {
             interestKeywordRepository.findAllByKeyword(keyword);
 
         for (InterestKeyword ik : interestKeywords) {
-            List<ArticleInterest> articleInterestList = new ArrayList<>();
-
-            for (Article article : articles) {
-                ArticleInterest articleInterest = ArticleInterest.builder()
+            List<ArticleInterest> articleInterestList = filteredArticles.stream()
+                .map(article -> ArticleInterest.builder()
                     .article(article)
                     .interest(ik.getInterest())
-                    .build();
-                articleInterestList.add(articleInterest);
-            }
+                    .build())
+                .toList();
 
             articleInterestRepository.saveAll(articleInterestList);
 
             monewMetrics.getInterestArticleMappedCounter(ik.getInterest().getId(),
                     ik.getInterest().getName())
-                .increment(articles.size());
+                .increment(filteredArticles.size());
 
             eventPublisher.publishEvent(
                 new NewArticleCollectEvent(

@@ -3,10 +3,10 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url:
+    url: ${DB_URL}
     driver-class-name: org.postgresql.Driver
-    username:
-    password:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:

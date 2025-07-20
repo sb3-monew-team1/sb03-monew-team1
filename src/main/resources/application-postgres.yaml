@@ -15,7 +15,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        default_schema: monew
     show-sql: true
     # OSIV 비활성화
     open-in-view: false

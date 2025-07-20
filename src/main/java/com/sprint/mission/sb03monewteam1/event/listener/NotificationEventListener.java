@@ -9,6 +9,7 @@ import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.event.NewsCollectJobCompletedEvent;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationSendException;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import java.util.List;
@@ -26,6 +27,7 @@ public class NotificationEventListener {
     private final NotificationService notificationService;
 
     private final SubscriptionRepository subscriptionRepository;
+    private final InterestRepository interestRepository;
 
     private final java.util.Map<java.util.UUID, Integer> articleCountMap = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Map<java.util.UUID, String> interestNameMap = new java.util.concurrent.ConcurrentHashMap<>();
@@ -72,11 +74,12 @@ public class NotificationEventListener {
             try {
                 log.info("구독 알림 전송 요청 - 관심사:{}, 구독자 수:{}, 기사 수:{}", interestName,
                     subscribers.size(), count);
+
+                Interest interest = interestRepository.findById(interestId)
+                    .orElseThrow(
+                        () -> new IllegalArgumentException("해당 관심사가 존재하지 않습니다: " + interestId));
+
                 subscribers.forEach(subscriber -> {
-                    Interest interest = Interest.builder()
-                        .name(interestName)
-                        .build();
-                    interest.setIdForTest(interestId);
                     notificationService.createNewArticleNotification(subscriber, interest, count);
                 });
                 log.info("구독 알림 전송 완료 - 관심사:{}, 구독자 수:{}", interestName, subscribers.size());

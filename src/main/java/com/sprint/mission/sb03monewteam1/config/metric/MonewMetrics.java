@@ -1,5 +1,7 @@
 package com.sprint.mission.sb03monewteam1.config.metric;
 
+import static java.util.Collections.unmodifiableMap;
+
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
@@ -31,13 +33,9 @@ public class MonewMetrics {
     @Getter
     private Counter interestCreatedCounter;
 
-    @Getter
     private final Map<UUID, Counter> interestArticleMappedCounters = new ConcurrentHashMap<>();
-    @Getter
     private final Map<UUID, Counter> articleViewedCounters = new ConcurrentHashMap<>();
-    @Getter
     private final Map<UUID, Counter> articleCommentedCounters = new ConcurrentHashMap<>();
-    @Getter
     private final Map<String, Timer> batchJobTimers = new ConcurrentHashMap<>();
 
     public MonewMetrics(MeterRegistry meterRegistry,
@@ -134,5 +132,21 @@ public class MonewMetrics {
 
     public MeterRegistry getMeterRegistry() {
         return meterRegistry;
+    }
+
+    public Map<UUID, Counter> getInterestArticleMappedCounters() {
+        return unmodifiableMap(interestArticleMappedCounters);
+    }
+
+    public Map<UUID, Counter> getArticleViewedCounters() {
+        return unmodifiableMap(articleViewedCounters);
+    }
+
+    public Map<UUID, Counter> getArticleCommentedCounters() {
+        return unmodifiableMap(articleCommentedCounters);
+    }
+
+    public Map<String, Timer> getBatchJobTimers() {
+        return unmodifiableMap(batchJobTimers);
     }
 }
