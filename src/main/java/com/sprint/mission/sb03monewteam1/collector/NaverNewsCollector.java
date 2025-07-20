@@ -4,11 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
-import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleParseException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import dev.failsafe.Failsafe;
+import dev.failsafe.RateLimiter;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +28,10 @@ public class NaverNewsCollector {
     private final WebClient naverApiWebClient;
     private final ObjectMapper objectMapper;
 
+    private final RateLimiter<Object> rateLimiter =
+        RateLimiter.smoothBuilder(10, Duration.ofSeconds(1))
+            .withMaxWaitTime(Duration.ofMillis(200)).build();
+
     @Value("${news.api.naver.client-id}")
     private String naverClientId;
 
@@ -38,42 +41,43 @@ public class NaverNewsCollector {
     @Value("${news.api.naver.source-name:NAVER}")
     private String sourceName;
 
-    public List<CollectedArticleDto> collect(Interest interest, String keyword) {
-        try {
-            String query = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
-            String response = naverApiWebClient
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                    .path("/v1/search/news.json")
-                    .queryParam("query", query)
-                    .queryParam("display", 10)
-                    .queryParam("start", 1)
-                    .queryParam("sim", "sim")
-                    .build())
-                .header("X-Naver-Client-Id", naverClientId)
-                .header("X-Naver-Client-Secret", naverClientSecret)
-                .retrieve()
-                .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(30))
-                .block();
-
+    public List<CollectedArticleDto> collect(String keyword) {
+        return Failsafe.with(rateLimiter).get(() -> {
             try {
-                return parseArticles(response);
-            } catch (JsonProcessingException e) {
-                throw new ArticleParseException(
-                    "Naver API 응답 파싱 실패: " + e.getMessage(),
+                String response = naverApiWebClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                        .path("/v1/search/news.json")
+                        .queryParam("query", keyword)
+                        .queryParam("display", 10)
+                        .queryParam("start", 1)
+                        .queryParam("sim", "sim")
+                        .build())
+                    .header("X-Naver-Client-Id", naverClientId)
+                    .header("X-Naver-Client-Secret", naverClientSecret)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(30))
+                    .block();
+
+                try {
+                    return parseArticles(response);
+                } catch (JsonProcessingException e) {
+                    throw new ArticleParseException(
+                        "Naver API 응답 파싱 실패: " + e.getMessage(),
+                        "NAVER",
+                        e
+                    );
+                }
+            } catch (Exception e) {
+                log.error("Naver API 수집 실패: {}", e.getMessage(), e);
+                throw new ArticleCollectException(
+                    "Naver API 수집 실패: " + e.getMessage(),
                     "NAVER",
                     e
                 );
             }
-        } catch (Exception e) {
-            log.error("Naver API 수집 실패: {}", e.getMessage(), e);
-            throw new ArticleCollectException(
-                "Naver API 수집 실패: " + e.getMessage(),
-                "NAVER",
-                e
-            );
-        }
+        });
     }
 
     private List<CollectedArticleDto> parseArticles(String json) throws Exception {

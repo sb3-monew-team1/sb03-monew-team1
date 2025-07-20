@@ -9,8 +9,10 @@ import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
 
     @Override
@@ -127,5 +130,21 @@ public class NotificationServiceImpl implements NotificationService {
         notification.markAsChecked();
 
         log.info("알림 개별 확인 완료: notificationId={}, userId={}", notificationId, requestUserId);
+    }
+
+    @Override
+    public void confirmAll(UUID userId) {
+
+        log.info("알림 전체 확인 시작: userId={}", userId);
+
+        if (!userRepository.existsByIdAndIsDeletedFalse(userId)) {
+            throw new UserNotFoundException(userId);
+        }
+
+        List<Notification> notifications = notificationRepository.findByUserIdAndIsCheckedFalse(userId);
+
+        notifications.forEach(Notification::markAsChecked);
+
+        log.info("알림 전체 확인 완료: userId={}, 확인된 알림 수={}", userId, notifications.size());
     }
 }

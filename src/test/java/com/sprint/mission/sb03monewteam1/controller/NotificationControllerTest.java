@@ -21,11 +21,13 @@ import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.sb03monewteam1.exception.notification.NotificationNotFoundException;
+import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -290,6 +292,36 @@ public class NotificationControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCode.FORBIDDEN_ACCESS.name()))
                 .andExpect(jsonPath("$.message").exists());
+        }
+
+        @Test
+        void 알림을_전체_확인하면_204가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID userId = UUID.randomUUID();
+
+            willDoNothing().given(notificationService).confirmAll(userId);
+
+            // when & Then
+            mockMvc.perform(patch("/api/notifications")
+                    .header("Monew-Request-User-ID", userId.toString()))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void 존재하지_않는_유저가_알림을_전체_확인하면_404가_반환되어야_한다() throws Exception {
+
+            // given
+            UUID invalidUserId = UUID.randomUUID();
+
+            willThrow(new UserNotFoundException(invalidUserId))
+                .given(notificationService)
+                .confirmAll(invalidUserId);
+
+            // when & then
+            mockMvc.perform(patch("/api/notifications")
+                    .header("Monew-Request-User-ID", invalidUserId.toString()))
+                .andExpect(status().isNotFound());
         }
     }
 }

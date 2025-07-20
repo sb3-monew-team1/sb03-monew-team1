@@ -9,21 +9,25 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
+import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
+import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
-import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -38,6 +42,8 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepositor
 import com.sprint.mission.sb03monewteam1.repository.jpa.articleView.ArticleViewRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
+import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -77,10 +83,16 @@ class ArticleServiceTest {
     private CommentLikeRepository commentLikeRepository;
 
     @Mock
+    private InterestKeywordRepository interestKeywordRepository;
+
+    @Mock
     private NaverNewsCollector naverNewsCollector;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private MonewMetrics monewMetrics;
 
     @InjectMocks
     private ArticleServiceImpl articleService;
@@ -393,8 +405,13 @@ class ArticleServiceTest {
     @Test
     void 네이버_뉴스_수집시_ArticleInterest_저장_확인() {
         // given
-        Interest interest = Interest.builder().name("IT").build();
+        Interest interest1 = Interest.builder().name("IT").build();
+        Interest interest2 = Interest.builder().name("SPORTS").build();
         String keyword = "테스트";
+        InterestKeyword ik1 = InterestKeyword.builder().interest(interest1).keyword(keyword)
+            .build();
+        InterestKeyword ik2 = InterestKeyword.builder().interest(interest2).keyword(keyword)
+            .build();
         CollectedArticleDto dto = CollectedArticleDto.builder()
             .source("네이버뉴스")
             .sourceUrl("http://test.com/1")
@@ -403,17 +420,24 @@ class ArticleServiceTest {
             .summary("요약")
             .build();
         List<CollectedArticleDto> collectedArticles = List.of(dto);
+        Article article = ArticleFixture.createArticle();
 
-        when(naverNewsCollector.collect(interest, keyword)).thenReturn(collectedArticles);
-        when(articleRepository.existsBySourceUrl(any())).thenReturn(false);
+        when(naverNewsCollector.collect(keyword)).thenReturn(collectedArticles);
+        when(articleMapper.toEntity(dto)).thenReturn(article);
+        when(articleRepository.findAllBySourceUrlIn(anyList())).thenReturn(List.of());
+        when(articleRepository.saveAll(anyList())).thenReturn(List.of(article));
+        when(interestKeywordRepository.findAllByKeyword(keyword)).thenReturn(List.of(ik1, ik2));
+        when(monewMetrics.getArticleCreatedCounter()).thenReturn(
+            mock(io.micrometer.core.instrument.Counter.class));
+        when(monewMetrics.getInterestArticleMappedCounter(any(), any())).thenReturn(
+            mock(Counter.class));
 
-        // when
-        articleService.collectAndSaveNaverArticles(interest, keyword);
+        List<Article> articles = articleService.collectNaverArticles(keyword);
+        articleService.saveArticles(articles, keyword);
 
         // then
         verify(articleRepository).saveAll(anyList());
-        verify(articleInterestRepository).saveAll(anyList());
-        verify(eventPublisher).publishEvent(any(NewArticleCollectEvent.class));
+        verify(articleInterestRepository, times(2)).saveAll(anyList());
     }
 
     @Test
@@ -472,5 +496,30 @@ class ArticleServiceTest {
             .isInstanceOf(ArticleNotFoundException.class);
 
         verify(articleRepository).findById(articleId);
+    }
+
+    @Test
+    void 기사_중복_저장_실패_이미_존재하는_기사() {
+        // given
+        String keyword = "테스트";
+        CollectedArticleDto dto = CollectedArticleDto.builder()
+            .source("네이버뉴스")
+            .sourceUrl("http://test.com/1")
+            .title("테스트 기사")
+            .publishDate(Instant.now())
+            .summary("요약")
+            .build();
+        when(naverNewsCollector.collect(keyword)).thenReturn(List.of(dto));
+        when(articleRepository.findAllBySourceUrlIn(anyList())).thenReturn(
+            List.of(dto.sourceUrl()));
+
+        // when
+        List<Article> articles = articleService.collectNaverArticles(keyword);
+
+        // then
+        assertThat(articles).isEmpty();
+        verify(articleRepository).findAllBySourceUrlIn(anyList());
+        verify(articleRepository, never()).saveAll(anyList());
+        verify(articleInterestRepository, never()).save(any(ArticleInterest.class));
     }
 }
