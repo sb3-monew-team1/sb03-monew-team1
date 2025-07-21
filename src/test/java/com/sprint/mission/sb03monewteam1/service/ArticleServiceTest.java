@@ -228,8 +228,6 @@ class ArticleServiceTest {
             eq(publishDateToInstant),
             eq(after), eq(limit + 1), eq(false)))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
-            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
@@ -268,8 +266,6 @@ class ArticleServiceTest {
         when(articleRepository.findArticlesWithCursorByViewCount(
             any(), any(), any(), any(), anyLong(), any(Instant.class), anyInt(), anyBoolean()))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
-            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
@@ -305,7 +301,7 @@ class ArticleServiceTest {
             isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1),
             eq(false)))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
+        when(articleMapper.toDto(any(Article.class), anyBoolean()))
             .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
@@ -332,7 +328,7 @@ class ArticleServiceTest {
         when(articleRepository.findArticlesWithCursorByDate(
             isNull(), isNull(), isNull(), isNull(), isNull(), eq(3), eq(false)))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
+        when(articleMapper.toDto(any(Article.class), anyBoolean()))
             .thenReturn(ArticleDto.builder().id(UUID.randomUUID()).title("제목").build());
 
         // when
