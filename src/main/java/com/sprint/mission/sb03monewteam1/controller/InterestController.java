@@ -4,6 +4,7 @@ import com.sprint.mission.sb03monewteam1.controller.api.InterestApi;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 import jakarta.validation.Valid;
@@ -25,8 +26,8 @@ public class InterestController implements InterestApi {
     @Override
     @PostMapping
     public ResponseEntity<InterestDto> create(
-        @Valid @RequestBody InterestRegisterRequest request
-    ) {
+        @RequestBody @Valid InterestRegisterRequest request) {
+
         log.info("관심사 등록 요청: {}", request);
 
         InterestDto response = interestService.create(request);
@@ -42,10 +43,10 @@ public class InterestController implements InterestApi {
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
         @RequestParam(defaultValue = "subscriberCount") String orderBy,
-        @RequestParam(defaultValue = "DESC") String direction)
-    {
+        @RequestParam(defaultValue = "DESC") String direction) {
 
-        log.info("관심사 조회 요청: userId: {}. keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
+        log.info(
+            "관심사 조회 요청: userId: {}. keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
             userId, keyword, cursor, limit, orderBy, direction);
 
         CursorPageResponse<InterestDto> response = interestService.getInterests(
@@ -70,6 +71,22 @@ public class InterestController implements InterestApi {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(subscriptionDto);
     }
+
+    @PatchMapping("/{interestId}")
+    public ResponseEntity<InterestDto> updateInterestKeywords(
+        @PathVariable UUID interestId,
+        @RequestBody @Valid InterestUpdateRequest request,
+        @RequestHeader("Monew-Request-User-ID") UUID userId) {
+
+        log.info("관심사 수정 요청: interestId={}, request={}", interestId, request);
+
+        InterestDto updatedInterestDto = interestService.updateInterestKeywords(interestId, request, userId);
+
+        log.info("관심사 수정 완료: response={}", updatedInterestDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(updatedInterestDto);
+    }
+
 
     @DeleteMapping("/{interestId}")
     public ResponseEntity<Void> deleteInterest(@PathVariable UUID interestId) {

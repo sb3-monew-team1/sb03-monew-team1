@@ -3,10 +3,12 @@ package com.sprint.mission.sb03monewteam1.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
@@ -198,7 +200,6 @@ class InterestIntegrationTest {
             interestRepository.saveAll(List.of(interest1, interest2, interest3, interest4));
             interestKeywordRepository.saveAll(List.of(keyword1, keyword2, keyword3, keyword4));
 
-
             testUser = User.builder()
                 .nickname("testUser")
                 .email("testuser@example.com")
@@ -376,6 +377,69 @@ class InterestIntegrationTest {
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
         }
     }
+
+    @Nested
+    @DisplayName("관심사 수정 테스트")
+    class InterestUpdateTests {
+
+        private Interest testInterest;
+        private User testUser;
+
+        @BeforeEach
+        void setUp() {
+            testInterest = InterestFixture.createInterest();
+            interestRepository.save(testInterest);
+
+            testUser = UserFixture.createUser();
+            userRepository.save(testUser);
+        }
+
+        @Test
+        void 관심사를_수정하면_수정된_관심사_DTO를_반환한다() throws Exception {
+            // Given
+            List<String> updatedKeywords = List.of("newKeyword");
+            InterestUpdateRequest updateRequest = InterestUpdateRequest.builder()
+                .keywords(updatedKeywords)
+                .build();
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", testInterest.getId())
+                    .header("Monew-Request-User-ID", testUser.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(testInterest.getName()))
+                .andExpect(jsonPath("$.keywords").isArray())
+                .andExpect(jsonPath("$.keywords.length()").value(updatedKeywords.size()))
+                .andExpect(jsonPath("$.keywords[0]").value(updatedKeywords.get(0)));
+
+            Interest updatedInterest = interestRepository.findById(testInterest.getId())
+                .orElseThrow();
+            assertThat(updatedInterest.getKeywords().size()).isEqualTo(updatedKeywords.size());
+            assertThat(updatedInterest.getKeywords().get(0).getKeyword()).isEqualTo(
+                updatedKeywords.get(0));
+        }
+
+
+        @Test
+        void 존재하지_않는_관심사를_수정하려고_하면_404를_반환한다() throws Exception {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            InterestUpdateRequest updateRequest = InterestUpdateRequest.builder()
+                .keywords(List.of("newKeyword"))
+                .build();
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", nonExistentInterestId)
+                    .header("Monew-Request-User-ID", testUser.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+        }
+    }
+
 
     @Nested
     @DisplayName("관심사 삭제 테스트")

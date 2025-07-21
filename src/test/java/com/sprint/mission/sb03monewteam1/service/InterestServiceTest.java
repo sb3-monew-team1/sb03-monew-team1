@@ -14,7 +14,9 @@ import static org.mockito.Mockito.when;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
@@ -33,6 +35,7 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeyword
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -354,6 +357,86 @@ class InterestServiceTest {
             // When & Then
             InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
                 interestService.createSubscription(user.getId(), nonExistentInterestId);
+            });
+
+            assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
+
+            verify(interestRepository).findById(nonExistentInterestId);
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 키워드 수정 테스트")
+    class InterestUpdateKeywordsTests {
+
+        @Test
+        void 관심사_키워드를_수정하면_수정된_관심사_응답_DTO를_반환한다() {
+            // Given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> newKeywords = Arrays.asList("keyword1", "keyword2");
+
+            Interest existingInterest = Interest.builder()
+                .name("Interest 1")
+                .subscriberCount(10L)
+                .build();
+            existingInterest.setKeywords(new ArrayList<>());
+
+            Interest updatedInterest = Interest.builder()
+                .name("Interest 1")
+                .subscriberCount(10L)
+                .build();
+            updatedInterest.setKeywords(Arrays.asList(
+                InterestKeyword.builder().keyword("keyword1").interest(updatedInterest).build(),
+                InterestKeyword.builder().keyword("keyword2").interest(updatedInterest).build()
+            ));
+
+            InterestDto expectedResponse = InterestDto.builder()
+                .id(interestId)
+                .name("Interest 1")
+                .keywords(Arrays.asList("keyword1", "keyword2"))
+                .subscribedByMe(true) // 예시로 구독된 상태로 설정
+                .build();
+
+            InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
+
+            given(interestRepository.findById(interestId)).willReturn(Optional.of(existingInterest));
+            given(subscriptionRepository.existsByUserIdAndInterestId(userId, interestId)).willReturn(true);
+            given(interestRepository.save(existingInterest)).willReturn(updatedInterest);
+            given(interestMapper.toDto(updatedInterest, true)).willReturn(expectedResponse);
+
+            // When
+            InterestDto result = interestService.updateInterestKeywords(interestId, request, userId);
+
+            // Then
+            assertThat(result)
+                .isNotNull()
+                .extracting(InterestDto::name)
+                .isEqualTo(expectedResponse.name());
+            assertThat(result.keywords()).containsExactly("keyword1", "keyword2");
+            assertThat(result.subscribedByMe()).isTrue();
+
+            verify(interestRepository).findById(interestId);
+            verify(interestRepository).save(existingInterest);
+            verify(interestMapper).toDto(updatedInterest, true);
+        }
+
+
+
+        @Test
+        void 존재하지_않는_관심사를_수정하려_하면_InterestNotFoundException이_발생한다() {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> newKeywords = Arrays.asList("keyword1", "keyword2");
+
+            InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
+
+            given(interestRepository.findById(nonExistentInterestId)).willReturn(Optional.empty());
+
+            // When & Then
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
+                interestService.updateInterestKeywords(nonExistentInterestId, request, userId);
             });
 
             assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
