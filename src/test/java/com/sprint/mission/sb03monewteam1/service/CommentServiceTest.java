@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.verify;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
@@ -17,6 +18,10 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
@@ -30,6 +35,8 @@ import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
+import com.sprint.mission.sb03monewteam1.mapper.CommentActivityMapper;
+import com.sprint.mission.sb03monewteam1.mapper.CommentLikeActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
@@ -78,11 +85,17 @@ public class CommentServiceTest {
     @Mock
     private CommentLikeMapper commentLikeMapper;
 
-    @InjectMocks
-    private CommentServiceImpl commentService;
+    @Mock
+    private CommentActivityMapper commentActivityMapper;
+
+    @Mock
+    private CommentLikeActivityMapper commentLikeActivityMapper;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @InjectMocks
+    private CommentServiceImpl commentService;
 
     @BeforeEach
     void setUp() {
@@ -126,6 +139,7 @@ public class CommentServiceTest {
             assertThat(result.likeCount()).isEqualTo(expectedCommentDto.likeCount());
             assertThat(result.likedByMe()).isEqualTo(expectedCommentDto.likedByMe());
             assertThat(result.createdAt()).isEqualTo(expectedCommentDto.createdAt());
+            verify(eventPublisher).publishEvent(any(CommentActivityCreateEvent.class));
         }
 
         @Test
@@ -852,6 +866,7 @@ public class CommentServiceTest {
             // then
             assertThat(result).isEqualTo(expectedCommentLikeDto);
             assertThat(comment.getLikeCount()).isEqualTo(1L);
+            verify(eventPublisher).publishEvent(any(CommentLikeActivityCreateEvent.class));
         }
 
         @Test
@@ -954,6 +969,7 @@ public class CommentServiceTest {
             then(commentRepository).should().findByIdAndIsDeletedFalse(commentId);
             then(commentLikeRepository).should().findByUserIdAndCommentId(userId, commentId);
             then(commentLikeRepository).should().deleteById(commentLikeId);
+            verify(eventPublisher).publishEvent(any(CommentLikeActivityDeleteEvent.class));
         }
 
         @Test

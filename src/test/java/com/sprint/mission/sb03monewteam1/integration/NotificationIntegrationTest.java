@@ -155,7 +155,7 @@ public class NotificationIntegrationTest {
                 .untilAsserted(() -> {
                     Notification notification = notificationRepository.findAll().get(0);
                     assertThat(notification.getUser().getId()).isEqualTo(author.getId());
-                    assertThat(notification.getResourceType()).isEqualTo(ResourceType.comment);
+                    assertThat(notification.getResourceType()).isEqualTo(ResourceType.COMMENT);
                     assertThat(notification.getResourceId()).isEqualTo(comment.getId());
                     assertThat(notification.getContent()).contains(liker.getNickname());
                 });
@@ -220,7 +220,7 @@ public class NotificationIntegrationTest {
                     List<Notification> notifications = notificationRepository.findAll();
                     assertThat(notifications.size()).isEqualTo(3);
                     assertThat(notifications.get(0).getResourceType()).isEqualTo(
-                        ResourceType.interest);
+                        ResourceType.INTEREST);
                     assertThat(notifications.get(0).getUser().getId()).isEqualTo(user1.getId());
                 });
 

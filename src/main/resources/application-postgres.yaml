@@ -23,6 +23,10 @@ spring:
     jdbc:
       initialize-schema: always
 
+  data:
+    mongodb:
+      uri: mongodb://mongo_root_user:mongo_root_password@mongo:27017/monew_mongo
+
 logging:
   level:
     root: info
