@@ -50,11 +50,12 @@ public class ArticleController implements ArticleApi {
         @RequestParam(required = false) String direction,
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false) Instant after,
-        @RequestParam(defaultValue = "10") int limit) {
+        @RequestParam(defaultValue = "10") int limit,
+        @RequestHeader(value = "Monew-Request-User-ID", required = false) UUID userId) {
 
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
             keyword, sourceIn, interests, publishDateFrom, publishDateTo,
-            orderBy, direction, cursor, after, limit);
+            orderBy, direction, cursor, after, limit, userId);
 
         return ResponseEntity.ok(result);
     }
