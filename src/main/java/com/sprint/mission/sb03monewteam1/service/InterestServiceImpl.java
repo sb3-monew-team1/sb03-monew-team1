@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,8 +46,11 @@ public class InterestServiceImpl implements InterestService {
     private final SubscriptionRepository subscriptionRepository;
     private final InterestKeywordRepository interestKeywordRepository;
     private final UserRepository userRepository;
+
     private final InterestMapper interestMapper;
     private final SubscriptionMapper subscriptionMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public InterestDto create(InterestRegisterRequest request) {
@@ -171,6 +176,10 @@ public class InterestServiceImpl implements InterestService {
 
         log.info("구독 생성 완료: subscriptionId={}, userId={}, interestId={}",
             savedSubscription.getId(), user.getId(), interest.getId());
+
+        SubscriptionDto eventDto = subscriptionMapper.toDto(savedSubscription);
+        eventPublisher.publishEvent(new SubscriptionActivityCreateEvent(userId, eventDto));
+        log.debug("구독 활동 내역 이벤트 발행 완료: {}", eventDto);
 
         return subscriptionMapper.toDto(savedSubscription);
     }
