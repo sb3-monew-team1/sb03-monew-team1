@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-@Document(collection = "comment_activities")
 public interface CommentActivityRepository extends MongoRepository<CommentActivity, UUID> {
 
     @Aggregation(pipeline = {

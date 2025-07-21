@@ -59,7 +59,7 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDeleteEvent(SubscriptionActivityDeleteEvent event) {
-        log.debug("SubscriptionActivityDeleteEven 리스너 실행: {}", event);
+        log.debug("SubscriptionActivityDeleteEvent 리스너 실행: {}", event);
         deleteUserActivity(event.userId(), event.interestId());
     }
 }
