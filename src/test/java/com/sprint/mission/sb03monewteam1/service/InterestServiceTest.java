@@ -26,6 +26,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
+import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
@@ -537,7 +538,7 @@ class InterestServiceTest {
         }
 
         @Test
-        void 존재하지_않는_관심사이면_예외가_발생한다() {
+        void 존재하지_않는_관심사를_구독취소하면_예외가_발생한다() {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
@@ -556,6 +557,35 @@ class InterestServiceTest {
 
             verify(interestRepository).findById(nonExistentInterestId);
             verifyNoMoreInteractions(subscriptionRepository, userRepository);
+        }
+
+        @Test
+        void 구독정보가_존재하지_않으면_예외가_발생한다() {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
+
+            Interest interest = InterestFixture.createInterest();
+            User user = UserFixture.createUser();
+
+            when(interestRepository.findById(interestId)).thenReturn(Optional.of(interest));
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            when(subscriptionRepository.findByUserIdAndInterestId(userId, interestId)).thenReturn(
+                Optional.empty());
+
+            // When & Then
+            SubscriptionNotFoundException exception = assertThrows(
+                SubscriptionNotFoundException.class,
+                () -> interestService.deleteSubscription(userId, interestId)
+            );
+
+            assertThat(exception)
+                .hasMessageContaining("구독 정보를 찾을 수 없습니다");
+
+            verify(interestRepository).findById(interestId);
+            verify(userRepository).findById(userId);
+            verify(subscriptionRepository).findByUserIdAndInterestId(userId, interestId);
+            verifyNoMoreInteractions(subscriptionRepository);
         }
     }
 }
