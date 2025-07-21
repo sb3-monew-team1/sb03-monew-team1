@@ -18,7 +18,7 @@ public class NotificationCleanupScheduler {
     private final JobLauncher jobLauncher;
     private final Job deleteOldNotificationsJob;
 
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "0 15 0 * * *")
     public void runNotificationCleanupBatch() {
         log.info("스케줄러: 알림 삭제 배치 잡 실행 요청");
         try {
