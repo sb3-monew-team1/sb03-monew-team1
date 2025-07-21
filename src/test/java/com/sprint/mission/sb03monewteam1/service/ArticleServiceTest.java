@@ -29,7 +29,6 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
-import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -40,11 +39,11 @@ import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.articleView.ArticleViewRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
@@ -235,7 +234,7 @@ class ArticleServiceTest {
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
             keyword, sourceIn, interests, publishDateFrom, publishDateTo,
-            orderBy, direction, cursor, after, limit);
+            orderBy, direction, cursor, after, limit, null);
 
         // then
         assertThat(result).isNotNull();
@@ -274,7 +273,7 @@ class ArticleServiceTest {
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, cursor, after, limit);
+            null, null, null, null, null, orderBy, direction, cursor, after, limit, null);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -311,7 +310,7 @@ class ArticleServiceTest {
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, cursor, after, limit);
+            null, null, null, null, null, orderBy, direction, cursor, after, limit, null);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -338,7 +337,7 @@ class ArticleServiceTest {
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, "publishDate", "DESC", null, null, 2);
+            null, null, null, null, null, "publishDate", "DESC", null, null, 2, null);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -374,7 +373,7 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit, null))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
@@ -389,7 +388,7 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit, null))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
@@ -404,7 +403,7 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit, null))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_DATE.getMessage(), invalidCursor);
     }

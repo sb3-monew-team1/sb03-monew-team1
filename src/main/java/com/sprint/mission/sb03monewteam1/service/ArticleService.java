@@ -22,7 +22,8 @@ public interface ArticleService {
         String direction,
         String cursor,
         Instant after,
-        int limit);
+        int limit,
+        UUID userId);
 
     List<String> getSources();
 
