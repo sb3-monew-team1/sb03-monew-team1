@@ -4,6 +4,7 @@ import com.sprint.mission.sb03monewteam1.controller.api.InterestApi;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.service.InterestService;
 import jakarta.validation.Valid;
@@ -42,10 +43,10 @@ public class InterestController implements InterestApi {
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
         @RequestParam(defaultValue = "subscriberCount") String orderBy,
-        @RequestParam(defaultValue = "DESC") String direction)
-    {
+        @RequestParam(defaultValue = "DESC") String direction) {
 
-        log.info("관심사 조회 요청: userId: {}. keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
+        log.info(
+            "관심사 조회 요청: userId: {}. keyword: {}, cursor: {}, limit: {}, orderBy: {}, direction: {}",
             userId, keyword, cursor, limit, orderBy, direction);
 
         CursorPageResponse<InterestDto> response = interestService.getInterests(
@@ -70,6 +71,17 @@ public class InterestController implements InterestApi {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(subscriptionDto);
     }
+
+    @PatchMapping("/{interestId}")
+    public ResponseEntity<InterestDto> updateInterestKeywords(
+        @PathVariable UUID interestId,
+        @RequestBody InterestUpdateRequest request,
+        @RequestHeader("Monew-Request-User-ID") UUID userId) {
+
+        InterestDto updatedInterestDto = interestService.updateInterestKeywords(interestId, request, userId);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedInterestDto);
+    }
+
 
     @DeleteMapping("/{interestId}")
     public ResponseEntity<Void> deleteInterest(@PathVariable UUID interestId) {
