@@ -188,6 +188,8 @@ public class InterestServiceImpl implements InterestService {
 
     @Override
     public InterestDto updateInterestKeywords(UUID interestId, InterestUpdateRequest request, UUID userId) {
+        log.info("관심사 수정 요청: userId={}, interestId={}, request={}", userId, interestId, request);
+
         Interest interest = interestRepository.findById(interestId)
             .orElseThrow(() -> new InterestNotFoundException(interestId));
 
@@ -207,7 +209,11 @@ public class InterestServiceImpl implements InterestService {
 
         Interest updatedInterest = interestRepository.save(interest);
 
-        return interestMapper.toDto(updatedInterest, subscribedByMe);
+        InterestDto updatedInterestDto = interestMapper.toDto(updatedInterest, subscribedByMe);
+
+        log.info("관심사 수정 완료: response={}", updatedInterestDto);
+
+        return updatedInterestDto;
     }
 
 

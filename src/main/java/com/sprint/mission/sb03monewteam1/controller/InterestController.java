@@ -26,8 +26,8 @@ public class InterestController implements InterestApi {
     @Override
     @PostMapping
     public ResponseEntity<InterestDto> create(
-        @Valid @RequestBody InterestRegisterRequest request
-    ) {
+        @RequestBody @Valid InterestRegisterRequest request) {
+
         log.info("관심사 등록 요청: {}", request);
 
         InterestDto response = interestService.create(request);
@@ -75,10 +75,15 @@ public class InterestController implements InterestApi {
     @PatchMapping("/{interestId}")
     public ResponseEntity<InterestDto> updateInterestKeywords(
         @PathVariable UUID interestId,
-        @RequestBody InterestUpdateRequest request,
+        @RequestBody @Valid InterestUpdateRequest request,
         @RequestHeader("Monew-Request-User-ID") UUID userId) {
 
+        log.info("관심사 수정 요청: interestId={}, request={}", interestId, request);
+
         InterestDto updatedInterestDto = interestService.updateInterestKeywords(interestId, request, userId);
+
+        log.info("관심사 수정 완료: response={}", updatedInterestDto);
+
         return ResponseEntity.status(HttpStatus.OK).body(updatedInterestDto);
     }
 
