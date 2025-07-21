@@ -200,7 +200,6 @@ class InterestIntegrationTest {
             interestRepository.saveAll(List.of(interest1, interest2, interest3, interest4));
             interestKeywordRepository.saveAll(List.of(keyword1, keyword2, keyword3, keyword4));
 
-
             testUser = User.builder()
                 .nickname("testUser")
                 .email("testuser@example.com")
@@ -414,9 +413,11 @@ class InterestIntegrationTest {
                 .andExpect(jsonPath("$.keywords.length()").value(updatedKeywords.size()))
                 .andExpect(jsonPath("$.keywords[0]").value(updatedKeywords.get(0)));
 
-            Interest updatedInterest = interestRepository.findById(testInterest.getId()).orElseThrow();
+            Interest updatedInterest = interestRepository.findById(testInterest.getId())
+                .orElseThrow();
             assertThat(updatedInterest.getKeywords().size()).isEqualTo(updatedKeywords.size());
-            assertThat(updatedInterest.getKeywords().get(0).getKeyword()).isEqualTo(updatedKeywords.get(0));
+            assertThat(updatedInterest.getKeywords().get(0).getKeyword()).isEqualTo(
+                updatedKeywords.get(0));
         }
 
 

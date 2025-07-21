@@ -177,7 +177,7 @@ class InterestControllerTest {
             );
 
             given(interestService.getInterests(
-                any(UUID.class),anyString(), anyString(), anyInt(), anyString(), anyString()))
+                any(UUID.class), anyString(), anyString(), anyInt(), anyString(), anyString()))
                 .willReturn(responseDto);
 
             // When & Then
@@ -257,7 +257,8 @@ class InterestControllerTest {
                 .build();
 
             given(interestService.getInterests(
-                any(UUID.class), anyString(), anyString(), eq(10), eq("subscriberCount"), eq("desc")))
+                any(UUID.class), anyString(), anyString(), eq(10), eq("subscriberCount"),
+                eq("desc")))
                 .willReturn(responseDto);
 
             // When & Then
@@ -328,7 +329,8 @@ class InterestControllerTest {
             String keyword = "soccer";
             int limit = 10;
 
-            given(interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
+            given(
+                interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
                 .willThrow(new InvalidCursorException("잘못된 커서 형식입니다."));
 
             // When & Then
@@ -352,7 +354,8 @@ class InterestControllerTest {
             String keyword = "soccer";
             int limit = 10;
 
-            given(interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
+            given(
+                interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
                 .willThrow(new InvalidSortOptionException("지원하지 않는 정렬 필드입니다."));
 
             // When & Then
@@ -388,7 +391,8 @@ class InterestControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-            given(interestService.createSubscription(userId, interestId)).willReturn(subscriptionDto);
+            given(interestService.createSubscription(userId, interestId)).willReturn(
+                subscriptionDto);
 
             // When & Then
             mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId)
@@ -471,7 +475,8 @@ class InterestControllerTest {
 
             InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
 
-            given(interestService.updateInterestKeywords(eq(nonExistentInterestId), eq(request), eq(userId)))
+            given(interestService.updateInterestKeywords(eq(nonExistentInterestId), eq(request),
+                eq(userId)))
                 .willThrow(new InterestNotFoundException(nonExistentInterestId));
 
             // When & Then
@@ -483,7 +488,8 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
 
-            verify(interestService).updateInterestKeywords(eq(nonExistentInterestId), eq(request), eq(userId));
+            verify(interestService).updateInterestKeywords(eq(nonExistentInterestId), eq(request),
+                eq(userId));
         }
 
         @Test
@@ -531,7 +537,8 @@ class InterestControllerTest {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
 
-            doThrow(new InterestNotFoundException(nonExistentInterestId)).when(interestService).deleteInterest(nonExistentInterestId);
+            doThrow(new InterestNotFoundException(nonExistentInterestId)).when(interestService)
+                .deleteInterest(nonExistentInterestId);
 
             // When & Then
             mockMvc.perform(delete("/api/interests/{interestId}", nonExistentInterestId)
