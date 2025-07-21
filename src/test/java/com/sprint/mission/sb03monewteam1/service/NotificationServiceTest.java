@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -378,13 +377,13 @@ public class NotificationServiceTest {
             }
 
             given(userRepository.existsByIdAndIsDeletedFalse(userId)).willReturn(true);
-            given(notificationRepository.findByUserIdAndIsCheckedFalse(userId)).willReturn(notifications);
+            given(notificationRepository.markAllAsCheckedByUserId(userId)).willReturn(5);
 
             // when
             notificationService.confirmAll(userId);
 
             // then
-            assertThat(notifications).allMatch(Notification::isChecked);
+            then(notificationRepository).should().markAllAsCheckedByUserId(userId);
         }
 
         @Test
@@ -394,7 +393,7 @@ public class NotificationServiceTest {
             UUID userId = UUID.randomUUID();
 
             given(userRepository.existsByIdAndIsDeletedFalse(userId)).willReturn(true);
-            given(notificationRepository.findByUserIdAndIsCheckedFalse(userId)).willReturn(List.of());
+            given(notificationRepository.markAllAsCheckedByUserId(userId)).willReturn(0);
 
             // when & then
             assertThatCode(() -> notificationService.confirmAll(userId))
