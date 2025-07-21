@@ -14,6 +14,7 @@ import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +77,7 @@ public class NotificationServiceImpl implements NotificationService {
         Instant after,
         int limit
     ) {
+        log.info("알림 목록 조회 요청 - userId:{}, cursor:{}, limit:{}", userId, cursor, limit);
         List<Notification> notifications = notificationRepository
             .findUncheckedNotificationsWithCursor(
                 userId,
@@ -103,6 +105,8 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         Long totalElements = notificationRepository.countByUserIdAndIsCheckedFalse(userId);
+
+        log.info("알림 목록 조회 완료 - userId:{}, cursor:{}, limit:{}", userId, cursor, limit);
 
         return CursorPageResponse.<NotificationDto>builder()
             .content(contents)
@@ -144,5 +148,13 @@ public class NotificationServiceImpl implements NotificationService {
         int updatedCount = notificationRepository.markAllAsCheckedByUserId(userId);
 
         log.info("알림 전체 확인 완료: userId={}, 확인된 알림 수={}", userId, updatedCount);
+    }
+
+    @Override
+    public void deleteOldCheckedNotifications() {
+        log.info("자동 확인 알림 삭제 요청");
+        Instant threshold = Instant.now().minus(7, ChronoUnit.DAYS);
+        int deleted = notificationRepository.deleteCheckedNotificationsBefore(threshold);
+        log.info("자동 확인 알림 삭제 완료 - 삭제된 알림 갯수: {}", deleted);
     }
 }

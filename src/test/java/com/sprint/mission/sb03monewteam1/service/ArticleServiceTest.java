@@ -28,6 +28,8 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -36,6 +38,7 @@ import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
+import com.sprint.mission.sb03monewteam1.mapper.ArticleViewActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
@@ -72,6 +75,9 @@ class ArticleServiceTest {
 
     @Mock
     private ArticleViewMapper articleViewMapper;
+
+    @Mock
+    private ArticleViewActivityMapper articleViewActivityMapper;
 
     @Mock
     private ArticleInterestRepository articleInterestRepository;
@@ -134,6 +140,7 @@ class ArticleServiceTest {
         verify(articleRepository).incrementViewCount(articleId);
         verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
         verify(articleViewRepository).save(any(ArticleView.class));
+        verify(eventPublisher).publishEvent(any(ArticleViewActivityCreateEvent.class));
     }
 
     @Test

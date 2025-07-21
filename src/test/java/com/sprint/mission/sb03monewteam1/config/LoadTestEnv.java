@@ -6,6 +6,6 @@ import java.lang.annotation.RetentionPolicy;
 import org.springframework.test.context.ContextConfiguration;
 
 @Retention(RetentionPolicy.RUNTIME)
-@ContextConfiguration(initializers = EnvInitializer.class)
+@ContextConfiguration(initializers = {EnvInitializer.class, MongoContainerInitializer.class})
 public @interface LoadTestEnv {
 }

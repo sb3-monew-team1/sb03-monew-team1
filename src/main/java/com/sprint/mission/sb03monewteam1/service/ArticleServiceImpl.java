@@ -4,6 +4,7 @@ import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleViewActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -11,12 +12,15 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.Interest;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
+import com.sprint.mission.sb03monewteam1.mapper.ArticleViewActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
@@ -53,6 +57,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
     private final ArticleViewMapper articleViewMapper;
+    private final ArticleViewActivityMapper articleViewActivityMapper;
 
     private final NaverNewsCollector naverNewsCollector;
     private final HankyungNewsCollector hankyungNewsCollector;
@@ -80,6 +85,10 @@ public class ArticleServiceImpl implements ArticleService {
 
         ArticleView articleView = ArticleView.createArticleView(userId, article);
         ArticleView savedArticleView = articleViewRepository.save(articleView);
+
+        ArticleViewActivityDto event = articleViewActivityMapper.toDto(savedArticleView);
+        eventPublisher.publishEvent(new ArticleViewActivityCreateEvent(userId, event));
+        log.debug("기사 뷰 활동 내역 이벤트 발행 완료: {}", event);
 
         ArticleViewDto result = articleViewMapper.toDto(savedArticleView);
         log.info("기사 뷰 등록 완료 - id: {}", result.id());
