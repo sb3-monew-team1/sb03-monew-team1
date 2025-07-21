@@ -17,7 +17,8 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Transactional(readOnly = false)
     @Query("""
         UPDATE Notification n
-          SET n.isChecked = true
+          SET n.isChecked = true,
+                n.updatedAt = CURRENT_TIMESTAMP
         WHERE n.user.id = :userId
           AND n.isChecked = false
       """)
