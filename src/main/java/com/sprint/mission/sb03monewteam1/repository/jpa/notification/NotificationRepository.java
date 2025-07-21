@@ -2,7 +2,6 @@ package com.sprint.mission.sb03monewteam1.repository.jpa.notification;
 
 import com.sprint.mission.sb03monewteam1.entity.Notification;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,10 +13,19 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     long countByUserIdAndIsCheckedFalse(UUID userId);
 
-    List<Notification> findByUserIdAndIsCheckedFalse(UUID userId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = """
+        UPDATE notifications
+           SET is_checked = true,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = :userId
+           AND is_checked = false
+    """, nativeQuery = true)
+    int markAllAsCheckedByUserId(@Param("userId") UUID userId);
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM Notification n WHERE n.isChecked = true AND n.createdAt < :threshold")
+    @Query("DELETE FROM Notification n WHERE n.isChecked = true AND n.updatedAt < :threshold")
     int deleteCheckedNotificationsBefore(@Param("threshold") Instant threshold);
 }
