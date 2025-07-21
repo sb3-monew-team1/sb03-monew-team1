@@ -13,8 +13,8 @@ import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
-import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -345,24 +345,29 @@ public class ArticleServiceImpl implements ArticleService {
         List<InterestKeyword> interestKeywords =
             interestKeywordRepository.findAllByKeyword(keyword);
 
-        for (InterestKeyword ik : interestKeywords) {
+        List<Interest> interests = interestKeywords.stream()
+            .map(InterestKeyword::getInterest)
+            .distinct()
+            .toList();
+
+        for (Interest interest : interests) {
             List<ArticleInterest> articleInterestList = filteredArticles.stream()
                 .map(article -> ArticleInterest.builder()
                     .article(article)
-                    .interest(ik.getInterest())
+                    .interest(interest)
                     .build())
                 .toList();
 
             articleInterestRepository.saveAll(articleInterestList);
 
-            monewMetrics.getInterestArticleMappedCounter(ik.getInterest().getId(),
-                    ik.getInterest().getName())
+            monewMetrics.getInterestArticleMappedCounter(interest.getId(),
+                    interest.getName())
                 .increment(filteredArticles.size());
 
             eventPublisher.publishEvent(
                 new NewArticleCollectEvent(
-                    ik.getInterest().getId(),
-                    ik.getInterest().getName(),
+                    interest.getId(),
+                    interest.getName(),
                     articleDtos));
         }
     }
