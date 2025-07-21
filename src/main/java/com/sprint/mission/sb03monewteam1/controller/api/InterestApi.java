@@ -65,7 +65,8 @@ public interface InterestApi {
             )
         )
     })
-    ResponseEntity<InterestDto> create(InterestRegisterRequest interestRegisterRequest);
+    ResponseEntity<InterestDto> createInterest(
+        InterestRegisterRequest interestRegisterRequest);
 
     @Operation(summary = "관심사 목록 조회", description = "사용자가 관심사 목록을 조회합니다.")
     @ApiResponses({
@@ -100,8 +101,7 @@ public interface InterestApi {
         @RequestParam(defaultValue = "") String cursor,
         @RequestParam(defaultValue = "10") int limit,
         @RequestParam(defaultValue = "subscriberCount") String orderBy,
-        @RequestParam(defaultValue = "DESC") String direction
-    );
+        @RequestParam(defaultValue = "DESC") String direction);
 
     @Operation(summary = "관심사 구독", description = "사용자가 특정 관심사를 구독합니다.")
     @ApiResponses({
@@ -132,8 +132,7 @@ public interface InterestApi {
     })
     ResponseEntity<SubscriptionDto> createSubscription(
         @PathVariable UUID interestId,
-        @RequestHeader("Monew-Request-User-ID") UUID userId
-    );
+        @RequestHeader("Monew-Request-User-ID") UUID userId);
 
     @Operation(summary = "관심사 수정", description = "사용자가 관심사를 수정합니다.")
     @ApiResponses({
@@ -173,8 +172,7 @@ public interface InterestApi {
     ResponseEntity<InterestDto> updateInterestKeywords(
         @PathVariable UUID interestId,
         @RequestBody InterestUpdateRequest request,
-        @RequestHeader("Monew-Request-User-ID") UUID userId
-    );
+        @RequestHeader("Monew-Request-User-ID") UUID userId);
 
     @Operation(summary = "관심사 삭제", description = "사용자가 특정 관심사를 삭제합니다.")
     @ApiResponses({
@@ -200,5 +198,34 @@ public interface InterestApi {
             )
         )
     })
-    ResponseEntity<Void> deleteInterest(@PathVariable UUID interestId);
+    ResponseEntity<Void> deleteInterest(
+        @PathVariable UUID interestId);
+
+    @Operation(summary = "관심사 구독 취소", description = "사용자가 특정 관심사에 대한 구독을 취소합니다.")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204",
+            description = "구독 취소 성공",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "관심사 또는 구독 정보가 존재하지 않음",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 내부 오류",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<Void> deleteSubscription(
+        @PathVariable UUID interestId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId);
 }

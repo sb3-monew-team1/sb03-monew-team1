@@ -557,7 +557,7 @@ class InterestControllerTest {
     class DeleteSubscriptionTests {
 
         @Test
-        void 관심사_구독을_취소하면_200을_반환한다() throws Exception {
+        void 관심사_구독을_취소하면_204를_반환한다() throws Exception {
             // Given
             UUID userId = UUID.randomUUID();
             UUID interestId = UUID.randomUUID();
@@ -568,7 +568,7 @@ class InterestControllerTest {
             mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId)
                     .header("Monew-Request-User-ID", userId.toString())
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
             verify(interestService).deleteSubscription(userId, interestId);
         }

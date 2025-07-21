@@ -24,6 +24,7 @@ public enum ErrorCode {
     INTEREST_SIMILARITY_ERROR(HttpStatus.CONFLICT, "유사한 관심사 이름이 존재합니다."),
     INTEREST_DUPLICATE(HttpStatus.CONFLICT, "이미 존재하는 관심사입니다."),
     INTEREST_NOT_FOUND(HttpStatus.NOT_FOUND, "관심사를 찾을 수 없습니다."),
+    SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 정보를 찾을 수 없습니다."),
 
     // 기사 관련 예외
     ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "기사를 찾을 수 없습니다."),
@@ -42,6 +43,7 @@ public enum ErrorCode {
     NOTIFICATION_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림 전송에 실패하였습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
     NOTIFICATION_CLEANUP_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "확인된 알림 삭제에 실패하였습니다."),
+
     // 커서 기반 페이지네이션 관련 예외
     INVALID_CURSOR_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 커서 형식입니다."),
     INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST,"잘못된 ID 커서 형식입니다."),

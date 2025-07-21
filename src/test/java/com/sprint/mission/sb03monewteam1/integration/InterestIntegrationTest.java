@@ -498,12 +498,12 @@ class InterestIntegrationTest {
         }
 
         @Test
-        void 관심사_구독을_취소하면_200을_반환하고_구독자수가_감소한다() throws Exception {
+        void 관심사_구독을_취소하면_204를_반환하고_구독자수가_감소한다() throws Exception {
             // When & Then
             mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interest.getId())
                     .header("Monew-Request-User-ID", user.getId())
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
             // Then
             boolean exists = subscriptionRepository.findByUserIdAndInterestId(user.getId(),
@@ -515,7 +515,7 @@ class InterestIntegrationTest {
         }
 
         @Test
-        void 존재하지_않는_관심사에_대한_구독_취소는_404를_반환한다() throws Exception {
+        void 존재하지_않는_관심사에_대해_구독_취소하면_404를_반환한다() throws Exception {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
 

@@ -16,6 +16,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
+import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
@@ -102,7 +103,8 @@ public class InterestServiceImpl implements InterestService {
 
         if (!isValidSortDirection(direction)) {
             log.error("관심사 조회 요청: 잘못된 정렬 방향: direction={}", direction);
-            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection", direction);
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection",
+                direction);
         }
 
         if (cursor != null && !cursor.trim().isEmpty() && !isValidCursor(cursor, orderBy)) {
@@ -150,7 +152,8 @@ public class InterestServiceImpl implements InterestService {
 
         long totalElements = interestRepository.countByKeywordOrName(keyword);
 
-        return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements, hasNext);
+        return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements,
+            hasNext);
     }
 
     @Transactional
@@ -186,7 +189,8 @@ public class InterestServiceImpl implements InterestService {
     }
 
     @Override
-    public InterestDto updateInterestKeywords(UUID interestId, InterestUpdateRequest request, UUID userId) {
+    public InterestDto updateInterestKeywords(UUID interestId, InterestUpdateRequest request,
+        UUID userId) {
         log.info("관심사 수정 요청: userId={}, interestId={}, request={}", userId, interestId, request);
 
         Interest interest = interestRepository.findById(interestId)
@@ -204,7 +208,8 @@ public class InterestServiceImpl implements InterestService {
             interest.getKeywords().add(interestKeyword);
         }
 
-        boolean subscribedByMe = subscriptionRepository.existsByUserIdAndInterestId(userId, interestId);
+        boolean subscribedByMe = subscriptionRepository.existsByUserIdAndInterestId(userId,
+            interestId);
 
         Interest updatedInterest = interestRepository.save(interest);
 
@@ -241,23 +246,15 @@ public class InterestServiceImpl implements InterestService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundException(userId));
 
-        Subscription subscription = subscriptionRepository.findByUserIdAndInterestId(userId, interestId)
-            .orElse(null);
+        Subscription subscription = subscriptionRepository.findByUserIdAndInterestId(userId,
+                interestId)
+            .orElseThrow(() -> new SubscriptionNotFoundException(userId, interestId));
 
-        if (subscription != null) {
-            subscriptionRepository.delete(subscription);
-            interest.setSubscriberCount(Math.max(0, interest.getSubscriberCount() - 1));
+        subscriptionRepository.delete(subscription);
+        interest.setSubscriberCount(Math.max(0, interest.getSubscriberCount() - 1));
 
-            log.info("구독 취소 완료: subscriptionId={}, userId={}, interestId={}",
-                subscription.getId(), userId, interestId);
-
-            log.info("구독자 수 감소 후: {}", interest.getSubscriberCount());
-
-        } else {
-            log.warn("구독 정보가 존재하지 않음: userId={}, interestId={}", userId, interestId);
-        }
-
-        log.info("구독 삭제 완료: userId={}, interestId={}", userId, interestId);
+        log.info("구독 취소 완료: subscriptionId={}, userId={}, interestId={}, 남은 구독자 수={}",
+            subscription.getId(), userId, interestId, interest.getSubscriberCount());
     }
 
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
@@ -282,7 +279,8 @@ public class InterestServiceImpl implements InterestService {
                 cursorValue = lastInterest.getUpdatedAt().toString();
                 break;
             default:
-                throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy", orderBy);
+                throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy",
+                    orderBy);
         }
         return cursorValue;
     }
