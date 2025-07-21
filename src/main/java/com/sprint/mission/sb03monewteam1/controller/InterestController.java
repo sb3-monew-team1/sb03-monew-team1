@@ -99,4 +99,13 @@ public class InterestController implements InterestApi {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @DeleteMapping("/{interestId}/subscriptions")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteSubscription(
+        @PathVariable UUID interestId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId
+    ) {
+        interestService.deleteSubscription(userId, interestId);
+    }
 }
