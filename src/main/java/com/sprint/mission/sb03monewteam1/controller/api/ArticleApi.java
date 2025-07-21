@@ -50,7 +50,8 @@ public interface ArticleApi {
         @RequestParam(required = false) String direction,
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false) Instant after,
-        @RequestParam(defaultValue = "10") int limit);
+        @RequestParam(defaultValue = "10") int limit,
+        @RequestHeader(value = "Monew-Request-User-ID", required = false) UUID userId);
 
     @Operation(summary = "출처 목록 조회", description = "기사의 출처 목록을 조회합니다.")
     @ApiResponses({
