@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -205,7 +204,7 @@ public class InterestServiceImpl implements InterestService {
             interest.getKeywords().add(interestKeyword);
         }
 
-        boolean subscribedByMe = subscriptionRepository.existsByUserIdAndInterestId(userId, interestId);
+        boolean subscribedByMe = subscriptionRepository.findByUserIdAndInterestId(userId, interestId);
 
         Interest updatedInterest = interestRepository.save(interest);
 
