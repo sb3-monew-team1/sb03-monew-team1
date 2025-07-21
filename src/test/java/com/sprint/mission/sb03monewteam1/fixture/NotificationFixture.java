@@ -14,7 +14,7 @@ public class NotificationFixture {
 
     private static final UUID DEFAULT_NOTIFICATION_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
     private static final String DEFAULT_CONTENT = "테스트 알림 내용입니다.";
-    private static final ResourceType DEFAULT_RESOURCE_TYPE = ResourceType.interest;
+    private static final ResourceType DEFAULT_RESOURCE_TYPE = ResourceType.INTEREST;
     private static final UUID DEFAULT_RESOURCE_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
     private static final boolean DEFAULT_IS_CHECKED = false;
     private static final Instant DEFAULT_CREATED_AT = Instant.parse("2024-01-01T00:00:00Z");
@@ -24,7 +24,7 @@ public class NotificationFixture {
     public static Notification createNewArticleNotification() {
         return Notification.builder()
             .content("관심사에 새 기사가 등록되었습니다.")
-            .resourceType(ResourceType.interest)
+            .resourceType(ResourceType.INTEREST)
             .resourceId(UUID.randomUUID())
             .isChecked(false)
             .user(UserFixture.createUser())
@@ -34,7 +34,7 @@ public class NotificationFixture {
     public static Notification createNewArticleNotification(User user) {
         return Notification.builder()
             .content("새로운 기사 등록 알림입니다.")
-            .resourceType(ResourceType.interest)
+            .resourceType(ResourceType.INTEREST)
             .resourceId(UUID.randomUUID())
             .isChecked(false)
             .user(user)
@@ -44,7 +44,7 @@ public class NotificationFixture {
     public static Notification createNewArticleNotification(String content) {
         return Notification.builder()
             .content(content)
-            .resourceType(ResourceType.interest)
+            .resourceType(ResourceType.INTEREST)
             .resourceId(UUID.randomUUID())
             .isChecked(false)
             .user(UserFixture.createUser())
@@ -58,7 +58,7 @@ public class NotificationFixture {
     ) {
         return Notification.builder()
             .content(String.format("%s와 관련된 기사가 %d건 등록되었습니다.", interest.getName(), articleCount))
-            .resourceType(ResourceType.interest)
+            .resourceType(ResourceType.INTEREST)
             .resourceId(interest.getId())
             .isChecked(false)
             .user(user)
