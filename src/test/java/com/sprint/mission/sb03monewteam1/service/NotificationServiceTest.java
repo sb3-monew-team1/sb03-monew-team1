@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -29,8 +30,10 @@ import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.NotificationMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
+import java.time.Duration;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -132,6 +135,7 @@ public class NotificationServiceTest {
     @Nested
     @DisplayName("미확인 알림 목록 테스트")
     class UnreadNotificationListTest {
+
         @Test
         void 미확인_알림_목록을_조회하면_CursorPageResponse를_반환한다() {
             // Given
@@ -141,7 +145,8 @@ public class NotificationServiceTest {
             int limit = 10;
 
             User user = UserFixture.createUser();
-            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(user, 5);
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(
+                user, 5);
             List<NotificationDto> notificationDtos = List.of(
                 NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 1", false),
                 NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 2", false),
@@ -183,7 +188,8 @@ public class NotificationServiceTest {
             int limit = 5;
 
             User user = UserFixture.createUser();
-            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(user, 6); // limit + 1
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(
+                user, 6); // limit + 1
 
             notifications.forEach(n -> ReflectionTestUtils.setField(n, "createdAt", Instant.now()));
 
@@ -227,7 +233,8 @@ public class NotificationServiceTest {
             int limit = 10;
 
             User user = UserFixture.createUser();
-            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(user, 3);
+            List<Notification> notifications = NotificationFixture.createUncheckedNotifications(
+                user, 3);
             List<NotificationDto> notificationDtos = List.of(
                 NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 1", false),
                 NotificationFixture.createNotificationDto(UUID.randomUUID(), "알림 2", false),
@@ -237,7 +244,8 @@ public class NotificationServiceTest {
             given(notificationRepository.findUncheckedNotificationsWithCursor(
                 eq(userId), eq(cursor), eq(after), eq(limit + 1))).willReturn(notifications);
             given(notificationMapper.toDto(any(Notification.class)))
-                .willReturn(notificationDtos.get(0), notificationDtos.get(1), notificationDtos.get(2));
+                .willReturn(notificationDtos.get(0), notificationDtos.get(1),
+                    notificationDtos.get(2));
 
             // When
             CursorPageResponse<NotificationDto> result = notificationService.getUncheckedNotifications(
@@ -412,6 +420,29 @@ public class NotificationServiceTest {
             // when & then
             assertThatThrownBy(() -> notificationService.confirmAll(invalidUserId))
                 .isInstanceOf(UserNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 자동 배치 삭제 테스트")
+    class NotificationAutoDeleteTests {
+
+        @Test
+        void 확인된_알림을_삭제할_수_있다() {
+            // Given
+            given(notificationRepository.deleteCheckedNotificationsBefore(any())).willReturn(1);
+
+            // When
+            notificationService.deleteOldCheckedNotifications();
+
+            // Then
+            then(notificationRepository).should().deleteCheckedNotificationsBefore(
+                argThat(actual ->
+                    Duration.between(actual, Instant.now().minus(7, ChronoUnit.DAYS)).abs()
+                        .toSeconds() < 2
+                )
+            );
+            then(notificationRepository).shouldHaveNoMoreInteractions();
         }
     }
 }

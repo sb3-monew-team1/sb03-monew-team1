@@ -25,4 +25,6 @@ public interface NotificationService {
         Instant after,
         int limit
     );
+
+    void deleteOldCheckedNotifications();
 }
