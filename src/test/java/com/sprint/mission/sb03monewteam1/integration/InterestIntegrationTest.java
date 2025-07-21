@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
@@ -398,7 +399,7 @@ class InterestIntegrationTest {
         void 관심사를_수정하면_수정된_관심사_DTO를_반환한다() throws Exception {
             // Given
             List<String> updatedKeywords = List.of("newKeyword");
-            InterestRegisterRequest updateRequest = InterestRegisterRequest.builder()
+            InterestUpdateRequest updateRequest = InterestUpdateRequest.builder()
                 .keywords(updatedKeywords)
                 .build();
 
@@ -423,7 +424,7 @@ class InterestIntegrationTest {
         void 존재하지_않는_관심사를_수정하려고_하면_404를_반환한다() throws Exception {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
-            InterestRegisterRequest updateRequest = InterestRegisterRequest.builder()
+            InterestUpdateRequest updateRequest = InterestUpdateRequest.builder()
                 .keywords(List.of("newKeyword"))
                 .build();
 
