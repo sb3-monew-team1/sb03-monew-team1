@@ -463,7 +463,7 @@ class InterestControllerTest {
         }
 
         @Test
-        void 관심사_키워드_수정시_존재하지_않는_관심사_수정하려하면_404를_반환한다() throws Exception {
+        void 관심사_키워드_수정시_존재하지_않는_관심사를_수정하려_하면_404를_반환한다() throws Exception {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
@@ -484,6 +484,25 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
 
             verify(interestService).updateInterestKeywords(eq(nonExistentInterestId), eq(request), eq(userId));
+        }
+
+        @Test
+        void 관심사_키워드를_수정할_때_키워드가_비어있으면_400을_반환한다() throws Exception {
+            // Given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> emptyKeywords = Arrays.asList();
+
+            InterestUpdateRequest request = new InterestUpdateRequest(emptyKeywords);
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("관심사 키워드는 최소 하나 이상이어야 합니다."));
         }
     }
 
