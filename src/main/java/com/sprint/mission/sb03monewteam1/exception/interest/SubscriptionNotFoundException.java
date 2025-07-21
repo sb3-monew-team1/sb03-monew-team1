@@ -7,7 +7,8 @@ import java.util.UUID;
 
 public class SubscriptionNotFoundException extends CustomException {
 
-  public SubscriptionNotFoundException(UUID interestId, UUID userId) {
-    super(ErrorCode.SUBSCRIPTION_NOT_FOUND, Map.of("interestID", String.valueOf(interestId), "userId", String.valueOf(userId)));
-  }
+    public SubscriptionNotFoundException(UUID interestId, UUID userId) {
+        super(ErrorCode.SUBSCRIPTION_NOT_FOUND,
+            Map.of("interestID", String.valueOf(interestId), "userID", String.valueOf(userId)));
+    }
 }
