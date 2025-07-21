@@ -145,11 +145,9 @@ public class NotificationServiceImpl implements NotificationService {
             throw new UserNotFoundException(userId);
         }
 
-        List<Notification> notifications = notificationRepository.findByUserIdAndIsCheckedFalse(userId);
+        int updatedCount = notificationRepository.markAllAsCheckedByUserId(userId);
 
-        notifications.forEach(Notification::markAsChecked);
-
-        log.info("알림 전체 확인 완료: userId={}, 확인된 알림 수={}", userId, notifications.size());
+        log.info("알림 전체 확인 완료: userId={}, 확인된 알림 수={}", userId, updatedCount);
     }
 
     @Override
