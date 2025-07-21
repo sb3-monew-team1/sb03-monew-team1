@@ -39,7 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification notification = Notification.builder()
             .content(String.format("%s와 관련된 기사가 %d건 등록되었습니다.", interest.getName(), articleCount))
-            .resourceType(ResourceType.INTERREST)
+            .resourceType(ResourceType.INTEREST)
             .resourceId(interest.getId())
             .user(user)
             .build();

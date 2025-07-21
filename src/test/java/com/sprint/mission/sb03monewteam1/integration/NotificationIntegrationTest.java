@@ -220,7 +220,7 @@ public class NotificationIntegrationTest {
                     List<Notification> notifications = notificationRepository.findAll();
                     assertThat(notifications.size()).isEqualTo(3);
                     assertThat(notifications.get(0).getResourceType()).isEqualTo(
-                        ResourceType.INTERREST);
+                        ResourceType.INTEREST);
                     assertThat(notifications.get(0).getUser().getId()).isEqualTo(user1.getId());
                 });
 
