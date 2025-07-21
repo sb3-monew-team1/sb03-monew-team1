@@ -123,7 +123,7 @@ public class NotificationServiceTest {
 
             Notification saved = captor.getValue();
             assertThat(saved.getUser().getId()).isEqualTo(comment.getAuthor().getId());
-            assertThat(saved.getResourceType()).isEqualTo(ResourceType.comment);
+            assertThat(saved.getResourceType()).isEqualTo(ResourceType.COMMENT);
             assertThat(saved.getResourceId()).isEqualTo(commentId);
             assertThat(saved.getContent()).isEqualTo(expectedContent);
         }

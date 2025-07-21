@@ -4,6 +4,6 @@ import lombok.Getter;
 
 @Getter
 public enum ResourceType {
-    interest,
-    comment
+    INTERREST,
+    COMMENT
 }

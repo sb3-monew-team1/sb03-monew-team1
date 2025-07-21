@@ -39,7 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification notification = Notification.builder()
             .content(String.format("%s와 관련된 기사가 %d건 등록되었습니다.", interest.getName(), articleCount))
-            .resourceType(ResourceType.interest)
+            .resourceType(ResourceType.INTERREST)
             .resourceId(interest.getId())
             .user(user)
             .build();
@@ -58,7 +58,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification notification = Notification.builder()
             .content(String.format("%s님이 나의 댓글을 좋아합니다.", user.getNickname()))
-            .resourceType(ResourceType.comment)
+            .resourceType(ResourceType.COMMENT)
             .resourceId(comment.getId())
             .user(comment.getAuthor())
             .build();
