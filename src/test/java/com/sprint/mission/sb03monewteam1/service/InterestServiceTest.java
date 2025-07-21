@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
@@ -420,7 +421,8 @@ class InterestServiceTest {
 
             given(interestRepository.findById(interestId)).willReturn(
                 Optional.of(existingInterest));
-            given(subscriptionRepository.findByUserIdAndInterestId(userId, interestId)).willReturn(
+            given(
+                subscriptionRepository.existsByUserIdAndInterestId(userId, interestId)).willReturn(
                 true);
             given(interestRepository.save(existingInterest)).willReturn(updatedInterest);
             given(interestMapper.toDto(updatedInterest, true)).willReturn(expectedResponse);
@@ -508,26 +510,29 @@ class InterestServiceTest {
 
     @Nested
     @DisplayName("관심사 구독 취소 테스트")
-    class InterestUnsubscribeTests {
+    class DeleteSubscriptionTests {
 
         @Test
         void 관심사_구독을_취소하면_구독이_삭제된다() {
             // Given
             Interest interest = InterestFixture.createInterest();
             User user = UserFixture.createUser();
-
             Subscription subscription = new Subscription(interest, user);
+            long originalCount = interest.getSubscriberCount();
 
-            when(interestRepository.findById(interest.getId())).thenReturn(Optional.of(interest));
-            given(subscriptionRepository.findByUserIdAndInterestId(user.getId(),
-                interest.getId())).willReturn(true);
+            when(interestRepository.findById(interest.getId()))
+                .thenReturn(Optional.of(interest));
+            when(userRepository.findById(user.getId()))
+                .thenReturn(Optional.of(user));
+            when(subscriptionRepository.findByUserIdAndInterestId(user.getId(), interest.getId()))
+                .thenReturn(Optional.of(subscription));
 
             // When
-            interestService.deleteSubscription(interest.getId(), user.getId());
+            interestService.deleteSubscription(user.getId(), interest.getId());
 
             // Then
             verify(subscriptionRepository).delete(subscription);
-            assertThat(interest.getSubscriberCount()).isEqualTo(interest.getSubscriberCount() - 1);
+            assertThat(interest.getSubscriberCount()).isEqualTo(originalCount - 1);
             verify(interestRepository).findById(interest.getId());
         }
 
@@ -537,17 +542,20 @@ class InterestServiceTest {
             UUID nonExistentInterestId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
 
-            when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
+            when(interestRepository.findById(nonExistentInterestId))
+                .thenReturn(Optional.empty());
 
-            // When
-            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class,
-                () -> {
-                    interestService.deleteSubscription(nonExistentInterestId);
-                });
+            // When & Then
+            InterestNotFoundException exception = assertThrows(
+                InterestNotFoundException.class,
+                () -> interestService.deleteSubscription(userId, nonExistentInterestId)
+            );
 
-            // Then
-            assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
+            assertThat(exception)
+                .hasMessageContaining("관심사를 찾을 수 없습니다");
+
             verify(interestRepository).findById(nonExistentInterestId);
+            verifyNoMoreInteractions(subscriptionRepository, userRepository);
         }
     }
 }

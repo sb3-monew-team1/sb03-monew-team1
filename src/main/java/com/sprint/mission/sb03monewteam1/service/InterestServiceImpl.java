@@ -204,7 +204,7 @@ public class InterestServiceImpl implements InterestService {
             interest.getKeywords().add(interestKeyword);
         }
 
-        boolean subscribedByMe = subscriptionRepository.findByUserIdAndInterestId(userId, interestId);
+        boolean subscribedByMe = subscriptionRepository.existsByUserIdAndInterestId(userId, interestId);
 
         Interest updatedInterest = interestRepository.save(interest);
 
@@ -229,6 +229,35 @@ public class InterestServiceImpl implements InterestService {
         interestRepository.delete(interest);
 
         log.info("관심사 삭제 완료: interestId={}", interestId);
+    }
+
+    @Override
+    public void deleteSubscription(UUID userId, UUID interestId) {
+        log.info("구독 취소 요청: userId={}, interestId={}", userId, interestId);
+
+        Interest interest = interestRepository.findById(interestId)
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        Subscription subscription = subscriptionRepository.findByUserIdAndInterestId(userId, interestId)
+            .orElse(null);
+
+        if (subscription != null) {
+            subscriptionRepository.delete(subscription);
+            interest.setSubscriberCount(Math.max(0, interest.getSubscriberCount() - 1));
+
+            log.info("구독 취소 완료: subscriptionId={}, userId={}, interestId={}",
+                subscription.getId(), userId, interestId);
+
+            log.info("구독자 수 감소 후: {}", interest.getSubscriberCount());
+
+        } else {
+            log.warn("구독 정보가 존재하지 않음: userId={}, interestId={}", userId, interestId);
+        }
+
+        log.info("구독 삭제 완료: userId={}, interestId={}", userId, interestId);
     }
 
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
