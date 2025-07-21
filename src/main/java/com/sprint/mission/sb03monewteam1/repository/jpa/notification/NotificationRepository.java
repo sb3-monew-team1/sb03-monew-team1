@@ -14,14 +14,14 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     long countByUserIdAndIsCheckedFalse(UUID userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional(readOnly = false)
-    @Query("""
-        UPDATE Notification n
-          SET n.isChecked = true,
-                n.updatedAt = CURRENT_TIMESTAMP
-        WHERE n.user.id = :userId
-          AND n.isChecked = false
-      """)
+    @Transactional
+    @Query(value = """
+        UPDATE notifications
+           SET is_checked = true,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = :userId
+           AND is_checked = false
+    """, nativeQuery = true)
     int markAllAsCheckedByUserId(@Param("userId") UUID userId);
 
     @Modifying
