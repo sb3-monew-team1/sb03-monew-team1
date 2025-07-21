@@ -16,7 +16,8 @@ public record ArticleDto(
     Long viewCount,
     Long commentCount,
     List<String> interests,
-    Instant createdAt
+    Instant createdAt,
+    Boolean viewedByMe
 ) {
 
 }

@@ -34,8 +34,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -119,31 +119,41 @@ public class ArticleServiceImpl implements ArticleService {
         String direction,
         String cursor,
         Instant after,
-        int limit) {
+        int limit,
+        UUID userId) {
 
         Instant from = parseToKstInstant(publishDateFrom);
         Instant to = parseToKstInstant(publishDateTo);
 
-        String sortBy = orderBy != null ? orderBy : "publishDate";
+        String sortBy = (orderBy != null) ? orderBy : "publishDate";
         boolean isAscending = "ASC".equalsIgnoreCase(direction);
 
         List<Article> articles = getArticlesBySortType(
             keyword, sourceIn, from, to,
-            sortBy, isAscending, cursor, after, limit);
+            sortBy, isAscending, cursor, after, limit
+        );
 
         boolean hasNext = articles.size() > limit;
         if (hasNext) {
             articles = articles.subList(0, limit);
         }
 
+        List<UUID> articleIds = articles.stream()
+            .map(Article::getId)
+            .toList();
+
+        Set<UUID> viewedIds = (userId != null && !articleIds.isEmpty())
+            ? articleViewRepository.findViewedArticleIdsByUserIdAndArticleIds(userId, articleIds)
+            : java.util.Collections.emptySet();
+
         List<ArticleDto> articleDtos = articles.stream()
-            .map(articleMapper::toDto)
-            .collect(Collectors.toList());
+            .map(article -> articleMapper.toDto(article, viewedIds.contains(article.getId())))
+            .toList();
 
         String nextCursor = generateNextCursor(articles, sortBy, hasNext);
         Instant nextAfter = generateNextAfter(articles, hasNext);
 
-        CursorPageResponse<ArticleDto> result = CursorPageResponse.<ArticleDto>builder()
+        return CursorPageResponse.<ArticleDto>builder()
             .content(articleDtos)
             .nextCursor(nextCursor)
             .nextAfter(nextAfter)
@@ -151,9 +161,6 @@ public class ArticleServiceImpl implements ArticleService {
             .totalElements(null)
             .hasNext(hasNext)
             .build();
-
-        log.info("기사 목록 조회 완료 - 조회된 기사 수: {}, hasNext: {}", articleDtos.size(), hasNext);
-        return result;
     }
 
     private List<Article> getArticlesBySortType(
