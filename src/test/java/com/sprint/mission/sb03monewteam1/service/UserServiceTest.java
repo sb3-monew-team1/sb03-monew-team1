@@ -46,6 +46,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")
@@ -65,6 +66,9 @@ public class UserServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @Mock
     private UserMapper userMapper;
@@ -96,6 +100,7 @@ public class UserServiceTest {
             UserDto expectedUserDto = UserFixture.createUserDto();
 
             given(userRepository.existsByEmail(userRegisterRequest.email())).willReturn(false);
+            given(passwordEncoder.encode(userRegisterRequest.password())).willReturn("encodedPassword");
             given(userRepository.save(any(User.class))).willReturn(savedUser);
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
 
@@ -145,6 +150,7 @@ public class UserServiceTest {
 
             given(userRepository.findByEmail(userLoginRequest.email())).willReturn(
                 Optional.of(existedUser));
+            given(passwordEncoder.matches(userLoginRequest.password(), existedUser.getPassword())).willReturn(true);
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
 
             // When

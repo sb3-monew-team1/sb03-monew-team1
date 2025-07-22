@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserDataSeeder implements DataSeeder {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private static final String DEFAULT_PASSWORD = "!qwe1234";
 
     @Override
     @Transactional
@@ -24,12 +28,15 @@ public class UserDataSeeder implements DataSeeder {
             log.info("UserDataSeeder: 사용자가 이미 존재하여 시드를 실행하지 않습니다.");
             return;
         }
+
+        String encodedPassword = passwordEncoder.encode(DEFAULT_PASSWORD);
+
         List<User> users = List.of(
-            createUser("user1@example.com", "유저1", "!qwe1234"),
-            createUser("user2@example.com", "유저2", "!qwe1234"),
-            createUser("user3@example.com", "유저3", "!qwe1234"),
-            createUser("user4@example.com", "유저4", "!qwe1234"),
-            createUser("user5@example.com", "유저5", "!qwe1234")
+            createUser("user1@example.com", "유저1", encodedPassword),
+            createUser("user2@example.com", "유저2", encodedPassword),
+            createUser("user3@example.com", "유저3", encodedPassword),
+            createUser("user4@example.com", "유저4", encodedPassword),
+            createUser("user5@example.com", "유저5", encodedPassword)
         );
 
         userRepository.saveAll(users);

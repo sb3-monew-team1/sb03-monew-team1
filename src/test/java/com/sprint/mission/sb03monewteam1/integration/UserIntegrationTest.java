@@ -38,7 +38,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,6 +75,9 @@ public class UserIntegrationTest {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     void 사용자_생성_시_Repository까지_반영되어야_한다() throws Exception {
@@ -123,7 +128,9 @@ public class UserIntegrationTest {
     void 정상적인_로그인_시_사용자_정보가_반환되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
-        User savedUser = userRepository.save(user);
+        String encodedPassword = passwordEncoder.encode(UserFixture.getDefaultPassword());
+        ReflectionTestUtils.setField(user, "password", encodedPassword);
+        userRepository.save(user);
 
         UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
 
@@ -144,6 +151,7 @@ public class UserIntegrationTest {
             .nickname("testUser")
             .password("Password123!")
             .build();
+        ReflectionTestUtils.setField(user, "password", passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
 
         UserLoginRequest loginRequest = UserLoginRequest.builder()
@@ -166,6 +174,7 @@ public class UserIntegrationTest {
             .nickname("testUser")
             .password("correctPassword123!")
             .build();
+        ReflectionTestUtils.setField(user, "password", passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
 
         UserLoginRequest loginRequest = UserLoginRequest.builder()
