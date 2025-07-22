@@ -25,7 +25,7 @@ public class InterestController implements InterestApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<InterestDto> create(
+    public ResponseEntity<InterestDto> createInterest(
         @RequestBody @Valid InterestRegisterRequest request) {
 
         log.info("관심사 등록 요청: {}", request);
@@ -80,7 +80,8 @@ public class InterestController implements InterestApi {
 
         log.info("관심사 수정 요청: interestId={}, request={}", interestId, request);
 
-        InterestDto updatedInterestDto = interestService.updateInterestKeywords(interestId, request, userId);
+        InterestDto updatedInterestDto = interestService.updateInterestKeywords(interestId, request,
+            userId);
 
         log.info("관심사 수정 완료: response={}", updatedInterestDto);
 
@@ -89,13 +90,28 @@ public class InterestController implements InterestApi {
 
 
     @DeleteMapping("/{interestId}")
-    public ResponseEntity<Void> deleteInterest(@PathVariable UUID interestId) {
+    public ResponseEntity<Void> deleteInterest(
+        @PathVariable UUID interestId) {
 
         log.info("관심사 삭제 요청: interestId={}", interestId);
 
         interestService.deleteInterest(interestId);
 
         log.info("관심사 삭제 완료: interestId={}", interestId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @DeleteMapping("/{interestId}/subscriptions")
+    public ResponseEntity<Void> deleteSubscription(
+        @PathVariable UUID interestId,
+        @RequestHeader("Monew-Request-User-ID") UUID userId) {
+
+        log.info("구독 삭제 요청: interestId={}, userId={}", interestId, userId);
+
+        interestService.deleteSubscription(userId, interestId);
+
+        log.info("구독 삭제 완료: interestId={}, userId={}", interestId, userId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

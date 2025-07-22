@@ -6,6 +6,7 @@ import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
@@ -467,6 +468,62 @@ class InterestIntegrationTest {
             mockMvc.perform(delete("/api/interests/{interestId}", nonExistentInterestId)
                     .header("Monew-Request-User-ID", UUID.randomUUID().toString())
                     .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 구독 취소 테스트")
+    class DeleteSubscriptionTests {
+
+        private Interest interest;
+        private User user;
+
+        @BeforeEach
+        void setUp() {
+            interest = interestRepository.save(InterestFixture.createInterest());
+
+            user = userRepository.save(UserFixture.createUser());
+
+            subscriptionRepository.save(
+                Subscription.builder()
+                    .user(user)
+                    .interest(interest)
+                    .build()
+            );
+
+            interest.setSubscriberCount(1L);
+        }
+
+        @Test
+        void 관심사_구독을_취소하면_204를_반환하고_구독자수가_감소한다() throws Exception {
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interest.getId())
+                    .header("Monew-Request-User-ID", user.getId())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+            // Then
+            boolean exists = subscriptionRepository.findByUserIdAndInterestId(user.getId(),
+                interest.getId()).isPresent();
+            assertThat(exists).isFalse();
+
+            Interest updatedInterest = interestRepository.findById(interest.getId()).orElseThrow();
+            assertThat(updatedInterest.getSubscriberCount()).isEqualTo(0L);
+        }
+
+        @Test
+        void 존재하지_않는_관심사에_대해_구독_취소하면_404를_반환한다() throws Exception {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+
+            // When & Then
+            mockMvc.perform(
+                    delete("/api/interests/{interestId}/subscriptions", nonExistentInterestId)
+                        .header("Monew-Request-User-ID", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));

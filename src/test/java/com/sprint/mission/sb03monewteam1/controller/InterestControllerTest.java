@@ -551,4 +551,46 @@ class InterestControllerTest {
             verify(interestService).deleteInterest(nonExistentInterestId);
         }
     }
+
+    @Nested
+    @DisplayName("관심사 구독 취소 테스트")
+    class DeleteSubscriptionTests {
+
+        @Test
+        void 관심사_구독을_취소하면_204를_반환한다() throws Exception {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
+
+            doNothing().when(interestService).deleteSubscription(userId, interestId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+            verify(interestService).deleteSubscription(userId, interestId);
+        }
+
+        @Test
+        void 존재하지_않는_관심사의_구독을_취소하면_404를_반환한다() throws Exception {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
+
+            doThrow(new InterestNotFoundException(interestId))
+                .when(interestService).deleteSubscription(userId, interestId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+
+            verify(interestService).deleteSubscription(userId, interestId);
+        }
+    }
 }
