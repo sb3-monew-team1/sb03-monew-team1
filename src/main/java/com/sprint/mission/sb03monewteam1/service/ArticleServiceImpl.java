@@ -12,7 +12,6 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
-import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
@@ -38,6 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -345,37 +345,62 @@ public class ArticleServiceImpl implements ArticleService {
         articleRepository.saveAll(filteredArticles);
         monewMetrics.getArticleCreatedCounter().increment(filteredArticles.size());
 
-        List<ArticleDto> articleDtos = filteredArticles.stream()
-            .map(articleMapper::toDto)
+        // 저장할 모든 (article_id, interest_id) 조합 생성
+        List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
+            keyword);
+        List<UUID> articleIds = filteredArticles.stream()
+            .map(Article::getId)
             .toList();
-
-        List<InterestKeyword> interestKeywords =
-            interestKeywordRepository.findAllByKeyword(keyword);
-
-        List<Interest> interests = interestKeywords.stream()
-            .map(InterestKeyword::getInterest)
+        List<UUID> interestIds = interestKeywords.stream()
+            .map(ik -> ik.getInterest().getId())
             .distinct()
             .toList();
 
-        for (Interest interest : interests) {
-            List<ArticleInterest> articleInterestList = filteredArticles.stream()
-                .map(article -> ArticleInterest.builder()
-                    .article(article)
-                    .interest(interest)
-                    .build())
-                .toList();
+        // 이미 존재하는 (article_id, interest_id) 조합을 한 번에 조회
+        Set<Pair<UUID, UUID>> existingPairs = articleInterestRepository
+            .findExistingArticleInterestPairsAsPairs(articleIds, interestIds);
 
+        // 저장할 ArticleInterest 리스트 생성
+        List<ArticleInterest> articleInterestList = new java.util.ArrayList<>();
+        for (UUID interestId : interestIds) {
+            for (Article article : filteredArticles) {
+                Pair<UUID, UUID> pair = Pair.of(article.getId(), interestId);
+                if (!existingPairs.contains(pair)) {
+                    articleInterestList.add(
+                        ArticleInterest.builder()
+                            .article(article)
+                            .interest(interestKeywords.stream()
+                                .filter(ik -> ik.getInterest().getId().equals(interestId))
+                                .findFirst().get().getInterest())
+                            .build()
+                    );
+                }
+            }
+        }
+
+        if (!articleInterestList.isEmpty()) {
             articleInterestRepository.saveAll(articleInterestList);
 
-            monewMetrics.getInterestArticleMappedCounter(interest.getId(),
-                    interest.getName())
-                .increment(filteredArticles.size());
+            for (InterestKeyword ik : interestKeywords) {
+                monewMetrics.getInterestArticleMappedCounter(ik.getInterest().getId(),
+                        ik.getInterest().getName())
+                    .increment(filteredArticles.size());
+            }
+        }
+
+        for (UUID interestId : interestIds) {
+            String interestName = interestKeywords.stream()
+                .filter(ik -> ik.getInterest().getId().equals(interestId))
+                .findFirst()
+                .map(ik -> ik.getInterest().getName())
+                .orElse("Unknown Interest");
+            List<ArticleDto> articleDtos = filteredArticles.stream()
+                .map(articleMapper::toDto)
+                .toList();
 
             eventPublisher.publishEvent(
-                new NewArticleCollectEvent(
-                    interest.getId(),
-                    interest.getName(),
-                    articleDtos));
+                new NewArticleCollectEvent(interestId, interestName, articleDtos)
+            );
         }
     }
 }
