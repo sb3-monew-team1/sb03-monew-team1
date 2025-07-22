@@ -2,7 +2,9 @@ package com.sprint.mission.sb03monewteam1.event.listener;
 
 import com.mongodb.client.result.UpdateResult;
 import com.sprint.mission.sb03monewteam1.document.CommentLikeActivity;
+import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
@@ -78,7 +80,8 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
         UUID userId = event.userId();
         String newUserName = event.newUserName();
 
-        log.debug("[이벤트 수신] userId={}, newUserName={}", userId, newUserName);
+        log.debug("댓글 좋아요 활동 UserNameUpdateEvent 리스너 실행 userId={}, newUserName={}", userId,
+            newUserName);
 
         Query query = new Query(Criteria.where("commentLikes.commentUserId").is(userId));
 
@@ -91,7 +94,33 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
         if (result.getModifiedCount() == 0) {
             log.warn("[업데이트 실패] userId={}에 대한 댓글 좋아요 수정이 적용되지 않았습니다.", userId);
         } else {
-            log.info("[업데이트 성공] userId={}에 대한 댓글 좋아요 활동의 사용자 이름이 변경되었습니다.", userId);
+            log.info("댓글 좋아요 활동 UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId,
+                result.getModifiedCount());
+        }
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleCommentActivityUpdateForLikes(CommentActivityUpdateEvent event) {
+        UUID commentId = event.commentId();
+        String updatedContent = event.commentActivityDto().content();
+
+        log.debug("댓글 좋아요 활동 CommentActivityUpdateEvent 리스너 실행 commentId={}, updatedContent={}",
+            commentId, updatedContent);
+
+        Query query = new Query(Criteria.where("commentLikes.commentId").is(commentId));
+
+        Update update = new Update().set("commentLikes.$.commentContent", updatedContent);
+
+        UpdateResult result = mongoTemplate.updateMulti(query, update, CommentLikeActivity.class);
+
+        log.debug("[업데이트 실행] commentId={}, 수정된 문서 수={}", commentId, result.getModifiedCount());
+
+        if (result.getModifiedCount() == 0) {
+            log.warn("[업데이트 실패] commentId={}에 대한 댓글 내용 수정이 적용되지 않았습니다.", commentId);
+        } else {
+            log.info("댓글 좋아요 활동 CommentActivityUpdateEvent 리스너 실행 완료 commentId={}, 수정된 문서 수={}",
+                commentId, result.getModifiedCount());
         }
     }
 }

@@ -87,7 +87,8 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
         UUID userId = event.userId();
         String newUserName = event.newUserName();
 
-        log.debug("UserNameUpdateEvent 리스너 실행 userId={}, newUserName={}", userId, newUserName);
+        log.debug("댓글 활동 UserNameUpdateEvent 리스너 실행 userId={}, newUserName={}", userId,
+            newUserName);
 
         Query query = new Query(Criteria.where("comments.userId").is(userId));
 
@@ -95,6 +96,7 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
 
         UpdateResult result = mongoTemplate.updateMulti(query, update, CommentActivity.class);
 
-        log.info("UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId, result.getModifiedCount());
+        log.info("댓글 활동 UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId,
+            result.getModifiedCount());
     }
 }
