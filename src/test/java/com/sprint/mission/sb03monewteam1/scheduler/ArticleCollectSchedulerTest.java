@@ -1,7 +1,5 @@
 package com.sprint.mission.sb03monewteam1.scheduler;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -30,25 +28,15 @@ class ArticleCollectSchedulerTest {
     private JobLauncher jobLauncher;
 
     @Autowired
-    private Job naverNewsCollectJob;
-
-    @Autowired
-    private Job hankyungNewsCollectJob;
+    private Job newsCollectJob;
 
     @Autowired
     private ArticleCollectScheduler articleCollectScheduler;
 
     @Test
-    void naverNewsCollectJob_스케줄러_실행_테스트() throws Exception {
-        articleCollectScheduler.runNaverNewsCollectJob();
-        verify(jobLauncher, times(1)).run(eq(naverNewsCollectJob),
-            any());
-    }
-
-    @Test
-    void hankyungNewsCollectJob_스케줄러_실행_테스트() throws Exception {
-        articleCollectScheduler.runHankyungNewsCollectJob();
-        verify(jobLauncher, times(1)).run(eq(hankyungNewsCollectJob),
-            any());
+    void newsCollectJob_스케줄러_실행_테스트() throws Exception {
+        articleCollectScheduler.runNewsCollectJob();
+        verify(jobLauncher, times(1)).run(org.mockito.ArgumentMatchers.eq(newsCollectJob),
+            org.mockito.ArgumentMatchers.any());
     }
 }

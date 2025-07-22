@@ -35,6 +35,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewActivityMapper;
@@ -407,8 +408,8 @@ class ArticleServiceTest {
     @Test
     void 네이버_뉴스_수집시_ArticleInterest_저장_확인() {
         // given
-        Interest interest1 = Interest.builder().name("IT").build();
-        Interest interest2 = Interest.builder().name("SPORTS").build();
+        Interest interest1 = InterestFixture.createInterestWithId();
+        Interest interest2 = InterestFixture.createInterestWithId();
         String keyword = "테스트";
         InterestKeyword ik1 = InterestKeyword.builder().interest(interest1).keyword(keyword)
             .build();
@@ -439,7 +440,7 @@ class ArticleServiceTest {
 
         // then
         verify(articleRepository).saveAll(anyList());
-        verify(articleInterestRepository, times(2)).saveAll(anyList());
+        verify(articleInterestRepository, times(1)).saveAll(anyList());
     }
 
     @Test
