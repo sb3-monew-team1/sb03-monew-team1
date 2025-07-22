@@ -392,8 +392,14 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public List<ArticleRestoreResultDto> restoreArticles(String from, String to) {
-        LocalDate fromDate = Instant.parse(from).atZone(KST).toLocalDate();
-        LocalDate toDate = Instant.parse(to).atZone(KST).toLocalDate();
+        LocalDate fromDate;
+        LocalDate toDate;
+        try {
+            fromDate = Instant.parse(from).atZone(KST).toLocalDate();
+            toDate = Instant.parse(to).atZone(KST).toLocalDate();
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("잘못된 날짜 형식입니다: " + e.getMessage(), e);
+        }
 
         List<ArticleRestoreResultDto> results = new ArrayList<>();
         for (LocalDate date = fromDate; !date.isAfter(toDate); date = date.plusDays(1)) {
@@ -453,7 +459,9 @@ public class ArticleServiceImpl implements ArticleService {
             if (existingUrlSet.contains(dto.sourceUrl())) {
                 continue;
             }
+
             Article article = Article.builder()
+                .id(dto.id())
                 .source(dto.source())
                 .sourceUrl(dto.sourceUrl())
                 .title(dto.title())
@@ -463,7 +471,6 @@ public class ArticleServiceImpl implements ArticleService {
                 .commentCount(dto.commentCount())
                 .isDeleted(false)
                 .build();
-            article.setIdForTest(dto.id());
             newArticles.add(article);
             restoredIds.add(dto.id());
         }

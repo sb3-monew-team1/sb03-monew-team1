@@ -10,8 +10,8 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,9 +20,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "articles")
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
+
+    @Column(name = "id", columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     @Column(name = "source", nullable = false, length = 50)
     private String source;
@@ -83,5 +85,33 @@ public class Article extends BaseEntity {
 
     public boolean isNotDeleted() {
         return !this.isDeleted;
+    }
+
+    @Builder
+    public Article(
+        UUID id,
+        String source,
+        String sourceUrl,
+        String title,
+        Instant publishDate,
+        String summary,
+        Long commentCount,
+        Long viewCount,
+        Boolean isDeleted,
+        List<ArticleView> articleViews
+    ) {
+        super();
+        if (id != null) {
+            assignId(id); // BaseEntity의 id에 할당
+        }
+        this.source = source;
+        this.sourceUrl = sourceUrl;
+        this.title = title;
+        this.publishDate = publishDate;
+        this.summary = summary;
+        this.commentCount = commentCount != null ? commentCount : 0L;
+        this.viewCount = viewCount != null ? viewCount : 0L;
+        this.isDeleted = isDeleted != null ? isDeleted : false;
+        this.articleViews = articleViews != null ? articleViews : new ArrayList<>();
     }
 }
