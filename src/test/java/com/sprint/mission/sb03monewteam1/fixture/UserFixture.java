@@ -139,4 +139,8 @@ public class UserFixture {
     public static UUID getDefaultId() {
         return DEFAULT_ID;
     }
+
+    public static String getDefaultPassword() {
+        return DEFAULT_PASSWORD;
+    }
 }
