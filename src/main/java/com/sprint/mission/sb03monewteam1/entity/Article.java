@@ -1,30 +1,28 @@
 package com.sprint.mission.sb03monewteam1.entity;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import com.sprint.mission.sb03monewteam1.entity.base.BaseEntity;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Builder
 @Entity
 @Table(name = "articles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
-
-    @Column(name = "id", columnDefinition = "uuid", updatable = false, nullable = false)
-    private UUID id;
 
     @Column(name = "source", nullable = false, length = 50)
     private String source;
@@ -42,20 +40,16 @@ public class Article extends BaseEntity {
     private String summary;
 
     @Column(name = "comment_count", nullable = false)
-    @Builder.Default
-    private Long commentCount = 0L;
+    private Long commentCount;
 
     @Column(name = "view_count", nullable = false)
-    @Builder.Default
-    private Long viewCount = 0L;
+    private Long viewCount;
 
     @Column(name = "is_deleted", nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
+    private Boolean isDeleted;
 
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<ArticleView> articleViews = new ArrayList<>();
+    private List<ArticleView> articleViews;
 
     public void increaseViewCount() {
         this.viewCount++;
@@ -102,7 +96,7 @@ public class Article extends BaseEntity {
     ) {
         super();
         if (id != null) {
-            assignId(id); // BaseEntity의 id에 할당
+            assignId(id);
         }
         this.source = source;
         this.sourceUrl = sourceUrl;
