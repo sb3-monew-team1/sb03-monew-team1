@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
@@ -38,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,9 +75,6 @@ public class UserIntegrationTest {
 
     @Autowired
     private CommentRepository commentRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Test
     void 사용자_생성_시_Repository까지_반영되어야_한다() throws Exception {
@@ -128,7 +125,7 @@ public class UserIntegrationTest {
     void 정상적인_로그인_시_사용자_정보가_반환되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
-        String encodedPassword = passwordEncoder.encode(UserFixture.getDefaultPassword());
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray());
         ReflectionTestUtils.setField(user, "password", encodedPassword);
         userRepository.save(user);
 
@@ -151,7 +148,7 @@ public class UserIntegrationTest {
             .nickname("testUser")
             .password("Password123!")
             .build();
-        ReflectionTestUtils.setField(user, "password", passwordEncoder.encode(user.getPassword()));
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray());
         userRepository.save(user);
 
         UserLoginRequest loginRequest = UserLoginRequest.builder()
@@ -174,7 +171,7 @@ public class UserIntegrationTest {
             .nickname("testUser")
             .password("correctPassword123!")
             .build();
-        ReflectionTestUtils.setField(user, "password", passwordEncoder.encode(user.getPassword()));
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray());
         userRepository.save(user);
 
         UserLoginRequest loginRequest = UserLoginRequest.builder()

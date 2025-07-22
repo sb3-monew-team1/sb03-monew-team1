@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +38,6 @@ public class UserServiceImpl implements UserService {
     private final CommentLikeRepository commentLikeRepository;
     private final CommentRepository commentRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDto create(UserRegisterRequest userRegisterRequest) {
@@ -55,7 +54,7 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException(email);
         }
 
-        String encodedPassword = passwordEncoder.encode(rawPassword);
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, rawPassword.toCharArray());
 
             User user = User.builder()
             .email(email)
@@ -86,7 +85,9 @@ public class UserServiceImpl implements UserService {
                     return new InvalidEmailOrPasswordException(email);
                 });
 
-        if ((!passwordEncoder.matches(rawPassword, user.getPassword())) || user.isDeleted()) {
+        BCrypt.Result result = BCrypt.verifyer().verify(rawPassword.toCharArray(), user.getPassword());
+
+        if ((!result.verified || user.isDeleted())) {
             log.warn("로그인 실패 - 존재하지 않는 비밀번호, 입력한 비밀번호: {}", rawPassword);
             throw new InvalidEmailOrPasswordException(email);
         }

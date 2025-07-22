@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
@@ -46,7 +47,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")
@@ -66,9 +66,6 @@ public class UserServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
 
     @Mock
     private UserMapper userMapper;
@@ -100,7 +97,6 @@ public class UserServiceTest {
             UserDto expectedUserDto = UserFixture.createUserDto();
 
             given(userRepository.existsByEmail(userRegisterRequest.email())).willReturn(false);
-            given(passwordEncoder.encode(userRegisterRequest.password())).willReturn("encodedPassword");
             given(userRepository.save(any(User.class))).willReturn(savedUser);
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
 
@@ -145,12 +141,20 @@ public class UserServiceTest {
         void 사용자는_이메일과_비밀번호를_통해_로그인_할_수_있다() {
             // Given
             UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
-            User existedUser = UserFixture.createUser();
+
+            String encodedPassword =
+            BCrypt.withDefaults().hashToString(12, UserFixture.getDefaultPassword().toCharArray());
+
+            User existedUser = UserFixture.createUser(
+                UserFixture.getDefaultEmail(),
+                UserFixture.getDefaultNickname(),
+                encodedPassword
+                );
+
             UserDto expectedUserDto = UserFixture.createUserDto();
 
             given(userRepository.findByEmail(userLoginRequest.email())).willReturn(
                 Optional.of(existedUser));
-            given(passwordEncoder.matches(userLoginRequest.password(), existedUser.getPassword())).willReturn(true);
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
 
             // When

@@ -1,12 +1,12 @@
 package com.sprint.mission.sb03monewteam1.seeder;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserDataSeeder implements DataSeeder {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     private static final String DEFAULT_PASSWORD = "!qwe1234";
 
@@ -29,7 +28,7 @@ public class UserDataSeeder implements DataSeeder {
             return;
         }
 
-        String encodedPassword = passwordEncoder.encode(DEFAULT_PASSWORD);
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, DEFAULT_PASSWORD.toCharArray());
 
         List<User> users = List.of(
             createUser("user1@example.com", "유저1", encodedPassword),
