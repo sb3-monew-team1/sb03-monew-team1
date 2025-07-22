@@ -18,7 +18,6 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
-import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;

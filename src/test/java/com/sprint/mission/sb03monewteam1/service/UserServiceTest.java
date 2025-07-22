@@ -20,7 +20,6 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
-import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
