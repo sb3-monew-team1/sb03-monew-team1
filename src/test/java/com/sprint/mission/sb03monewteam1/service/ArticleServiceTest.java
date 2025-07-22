@@ -16,11 +16,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleRestoreResultDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -569,14 +570,17 @@ class ArticleServiceTest {
             .build();
         List<ArticleDto> dtos = List.of(dto1, dto2);
 
-        byte[] bytes = "dummy".getBytes();
+        ObjectMapper realMapper = new ObjectMapper();
+        realMapper.registerModule(new JavaTimeModule());
+        String json = realMapper.writeValueAsString(dtos);
+        byte[] bytes = json.getBytes();
+
+        when(articleRepository.findAllBySourceUrlIn(anyList()))
+            .thenReturn(List.of(dto2.sourceUrl()));
         when(s3Util.download("test-bucket", "backup/backup-articles-" + date + ".json"))
             .thenReturn(bytes);
-        when(objectMapper.readValue(any(String.class), any(TypeReference.class)))
-            .thenReturn(dtos);
-        when(articleRepository.existsBySourceUrl(dto1.sourceUrl())).thenReturn(false);
-        when(articleRepository.existsBySourceUrl(dto2.sourceUrl())).thenReturn(true);
 
+        ReflectionTestUtils.setField(articleService, "objectMapper", realMapper);
         ReflectionTestUtils.setField(articleService, "backupBucket", "test-bucket");
         ReflectionTestUtils.setField(articleService, "backupPrefix", "backup/");
 
