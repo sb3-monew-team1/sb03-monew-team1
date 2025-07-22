@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeCountUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.CommentActivityRepository;
 import java.util.ArrayList;
@@ -98,5 +99,21 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
 
         log.info("댓글 활동 UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId,
             result.getModifiedCount());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleCommentLikeCountChangedEvent(CommentLikeCountUpdateEvent event) {
+        UUID commentId = event.commentId();
+        long newLikeCount = event.newLikeCount();
+
+        log.debug("댓글 좋아요 수 변경 이벤트 실행: commentId={}, newLikeCount={}", commentId, newLikeCount);
+
+        Query query = new Query(Criteria.where("comments.id").is(commentId));
+        Update update = new Update().set("comments.$.likeCount", newLikeCount);
+
+        UpdateResult result = mongoTemplate.updateMulti(query, update, CommentActivity.class);
+
+        log.info("댓글 좋아요 수 변경 이벤트 완료: commentId={}, 업데이트된 문서 수={}", commentId, result.getModifiedCount());
     }
 }
