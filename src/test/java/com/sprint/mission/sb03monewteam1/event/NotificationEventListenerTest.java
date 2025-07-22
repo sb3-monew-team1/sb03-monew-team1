@@ -98,39 +98,7 @@ public class NotificationEventListenerTest {
             // When
             listener.handleCollectArticle(event);
             listener.handleCollectJobCompleted(
-                new NewsCollectJobCompletedEvent("naverNewsCollectJob", true));
-            listener.handleCollectJobCompleted(
-                new NewsCollectJobCompletedEvent("hankyungNewsCollectJob", true));
-
-            // Then
-            then(subscriptionRepository).should().findAllByInterestIdFetchUser(interest.getId());
-            then(notificationService).should()
-                .createNewArticleNotification(any(User.class), any(Interest.class),
-                    any(Integer.class));
-
-        }
-
-        @Test
-        void 하나의_배치잡이_실패해도_성공한_배치잡의_수집_건수로_알림이_생성된다() {
-            // Given
-            Interest interest = InterestFixture.createInterestWithId();
-            User user = UserFixture.createUser();
-            List<ArticleDto> articles = ArticleFixture.createArticleDtoList();
-            List<Subscription> subscription = List.of(
-                SubscriptionFixture.createSubscription(user, interest));
-            NewArticleCollectEvent event = new NewArticleCollectEvent(
-                interest.getId(), interest.getName(), articles);
-
-            given(interestRepository.findById(interest.getId())).willReturn(Optional.of(interest));
-            given(subscriptionRepository.findAllByInterestIdFetchUser(interest.getId())).willReturn(
-                subscription);
-
-            // When
-            listener.handleCollectArticle(event);
-            listener.handleCollectJobCompleted(
-                new NewsCollectJobCompletedEvent("naverNewsCollectJob", true));
-            listener.handleCollectJobCompleted(
-                new NewsCollectJobCompletedEvent("hankyungNewsCollectJob", false));
+                new NewsCollectJobCompletedEvent("newsCollectJob"));
 
             // Then
             then(subscriptionRepository).should().findAllByInterestIdFetchUser(interest.getId());
@@ -163,9 +131,7 @@ public class NotificationEventListenerTest {
             // When & Then
             assertThatThrownBy(() -> {
                 listener.handleCollectJobCompleted(
-                    new NewsCollectJobCompletedEvent("naverNewsCollectJob", true));
-                listener.handleCollectJobCompleted(
-                    new NewsCollectJobCompletedEvent("hankyungNewsCollectJob", true));
+                    new NewsCollectJobCompletedEvent("newsCollectJob"));
             }).isInstanceOf(NotificationSendException.class);
 
             then(subscriptionRepository).should().findAllByInterestIdFetchUser(interest.getId());

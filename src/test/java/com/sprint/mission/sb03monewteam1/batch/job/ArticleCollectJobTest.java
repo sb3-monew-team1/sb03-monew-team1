@@ -1,7 +1,10 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
+import com.sprint.mission.sb03monewteam1.config.TestConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -17,11 +20,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
-import com.sprint.mission.sb03monewteam1.config.TestConfig;
-
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @ActiveProfiles("test")
 @SpringBootTest
@@ -33,6 +31,7 @@ class ArticleCollectJobTest {
 
     @TestConfiguration
     static class BatchTestConfig {
+
         @Bean
         public JobLauncherTestUtils jobLauncherTestUtils() {
             return new JobLauncherTestUtils();
@@ -43,10 +42,7 @@ class ArticleCollectJobTest {
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
-    private Job naverNewsCollectJob;
-
-    @Autowired
-    private Job hankyungNewsCollectJob;
+    private Job newsCollectJob;
 
     @Autowired
     private JobLauncher jobLauncher;
@@ -58,15 +54,8 @@ class ArticleCollectJobTest {
     }
 
     @Test
-    void naverNewsCollectJob_실행_테스트() throws Exception {
-        jobLauncherTestUtils.setJob(naverNewsCollectJob);
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        assertThat(jobExecution.getExitStatus().getExitCode()).isEqualTo("COMPLETED");
-    }
-
-    @Test
-    void hankyungNewsCollectJob_실행_테스트() throws Exception {
-        jobLauncherTestUtils.setJob(hankyungNewsCollectJob);
+    void newsCollectJob_실행_테스트() throws Exception {
+        jobLauncherTestUtils.setJob(newsCollectJob);
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertThat(jobExecution.getExitStatus().getExitCode()).isEqualTo("COMPLETED");
     }
