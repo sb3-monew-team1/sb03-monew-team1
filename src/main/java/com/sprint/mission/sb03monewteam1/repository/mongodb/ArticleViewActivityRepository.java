@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.repository.mongodb;
 
 import com.sprint.mission.sb03monewteam1.document.ArticleViewActivity;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.mongodb.repository.Aggregation;
@@ -13,4 +14,6 @@ public interface ArticleViewActivityRepository extends MongoRepository<ArticleVi
         "{ $project: { articleViews: { $slice: [ { $sortArray: { input: \"$articleViews\", sortBy: { createdAt: -1 } } }, 10 ] } } }"
     })
     Optional<ArticleViewActivity> findRecent10ArticleViewsByUserId(UUID userId);
+
+    List<ArticleViewActivity> findAllByArticleViews_articleId(UUID articleId);
 }

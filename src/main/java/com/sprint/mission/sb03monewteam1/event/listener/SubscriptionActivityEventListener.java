@@ -73,11 +73,11 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleKeywordUpdate(SubscriptionActivityKeywordUpdateEvent event) {
+    public void handleKeywordUpdateEvent(SubscriptionActivityKeywordUpdateEvent event) {
         UUID interestId = event.interestId();
         List<String> keywords = event.newKeywords();
 
-        log.debug("[이벤트 수신] interestId={}, newKeywords={}", interestId, keywords);
+        log.debug("handleKeywordUpdateEvent 리스너 실행: interestId={}, newKeywords={}", interestId, keywords);
 
         Query query = new Query(Criteria.where("subscriptions.interestId").is(interestId));
         log.debug("[쿼리 생성] query={}", query);
@@ -89,7 +89,7 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
         log.debug("[문서 검색] 조건에 맞는 문서 수={}", matchedDocs.size());
 
         UpdateResult result = mongoTemplate.updateMulti(query, update, SubscriptionActivity.class);
-        log.info("[업데이트 실행] interestId={}, 수정 문서 수={}", interestId, result.getModifiedCount());
+        log.info("handleKeywordUpdateEvent 리스너 실행 완료: interestId={}, 수정 문서 수={}", interestId, result.getModifiedCount());
     }
 
     @Async
