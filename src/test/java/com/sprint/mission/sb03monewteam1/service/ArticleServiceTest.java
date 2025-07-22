@@ -13,8 +13,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
@@ -29,7 +32,6 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
-import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -40,14 +42,16 @@ import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.articleView.ArticleViewRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
+import com.sprint.mission.sb03monewteam1.util.S3Util;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -60,6 +64,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ArticleServiceTest {
@@ -99,6 +104,12 @@ class ArticleServiceTest {
 
     @Mock
     private MonewMetrics monewMetrics;
+
+    @Mock
+    private S3Util s3Util;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private ArticleServiceImpl articleService;
@@ -528,5 +539,78 @@ class ArticleServiceTest {
         verify(articleRepository).findAllBySourceUrlIn(anyList());
         verify(articleRepository, never()).saveAll(anyList());
         verify(articleInterestRepository, never()).save(any(ArticleInterest.class));
+    }
+
+    @Test
+    void 존재하지_않는_기사만_복구된다() throws Exception {
+        String from = "2024-01-01T00:00:00Z";
+        String to = "2024-01-01T00:00:00Z";
+        LocalDate date = LocalDate.of(2024, 1, 1);
+
+        ArticleDto dto1 = ArticleDto.builder()
+            .id(UUID.randomUUID())
+            .source("naver")
+            .sourceUrl("https://a.com")
+            .title("title1")
+            .publishDate(Instant.parse("2024-01-01T10:00:00Z"))
+            .summary("s")
+            .viewCount(0L)
+            .commentCount(0L)
+            .build();
+        ArticleDto dto2 = ArticleDto.builder()
+            .id(UUID.randomUUID())
+            .source("naver")
+            .sourceUrl("https://b.com")
+            .title("title2")
+            .publishDate(Instant.parse("2024-01-01T11:00:00Z"))
+            .summary("s")
+            .viewCount(0L)
+            .commentCount(0L)
+            .build();
+        List<ArticleDto> dtos = List.of(dto1, dto2);
+
+        byte[] bytes = "dummy".getBytes();
+        when(s3Util.download("test-bucket", "backup/backup-articles-" + date + ".json"))
+            .thenReturn(bytes);
+        when(objectMapper.readValue(any(String.class), any(TypeReference.class)))
+            .thenReturn(dtos);
+        when(articleRepository.existsBySourceUrl(dto1.sourceUrl())).thenReturn(false);
+        when(articleRepository.existsBySourceUrl(dto2.sourceUrl())).thenReturn(true);
+
+        ReflectionTestUtils.setField(articleService, "backupBucket", "test-bucket");
+        ReflectionTestUtils.setField(articleService, "backupPrefix", "backup/");
+
+        List<ArticleRestoreResultDto> results = articleService.restoreArticles(from, to);
+
+        assertThat(results).hasSize(1);
+        ArticleRestoreResultDto result = results.get(0);
+        assertThat(result.restoredArticleCount()).isEqualTo(1);
+        assertThat(result.restoredArticleIds()).containsExactly(dto1.id());
+
+        verify(s3Util).download("test-bucket", "backup/backup-articles-" + date + ".json");
+        verify(articleRepository).saveAll(anyList());
+    }
+
+    @Test
+    void 백업파일이_없으면_복구되지_않는다() {
+        String from = "2024-01-01T00:00:00Z";
+        String to = "2024-01-01T00:00:00Z";
+        LocalDate date = LocalDate.of(2024, 1, 1);
+
+        when(s3Util.download("test-bucket", "backup/backup-articles-" + date + ".json"))
+            .thenReturn(null);
+
+        ReflectionTestUtils.setField(articleService, "backupBucket", "test-bucket");
+        ReflectionTestUtils.setField(articleService, "backupPrefix", "backup/");
+
+        List<ArticleRestoreResultDto> results = articleService.restoreArticles(from, to);
+
+        assertThat(results).hasSize(1);
+        ArticleRestoreResultDto result = results.get(0);
+        assertThat(result.restoredArticleCount()).isZero();
+        assertThat(result.restoredArticleIds()).isEmpty();
+
+        verifyNoInteractions(articleRepository);
+        verifyNoInteractions(objectMapper);
     }
 }
