@@ -1,5 +1,6 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
@@ -13,8 +14,8 @@ import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
-import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
@@ -46,17 +47,19 @@ public class UserServiceImpl implements UserService {
 
         String email = userRegisterRequest.email();
         String nickname = userRegisterRequest.nickname();
-        String password = userRegisterRequest.password();
+        String rawPassword = userRegisterRequest.password();
 
         if (userRepository.existsByEmail(email)) {
             log.warn("중복된 이메일로 회원가입 시도: email={}", email);
             throw new EmailAlreadyExistsException(email);
         }
 
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, rawPassword.toCharArray());
+
         User user = User.builder()
             .email(email)
             .nickname(nickname)
-            .password(password)
+            .password(encodedPassword)
             .build();
 
         User savedUser = userRepository.save(user);
@@ -71,7 +74,7 @@ public class UserServiceImpl implements UserService {
     public UserDto login(UserLoginRequest userLoginRequest) {
 
         String email = userLoginRequest.email();
-        String password = userLoginRequest.password();
+        String rawPassword = userLoginRequest.password();
 
         log.info("로그인 인증 시작 - email={}", email);
 
@@ -82,8 +85,11 @@ public class UserServiceImpl implements UserService {
                     return new InvalidEmailOrPasswordException(email);
                 });
 
-        if (!user.getPassword().equals(password) || user.isDeleted()) {
-            log.warn("로그인 실패 - 존재하지 않는 비밀번호, 입력한 비밀번호: {}", password);
+        BCrypt.Result result = BCrypt.verifyer()
+            .verify(rawPassword.toCharArray(), user.getPassword());
+
+        if ((!result.verified || user.isDeleted())) {
+            log.warn("로그인 실패 - 잘못된 비밀번호: email={}", email);
             throw new InvalidEmailOrPasswordException(email);
         }
 

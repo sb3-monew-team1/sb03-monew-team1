@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.config.LoadTestEnv;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
@@ -39,6 +40,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,7 +125,9 @@ public class UserIntegrationTest {
     void 정상적인_로그인_시_사용자_정보가_반환되어야_한다() throws Exception {
         // Given
         User user = UserFixture.createUser();
-        User savedUser = userRepository.save(user);
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray());
+        ReflectionTestUtils.setField(user, "password", encodedPassword);
+        userRepository.save(user);
 
         UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
 
@@ -144,6 +148,7 @@ public class UserIntegrationTest {
             .nickname("testUser")
             .password("Password123!")
             .build();
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray());
         userRepository.save(user);
 
         UserLoginRequest loginRequest = UserLoginRequest.builder()
@@ -166,6 +171,7 @@ public class UserIntegrationTest {
             .nickname("testUser")
             .password("correctPassword123!")
             .build();
+        String encodedPassword = BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray());
         userRepository.save(user);
 
         UserLoginRequest loginRequest = UserLoginRequest.builder()

@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleRestoreResultDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Article;
@@ -32,6 +33,8 @@ public interface ArticleService {
     List<Article> collectHankyungArticles(String keyword);
 
     void saveArticles(List<Article> articles, String keyword);
+
+    List<ArticleRestoreResultDto> restoreArticles(String from, String to);
 
     void delete(UUID articleId);
 

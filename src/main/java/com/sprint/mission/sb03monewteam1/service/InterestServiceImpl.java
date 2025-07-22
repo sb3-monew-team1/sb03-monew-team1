@@ -1,8 +1,9 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.InterestDto;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
@@ -15,6 +16,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
+import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
@@ -101,7 +103,8 @@ public class InterestServiceImpl implements InterestService {
 
         if (!isValidSortDirection(direction)) {
             log.error("관심사 조회 요청: 잘못된 정렬 방향: direction={}", direction);
-            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection", direction);
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection",
+                direction);
         }
 
         if (cursor != null && !cursor.trim().isEmpty() && !isValidCursor(cursor, orderBy)) {
@@ -149,7 +152,8 @@ public class InterestServiceImpl implements InterestService {
 
         long totalElements = interestRepository.countByKeywordOrName(keyword);
 
-        return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements, hasNext);
+        return new CursorPageResponse<>(content, nextCursor, nextAfter, limit, totalElements,
+            hasNext);
     }
 
     @Transactional
@@ -185,6 +189,39 @@ public class InterestServiceImpl implements InterestService {
     }
 
     @Override
+    public InterestDto updateInterestKeywords(UUID interestId, InterestUpdateRequest request,
+        UUID userId) {
+        log.info("관심사 수정 요청: userId={}, interestId={}, request={}", userId, interestId, request);
+
+        Interest interest = interestRepository.findById(interestId)
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
+
+        List<String> newKeywords = request.keywords();
+
+        interest.getKeywords().clear();
+
+        for (String keyword : newKeywords) {
+            InterestKeyword interestKeyword = InterestKeyword.builder()
+                .keyword(keyword)
+                .interest(interest)
+                .build();
+            interest.getKeywords().add(interestKeyword);
+        }
+
+        boolean subscribedByMe = subscriptionRepository.existsByUserIdAndInterestId(userId,
+            interestId);
+
+        Interest updatedInterest = interestRepository.save(interest);
+
+        InterestDto updatedInterestDto = interestMapper.toDto(updatedInterest, subscribedByMe);
+
+        log.info("관심사 수정 완료: response={}", updatedInterestDto);
+
+        return updatedInterestDto;
+    }
+
+
+    @Override
     public void deleteInterest(UUID interestId) {
         log.info("관심사 삭제 요청: interestId={}", interestId);
         Interest interest = interestRepository.findById(interestId)
@@ -197,6 +234,27 @@ public class InterestServiceImpl implements InterestService {
         interestRepository.delete(interest);
 
         log.info("관심사 삭제 완료: interestId={}", interestId);
+    }
+
+    @Override
+    public void deleteSubscription(UUID userId, UUID interestId) {
+        log.info("구독 취소 요청: userId={}, interestId={}", userId, interestId);
+
+        Interest interest = interestRepository.findById(interestId)
+            .orElseThrow(() -> new InterestNotFoundException(interestId));
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        Subscription subscription = subscriptionRepository.findByUserIdAndInterestId(userId,
+                interestId)
+            .orElseThrow(() -> new SubscriptionNotFoundException(userId, interestId));
+
+        subscriptionRepository.delete(subscription);
+        interest.setSubscriberCount(Math.max(0, interest.getSubscriberCount() - 1));
+
+        log.info("구독 취소 완료: subscriptionId={}, userId={}, interestId={}, 남은 구독자 수={}",
+            subscription.getId(), userId, interestId, interest.getSubscriberCount());
     }
 
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {
@@ -221,7 +279,8 @@ public class InterestServiceImpl implements InterestService {
                 cursorValue = lastInterest.getUpdatedAt().toString();
                 break;
             default:
-                throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy", orderBy);
+                throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy",
+                    orderBy);
         }
         return cursorValue;
     }

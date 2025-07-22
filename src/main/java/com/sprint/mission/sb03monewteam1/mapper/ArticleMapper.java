@@ -1,10 +1,11 @@
 package com.sprint.mission.sb03monewteam1.mapper;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
 import com.sprint.mission.sb03monewteam1.entity.Article;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface ArticleMapper {
@@ -19,6 +20,7 @@ public interface ArticleMapper {
     @Mapping(target = "viewedByMe", source = "viewed")
     ArticleDto toDto(Article article, boolean viewed);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "commentCount", ignore = true)
     @Mapping(target = "viewCount", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)

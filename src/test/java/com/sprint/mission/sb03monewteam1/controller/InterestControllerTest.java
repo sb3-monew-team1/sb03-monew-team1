@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
+import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
@@ -176,7 +177,7 @@ class InterestControllerTest {
             );
 
             given(interestService.getInterests(
-                any(UUID.class),anyString(), anyString(), anyInt(), anyString(), anyString()))
+                any(UUID.class), anyString(), anyString(), anyInt(), anyString(), anyString()))
                 .willReturn(responseDto);
 
             // When & Then
@@ -256,7 +257,8 @@ class InterestControllerTest {
                 .build();
 
             given(interestService.getInterests(
-                any(UUID.class), anyString(), anyString(), eq(10), eq("subscriberCount"), eq("desc")))
+                any(UUID.class), anyString(), anyString(), eq(10), eq("subscriberCount"),
+                eq("desc")))
                 .willReturn(responseDto);
 
             // When & Then
@@ -327,7 +329,8 @@ class InterestControllerTest {
             String keyword = "soccer";
             int limit = 10;
 
-            given(interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
+            given(
+                interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
                 .willThrow(new InvalidCursorException("잘못된 커서 형식입니다."));
 
             // When & Then
@@ -351,7 +354,8 @@ class InterestControllerTest {
             String keyword = "soccer";
             int limit = 10;
 
-            given(interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
+            given(
+                interestService.getInterests(any(UUID.class), any(), any(), anyInt(), any(), any()))
                 .willThrow(new InvalidSortOptionException("지원하지 않는 정렬 필드입니다."));
 
             // When & Then
@@ -387,7 +391,8 @@ class InterestControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-            given(interestService.createSubscription(userId, interestId)).willReturn(subscriptionDto);
+            given(interestService.createSubscription(userId, interestId)).willReturn(
+                subscriptionDto);
 
             // When & Then
             mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId)
@@ -421,6 +426,93 @@ class InterestControllerTest {
     }
 
     @Nested
+    @DisplayName("관심사 키워드 수정 테스트")
+    class InterestUpdateKeywordsTests {
+
+        @Test
+        void 관심사_키워드를_수정하면_수정된_관심사_응답_DTO를_반환한다() throws Exception {
+            // Given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> newKeywords = Arrays.asList("keyword1", "keyword2");
+
+            InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
+
+            InterestDto expectedResponse = new InterestDto(
+                interestId,
+                "Interest 1",
+                newKeywords,
+                0L,
+                true
+            );
+
+            given(interestService.updateInterestKeywords(eq(interestId), eq(request), eq(userId)))
+                .willReturn(expectedResponse);
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(interestId.toString()))
+                .andExpect(jsonPath("$.name").value("Interest 1"))
+                .andExpect(jsonPath("$.keywords").isArray())
+                .andExpect(jsonPath("$.keywords.length()").value(2))
+                .andExpect(jsonPath("$.keywords[0]").value("keyword1"))
+                .andExpect(jsonPath("$.keywords[1]").value("keyword2"))
+                .andExpect(jsonPath("$.subscribedByMe").value(true));
+
+            verify(interestService).updateInterestKeywords(eq(interestId), eq(request), eq(userId));
+        }
+
+        @Test
+        void 관심사_키워드_수정시_존재하지_않는_관심사를_수정하려_하면_404를_반환한다() throws Exception {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> newKeywords = Arrays.asList("keyword1", "keyword2");
+
+            InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
+
+            given(interestService.updateInterestKeywords(eq(nonExistentInterestId), eq(request),
+                eq(userId)))
+                .willThrow(new InterestNotFoundException(nonExistentInterestId));
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", nonExistentInterestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+
+            verify(interestService).updateInterestKeywords(eq(nonExistentInterestId), eq(request),
+                eq(userId));
+        }
+
+        @Test
+        void 관심사_키워드를_수정할_때_키워드가_비어있으면_400을_반환한다() throws Exception {
+            // Given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            List<String> emptyKeywords = Arrays.asList();
+
+            InterestUpdateRequest request = new InterestUpdateRequest(emptyKeywords);
+
+            // When & Then
+            mockMvc.perform(patch("/api/interests/{interestId}", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("관심사 키워드는 최소 하나 이상이어야 합니다."));
+        }
+    }
+
+    @Nested
     @DisplayName("관심사 삭제 테스트")
     class InterestDeleteTests {
 
@@ -445,7 +537,8 @@ class InterestControllerTest {
             // Given
             UUID nonExistentInterestId = UUID.randomUUID();
 
-            doThrow(new InterestNotFoundException(nonExistentInterestId)).when(interestService).deleteInterest(nonExistentInterestId);
+            doThrow(new InterestNotFoundException(nonExistentInterestId)).when(interestService)
+                .deleteInterest(nonExistentInterestId);
 
             // When & Then
             mockMvc.perform(delete("/api/interests/{interestId}", nonExistentInterestId)
@@ -456,6 +549,48 @@ class InterestControllerTest {
                 .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
 
             verify(interestService).deleteInterest(nonExistentInterestId);
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 구독 취소 테스트")
+    class DeleteSubscriptionTests {
+
+        @Test
+        void 관심사_구독을_취소하면_204를_반환한다() throws Exception {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
+
+            doNothing().when(interestService).deleteSubscription(userId, interestId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+            verify(interestService).deleteSubscription(userId, interestId);
+        }
+
+        @Test
+        void 존재하지_않는_관심사의_구독을_취소하면_404를_반환한다() throws Exception {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
+
+            doThrow(new InterestNotFoundException(interestId))
+                .when(interestService).deleteSubscription(userId, interestId);
+
+            // When & Then
+            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId)
+                    .header("Monew-Request-User-ID", userId.toString())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("INTEREST_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("관심사를 찾을 수 없습니다."));
+
+            verify(interestService).deleteSubscription(userId, interestId);
         }
     }
 }
