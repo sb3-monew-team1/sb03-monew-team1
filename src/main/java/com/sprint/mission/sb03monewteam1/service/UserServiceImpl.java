@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
         BCrypt.Result result = BCrypt.verifyer().verify(rawPassword.toCharArray(), user.getPassword());
 
         if ((!result.verified || user.isDeleted())) {
-            log.warn("로그인 실패 - 존재하지 않는 비밀번호, 입력한 비밀번호: {}", rawPassword);
+            log.warn("로그인 실패 - 잘못된 비밀번호: email={}", email);
             throw new InvalidEmailOrPasswordException(email);
         }
 
