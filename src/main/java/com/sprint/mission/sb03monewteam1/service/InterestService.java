@@ -24,4 +24,6 @@ public interface InterestService {
     InterestDto updateInterestKeywords(UUID interestId, InterestUpdateRequest request, UUID userId);
 
     void deleteInterest(UUID interestId);
+
+    void deleteSubscription(UUID userId, UUID interestId);
 }

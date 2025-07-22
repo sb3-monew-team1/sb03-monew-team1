@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.sprint.mission.sb03monewteam1.dto.InterestDto;
@@ -25,7 +26,9 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionExcep
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestSimilarityException;
+import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
+import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
@@ -167,7 +170,8 @@ class InterestServiceTest {
 
             List<Interest> interests = Arrays.asList(interest2, interest1);
 
-            when(interestRepository.searchByKeywordOrName(null, null, limit + 1, orderBy, direction))
+            when(
+                interestRepository.searchByKeywordOrName(null, null, limit + 1, orderBy, direction))
                 .thenReturn(interests);
 
             Subscription subscription1 = Subscription.builder()
@@ -184,7 +188,8 @@ class InterestServiceTest {
                 .thenReturn(Arrays.asList(subscription1, subscription2));
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(user.getId(), null, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(user.getId(),
+                null, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(2);
@@ -192,7 +197,8 @@ class InterestServiceTest {
             assertThat(result.content().get(1).name()).isEqualTo("aesthetic");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy, direction);
+            verify(interestRepository).searchByKeywordOrName(null, null, limit + 1, orderBy,
+                direction);
             verify(subscriptionRepository).findAllByUserId(user.getId());
         }
 
@@ -205,25 +211,29 @@ class InterestServiceTest {
             String direction = "asc";
 
             Interest interest1 = Interest.builder().name("soccer").subscriberCount(15L).build();
-            Interest interest2 = Interest.builder().name("basketball").subscriberCount(100L).build();
+            Interest interest2 = Interest.builder().name("basketball").subscriberCount(100L)
+                .build();
 
             List<Interest> interests = Arrays.asList(interest1);
             List<InterestDto> interestDtos = Arrays.asList(
                 InterestDto.builder().name("soccer").subscriberCount(150L).build()
             );
 
-            when(interestRepository.searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
+            when(interestRepository.searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1),
+                eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),keyword, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),
+                keyword, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(1);
             assertThat(result.content().get(0).name()).isEqualTo("soccer");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1), eq(orderBy), eq(direction));
+            verify(interestRepository).searchByKeywordOrName(eq(keyword), eq(null), eq(limit + 1),
+                eq(orderBy), eq(direction));
         }
 
 
@@ -243,11 +253,13 @@ class InterestServiceTest {
                 InterestDto.builder().name("soccer").subscriberCount(200L).build()
             );
 
-            when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction)))
+            when(interestRepository.searchByKeywordOrName(eq(null), eq(null), eq(limit + 1),
+                eq(orderBy), eq(direction)))
                 .thenReturn(interests);
 
             // When
-            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),null, null, limit, orderBy, direction);
+            CursorPageResponse<InterestDto> result = interestService.getInterests(UUID.randomUUID(),
+                null, null, limit, orderBy, direction);
 
             // Then
             assertThat(result.content()).hasSize(2);
@@ -255,7 +267,8 @@ class InterestServiceTest {
             assertThat(result.content().get(1).name()).isEqualTo("soccer");
             assertThat(result.hasNext()).isFalse();
 
-            verify(interestRepository).searchByKeywordOrName(eq(null), eq(null), eq(limit + 1), eq(orderBy), eq(direction));
+            verify(interestRepository).searchByKeywordOrName(eq(null), eq(null), eq(limit + 1),
+                eq(orderBy), eq(direction));
         }
 
         @Test
@@ -267,7 +280,9 @@ class InterestServiceTest {
             String direction = "asc";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(UUID.randomUUID(), keyword, null, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(
+                () -> interestService.getInterests(UUID.randomUUID(), keyword, null, limit, orderBy,
+                    direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidSortOptionException.class)
@@ -287,7 +302,9 @@ class InterestServiceTest {
             String cursor = "invalidCursorFormat";
 
             // When
-            Throwable throwable = catchThrowable(() -> interestService.getInterests(UUID.randomUUID(), keyword, cursor, limit, orderBy, direction));
+            Throwable throwable = catchThrowable(
+                () -> interestService.getInterests(UUID.randomUUID(), keyword, cursor, limit,
+                    orderBy, direction));
 
             // Then
             assertThat(throwable).isInstanceOf(InvalidCursorException.class)
@@ -330,14 +347,16 @@ class InterestServiceTest {
             when(subscriptionMapper.toDto(subscription)).thenReturn(expectedDto);
 
             // When
-            SubscriptionDto result = interestService.createSubscription(interest.getId(), user.getId());
+            SubscriptionDto result = interestService.createSubscription(interest.getId(),
+                user.getId());
 
             // Then
             assertThat(result).isNotNull();
             assertThat(interest.getSubscriberCount()).isEqualTo(151L);
             assertThat(result.interestId()).isEqualTo(expectedDto.interestId());
             assertThat(result.interestName()).isEqualTo(expectedDto.interestName());
-            assertThat(result.interestSubscriberCount()).isEqualTo(expectedDto.interestSubscriberCount());
+            assertThat(result.interestSubscriberCount()).isEqualTo(
+                expectedDto.interestSubscriberCount());
             assertThat(result.createdAt()).isEqualTo(expectedDto.createdAt());
             verify(interestRepository).findById(interest.getId());
             verify(eventPublisher).publishEvent(any(SubscriptionActivityCreateEvent.class));
@@ -355,9 +374,10 @@ class InterestServiceTest {
             when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
 
             // When & Then
-            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
-                interestService.createSubscription(user.getId(), nonExistentInterestId);
-            });
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class,
+                () -> {
+                    interestService.createSubscription(user.getId(), nonExistentInterestId);
+                });
 
             assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
 
@@ -400,13 +420,17 @@ class InterestServiceTest {
 
             InterestUpdateRequest request = new InterestUpdateRequest(newKeywords);
 
-            given(interestRepository.findById(interestId)).willReturn(Optional.of(existingInterest));
-            given(subscriptionRepository.existsByUserIdAndInterestId(userId, interestId)).willReturn(true);
+            given(interestRepository.findById(interestId)).willReturn(
+                Optional.of(existingInterest));
+            given(
+                subscriptionRepository.existsByUserIdAndInterestId(userId, interestId)).willReturn(
+                true);
             given(interestRepository.save(existingInterest)).willReturn(updatedInterest);
             given(interestMapper.toDto(updatedInterest, true)).willReturn(expectedResponse);
 
             // When
-            InterestDto result = interestService.updateInterestKeywords(interestId, request, userId);
+            InterestDto result = interestService.updateInterestKeywords(interestId, request,
+                userId);
 
             // Then
             assertThat(result)
@@ -422,7 +446,6 @@ class InterestServiceTest {
         }
 
 
-
         @Test
         void 존재하지_않는_관심사를_수정하려_하면_InterestNotFoundException이_발생한다() {
             // Given
@@ -435,9 +458,10 @@ class InterestServiceTest {
             given(interestRepository.findById(nonExistentInterestId)).willReturn(Optional.empty());
 
             // When & Then
-            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
-                interestService.updateInterestKeywords(nonExistentInterestId, request, userId);
-            });
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class,
+                () -> {
+                    interestService.updateInterestKeywords(nonExistentInterestId, request, userId);
+                });
 
             assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
 
@@ -473,14 +497,95 @@ class InterestServiceTest {
             when(interestRepository.findById(nonExistentInterestId)).thenReturn(Optional.empty());
 
             // When & Then
-            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class, () -> {
-                interestService.deleteInterest(nonExistentInterestId);
-            });
+            InterestNotFoundException exception = assertThrows(InterestNotFoundException.class,
+                () -> {
+                    interestService.deleteInterest(nonExistentInterestId);
+                });
 
             assertThat(exception).hasMessageContaining("관심사를 찾을 수 없습니다.");
 
             verify(interestRepository).findById(nonExistentInterestId);
             verify(interestRepository, times(0)).delete(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 구독 취소 테스트")
+    class DeleteSubscriptionTests {
+
+        @Test
+        void 관심사_구독을_취소하면_구독이_삭제된다() {
+            // Given
+            Interest interest = InterestFixture.createInterest();
+            User user = UserFixture.createUser();
+            Subscription subscription = new Subscription(interest, user);
+            long originalCount = interest.getSubscriberCount();
+
+            when(interestRepository.findById(interest.getId()))
+                .thenReturn(Optional.of(interest));
+            when(userRepository.findById(user.getId()))
+                .thenReturn(Optional.of(user));
+            when(subscriptionRepository.findByUserIdAndInterestId(user.getId(), interest.getId()))
+                .thenReturn(Optional.of(subscription));
+
+            // When
+            interestService.deleteSubscription(user.getId(), interest.getId());
+
+            // Then
+            verify(subscriptionRepository).delete(subscription);
+            assertThat(interest.getSubscriberCount()).isEqualTo(originalCount - 1);
+            verify(interestRepository).findById(interest.getId());
+        }
+
+        @Test
+        void 존재하지_않는_관심사를_구독취소하면_예외가_발생한다() {
+            // Given
+            UUID nonExistentInterestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            when(interestRepository.findById(nonExistentInterestId))
+                .thenReturn(Optional.empty());
+
+            // When & Then
+            InterestNotFoundException exception = assertThrows(
+                InterestNotFoundException.class,
+                () -> interestService.deleteSubscription(userId, nonExistentInterestId)
+            );
+
+            assertThat(exception)
+                .hasMessageContaining("관심사를 찾을 수 없습니다");
+
+            verify(interestRepository).findById(nonExistentInterestId);
+            verifyNoMoreInteractions(subscriptionRepository, userRepository);
+        }
+
+        @Test
+        void 구독정보가_존재하지_않으면_예외가_발생한다() {
+            // Given
+            UUID userId = UUID.randomUUID();
+            UUID interestId = UUID.randomUUID();
+
+            Interest interest = InterestFixture.createInterest();
+            User user = UserFixture.createUser();
+
+            when(interestRepository.findById(interestId)).thenReturn(Optional.of(interest));
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            when(subscriptionRepository.findByUserIdAndInterestId(userId, interestId)).thenReturn(
+                Optional.empty());
+
+            // When & Then
+            SubscriptionNotFoundException exception = assertThrows(
+                SubscriptionNotFoundException.class,
+                () -> interestService.deleteSubscription(userId, interestId)
+            );
+
+            assertThat(exception)
+                .hasMessageContaining("구독 정보를 찾을 수 없습니다");
+
+            verify(interestRepository).findById(interestId);
+            verify(userRepository).findById(userId);
+            verify(subscriptionRepository).findByUserIdAndInterestId(userId, interestId);
+            verifyNoMoreInteractions(subscriptionRepository);
         }
     }
 }
