@@ -1,9 +1,13 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
 import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleRestoreResultDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewDto;
 import com.sprint.mission.sb03monewteam1.dto.CollectedArticleDto;
@@ -18,6 +22,7 @@ import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewCountChangedEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -31,16 +36,24 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.articleView.ArticleViewR
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
+import com.sprint.mission.sb03monewteam1.util.S3Util;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +81,17 @@ public class ArticleServiceImpl implements ArticleService {
     private final ApplicationEventPublisher eventPublisher;
 
     private final MonewMetrics monewMetrics;
+
+    private final ObjectMapper objectMapper;
+    private final S3Util s3Util;
+
+    @Value("${aws.s3.bucket:}")
+    private String backupBucket;
+
+    @Value("${aws.s3.backup-prefix:articles/}")
+    private String backupPrefix;
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Override
     @Transactional
@@ -378,5 +402,104 @@ public class ArticleServiceImpl implements ArticleService {
                     ik.getInterest().getName(),
                     articleDtos));
         }
+    }
+
+    @Override
+    @Transactional
+    public List<ArticleRestoreResultDto> restoreArticles(String from, String to) {
+        LocalDate fromDate;
+        LocalDate toDate;
+        try {
+            fromDate = Instant.parse(from).atZone(KST).toLocalDate();
+            toDate = Instant.parse(to).atZone(KST).toLocalDate();
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("잘못된 날짜 형식입니다: " + e.getMessage(), e);
+        }
+
+        List<ArticleRestoreResultDto> results = new ArrayList<>();
+        for (LocalDate date = fromDate; !date.isAfter(toDate); date = date.plusDays(1)) {
+            results.add(restoreByDate(date));
+        }
+        return results;
+    }
+
+    private ArticleRestoreResultDto restoreByDate(LocalDate date) {
+        String key = backupPrefix + "backup-articles-" + date + ".json";
+        List<UUID> restoredIds = new ArrayList<>();
+        final int BATCH_SIZE = 1000;
+        try {
+            byte[] data = s3Util.download(backupBucket, key);
+            if (data == null || data.length == 0) {
+                return buildResult(date, restoredIds);
+            }
+
+            List<ArticleDto> batch = new ArrayList<>(BATCH_SIZE);
+            Set<String> allSourceUrls = new HashSet<>();
+            ObjectMapper mapper = objectMapper;
+            try (InputStream is = new ByteArrayInputStream(data)) {
+                JsonParser parser = mapper.getFactory().createParser(is);
+                if (parser.nextToken() != JsonToken.START_ARRAY) {
+                    return buildResult(date, restoredIds);
+                }
+
+                while (parser.nextToken() == JsonToken.START_OBJECT) {
+                    ArticleDto dto = mapper.readValue(parser, ArticleDto.class);
+                    batch.add(dto);
+                    allSourceUrls.add(dto.sourceUrl());
+
+                    if (batch.size() == BATCH_SIZE) {
+                        restoredIds.addAll(processBatch(batch, allSourceUrls));
+                        batch.clear();
+                        allSourceUrls.clear();
+                    }
+                }
+                if (!batch.isEmpty()) {
+                    restoredIds.addAll(processBatch(batch, allSourceUrls));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to restore articles for date {}", date, e);
+        }
+        return buildResult(date, restoredIds);
+    }
+
+    private List<UUID> processBatch(List<ArticleDto> batch, Set<String> allSourceUrls) {
+        List<UUID> restoredIds = new ArrayList<>();
+        List<String> existingUrls = articleRepository.findAllBySourceUrlIn(
+            new ArrayList<>(allSourceUrls));
+        Set<String> existingUrlSet = new HashSet<>(existingUrls);
+
+        List<Article> newArticles = new ArrayList<>();
+        for (ArticleDto dto : batch) {
+            if (existingUrlSet.contains(dto.sourceUrl())) {
+                continue;
+            }
+
+            Article article = Article.builder()
+                .id(dto.id())
+                .source(dto.source())
+                .sourceUrl(dto.sourceUrl())
+                .title(dto.title())
+                .publishDate(dto.publishDate())
+                .summary(dto.summary())
+                .viewCount(dto.viewCount())
+                .commentCount(dto.commentCount())
+                .isDeleted(false)
+                .build();
+            newArticles.add(article);
+            restoredIds.add(dto.id());
+        }
+        if (!newArticles.isEmpty()) {
+            articleRepository.saveAll(newArticles);
+        }
+        return restoredIds;
+    }
+
+    private ArticleRestoreResultDto buildResult(LocalDate date, List<UUID> ids) {
+        return ArticleRestoreResultDto.builder()
+            .restoreDate(date.atStartOfDay(KST).toInstant())
+            .restoredArticleIds(ids)
+            .restoredArticleCount(ids.size())
+            .build();
     }
 }

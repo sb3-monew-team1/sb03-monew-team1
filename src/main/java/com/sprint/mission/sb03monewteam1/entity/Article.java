@@ -1,26 +1,26 @@
 package com.sprint.mission.sb03monewteam1.entity;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import com.sprint.mission.sb03monewteam1.entity.base.BaseEntity;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Builder
 @Entity
 @Table(name = "articles")
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
 
@@ -40,20 +40,16 @@ public class Article extends BaseEntity {
     private String summary;
 
     @Column(name = "comment_count", nullable = false)
-    @Builder.Default
-    private Long commentCount = 0L;
+    private Long commentCount;
 
     @Column(name = "view_count", nullable = false)
-    @Builder.Default
-    private Long viewCount = 0L;
+    private Long viewCount;
 
     @Column(name = "is_deleted", nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
+    private Boolean isDeleted;
 
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<ArticleView> articleViews = new ArrayList<>();
+    private List<ArticleView> articleViews;
 
     public void increaseViewCount() {
         this.viewCount++;
@@ -83,5 +79,33 @@ public class Article extends BaseEntity {
 
     public boolean isNotDeleted() {
         return !this.isDeleted;
+    }
+
+    @Builder
+    public Article(
+        UUID id,
+        String source,
+        String sourceUrl,
+        String title,
+        Instant publishDate,
+        String summary,
+        Long commentCount,
+        Long viewCount,
+        Boolean isDeleted,
+        List<ArticleView> articleViews
+    ) {
+        super();
+        if (id != null) {
+            assignId(id);
+        }
+        this.source = source;
+        this.sourceUrl = sourceUrl;
+        this.title = title;
+        this.publishDate = publishDate;
+        this.summary = summary;
+        this.commentCount = commentCount != null ? commentCount : 0L;
+        this.viewCount = viewCount != null ? viewCount : 0L;
+        this.isDeleted = isDeleted != null ? isDeleted : false;
+        this.articleViews = articleViews != null ? articleViews : new ArrayList<>();
     }
 }

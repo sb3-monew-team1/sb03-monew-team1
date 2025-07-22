@@ -10,6 +10,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
 import com.sprint.mission.sb03monewteam1.dto.request.UserLoginRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.UserRegisterRequest;
@@ -147,7 +148,16 @@ public class UserServiceTest {
         void 사용자는_이메일과_비밀번호를_통해_로그인_할_수_있다() {
             // Given
             UserLoginRequest userLoginRequest = UserFixture.createUserLoginRequest();
-            User existedUser = UserFixture.createUser();
+
+            String encodedPassword =
+            BCrypt.withDefaults().hashToString(12, UserFixture.getDefaultPassword().toCharArray());
+
+            User existedUser = UserFixture.createUser(
+                UserFixture.getDefaultEmail(),
+                UserFixture.getDefaultNickname(),
+                encodedPassword
+                );
+
             UserDto expectedUserDto = UserFixture.createUserDto();
 
             given(userRepository.findByEmail(userLoginRequest.email())).willReturn(
