@@ -23,8 +23,7 @@ public class ArticleCollectScheduler {
     private final JobOperator jobOperator;
     private final Job newsCollectJob;
 
-    //        @Scheduled(cron = "0 0 0 * * *")
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void runNewsCollectJob() {
         runJobIfNotRunning("newsCollectJob", newsCollectJob);
     }
