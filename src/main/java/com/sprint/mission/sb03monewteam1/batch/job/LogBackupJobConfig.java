@@ -1,6 +1,7 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
 import com.sprint.mission.sb03monewteam1.util.S3Util;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,7 +60,12 @@ public class LogBackupJobConfig {
         return (contribution, chunkContext) -> {
             LocalDate targetDate = LocalDate.now().minusDays(1);
             String dateStr = targetDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            try (Stream<Path> files = Files.list(Paths.get(logDir))) {
+            Path logPath = Paths.get(logDir);
+            if (!Files.exists(logPath)) {
+                log.warn("로그 디렉토리가 존재하지 않습니다: {}", logDir);
+                return RepeatStatus.FINISHED;
+            }
+            try (Stream<Path> files = Files.list(logPath)) {
                 files.filter(Files::isRegularFile)
                     .filter(path -> {
                         String name = path.getFileName().toString();
@@ -68,6 +74,9 @@ public class LogBackupJobConfig {
                             && name.endsWith(".log.gz");
                     })
                     .forEach(path -> uploadFile(targetDate, path));
+            } catch (IOException e) {
+                log.error("로그 디렉토리 읽기 실패: {}", logDir, e);
+                throw new RuntimeException("로그 백업 실패", e);
             }
             return RepeatStatus.FINISHED;
         };
