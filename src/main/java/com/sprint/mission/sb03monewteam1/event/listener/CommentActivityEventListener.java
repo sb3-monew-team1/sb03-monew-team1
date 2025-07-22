@@ -2,17 +2,23 @@ package com.sprint.mission.sb03monewteam1.event.listener;
 
 import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
 
+import com.mongodb.client.result.UpdateResult;
 import com.sprint.mission.sb03monewteam1.document.CommentActivity;
 import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.CommentActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -25,6 +31,8 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
     CommentActivityDto,
     CommentActivity,
     CommentActivityRepository> {
+
+    private final MongoTemplate mongoTemplate;
 
     private final CommentActivityRepository repository;
 
@@ -71,5 +79,22 @@ public class CommentActivityEventListener extends AbstractActivityEventListener<
         log.debug("CommentActivityUpdateEvent 리스너 실행: {}", event);
 
         updateUserActivity(event.userId(), event.commentId(), event.commentActivityDto());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUserNameUpdateEvent(UserNameUpdateEvent event) {
+        UUID userId = event.userId();
+        String newUserName = event.newUserName();
+
+        log.debug("UserNameUpdateEvent 리스너 실행 userId={}, newUserName={}", userId, newUserName);
+
+        Query query = new Query(Criteria.where("comments.userId").is(userId));
+
+        Update update = new Update().set("comments.$[].userNickname", newUserName);
+
+        UpdateResult result = mongoTemplate.updateMulti(query, update, CommentActivity.class);
+
+        log.info("UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId, result.getModifiedCount());
     }
 }

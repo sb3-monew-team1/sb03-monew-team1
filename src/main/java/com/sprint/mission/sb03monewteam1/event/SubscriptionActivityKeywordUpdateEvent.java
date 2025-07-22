@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.UUID;
 
 public record SubscriptionActivityKeywordUpdateEvent(
+
     UUID interestId,
+
     List<String> newKeywords
 ) {
 

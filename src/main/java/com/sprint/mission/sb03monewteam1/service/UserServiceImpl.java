@@ -8,6 +8,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
 import com.sprint.mission.sb03monewteam1.exception.user.InvalidEmailOrPasswordException;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class UserServiceImpl implements UserService {
     private final CommentLikeRepository commentLikeRepository;
     private final CommentRepository commentRepository;
     private final UserMapper userMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public UserDto create(UserRegisterRequest userRegisterRequest) {
@@ -108,6 +111,9 @@ public class UserServiceImpl implements UserService {
         user.update(request.nickname());
 
         log.info("사용자 정보 수정 완료 - id={}, nickname={}", user.getId(), user.getNickname());
+
+        eventPublisher.publishEvent(new UserNameUpdateEvent(userId, request.nickname()));
+        log.debug("UserNameUpdateEvent 발행 완료: userId={}, newUserName={}", userId, request.nickname());
 
         return userMapper.toDto(user);
     }
