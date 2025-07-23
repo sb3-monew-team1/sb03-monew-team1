@@ -16,6 +16,7 @@ import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeCountUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
@@ -119,12 +120,14 @@ public class CommentServiceImpl implements CommentService {
 
         // 정렬 기준 유효성 검사
         if (!orderField.equals("createdAt") && !orderField.equals("likeCount")) {
-            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderField);
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
+                orderField);
         }
 
         // 정렬 방향 유효성 검사
         if (!orderDirection.equals("DESC") && !orderDirection.equals("ASC")) {
-            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection", orderDirection);
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection",
+                orderDirection);
         }
 
         // 커서 유효성 검사
@@ -132,8 +135,11 @@ public class CommentServiceImpl implements CommentService {
             switch (orderField) {
                 case "createdAt" -> parseInstant(cursor);
                 case "likeCount" -> parseLong(cursor);
-                default -> throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderField);
-            };
+                default ->
+                    throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
+                        orderField);
+            }
+            ;
         }
 
         List<Comment> comments = commentRepository.findCommentsWithCursorBySort(
@@ -155,7 +161,9 @@ public class CommentServiceImpl implements CommentService {
             nextCursor = switch (orderField) {
                 case "createdAt" -> lastComment.getCreatedAt().toString();
                 case "likeCount" -> String.valueOf(lastComment.getLikeCount());
-                default -> throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy", orderField);
+                default ->
+                    throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
+                        orderField);
             };
             nextCursorAfter = lastComment.getCreatedAt();
         }
@@ -215,7 +223,8 @@ public class CommentServiceImpl implements CommentService {
         log.info("댓글 수정 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
         CommentActivityDto newContentActivity = commentActivityMapper.toDto(comment);
-        CommentActivityUpdateEvent event = new CommentActivityUpdateEvent(userId, commentId, newContentActivity);
+        CommentActivityUpdateEvent event = new CommentActivityUpdateEvent(userId, commentId,
+            newContentActivity);
         eventPublisher.publishEvent(event);
 
         return toCommentDtoWithLikedByMe(comment, userId);
@@ -295,6 +304,11 @@ public class CommentServiceImpl implements CommentService {
         eventPublisher.publishEvent(new CommentLikeEvent(user, comment));
         log.info("좋아요 등록 알림 이벤트 발행: likedBy={}, comment={}", user.getId(), comment.getId());
 
+        CommentLikeCountUpdateEvent countEvent =
+            new CommentLikeCountUpdateEvent(commentId, comment.getLikeCount());
+        eventPublisher.publishEvent(countEvent);
+        log.debug("댓글 좋아요 사용 기록 동기화 이벤트 발행 완료: {}", countEvent);
+
         log.info("댓글 좋아요 등록 완료 : 댓글 좋아요 ID = {}", commentLike.getId());
 
         CommentLikeActivityDto event = commentLikeActivityMapper.toDto(commentLike);
@@ -323,7 +337,8 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("댓글 좋아요 취소 완료 : 댓글 ID = {}, 유저 ID = {}", commentId, userId);
 
-        CommentLikeActivityDeleteEvent event = new CommentLikeActivityDeleteEvent(userId, comment.getId());
+        CommentLikeActivityDeleteEvent event = new CommentLikeActivityDeleteEvent(userId,
+            comment.getId());
         eventPublisher.publishEvent(event);
         log.debug("댓글 좋아요 활동 삭제 이벤트 발행 완료: {}", event);
     }
@@ -342,7 +357,9 @@ public class CommentServiceImpl implements CommentService {
         }
 
         CommentDto dto = commentMapper.toDto(comment);
-        if (dto == null) throw new CommentException(ErrorCode.INTERNAL_SERVER_ERROR);
+        if (dto == null) {
+            throw new CommentException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
         return dto.toBuilder().likedByMe(likedByMe).build();
     }
 

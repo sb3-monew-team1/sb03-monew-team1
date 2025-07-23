@@ -16,8 +16,10 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
-import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewCountUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -108,9 +110,15 @@ public class ArticleServiceImpl implements ArticleService {
         ArticleView articleView = ArticleView.createArticleView(userId, article);
         ArticleView savedArticleView = articleViewRepository.save(articleView);
 
-        ArticleViewActivityDto event = articleViewActivityMapper.toDto(savedArticleView);
-        eventPublisher.publishEvent(new ArticleViewActivityCreateEvent(userId, event));
-        log.debug("기사 뷰 활동 내역 이벤트 발행 완료: {}", event);
+        ArticleViewCountUpdateEvent event =
+            new ArticleViewCountUpdateEvent(article.getId(), article.getViewCount());
+
+        eventPublisher.publishEvent(event);
+        log.debug("기사 뷰 활동 내역 동기화 이벤트 발행 완료: {}", event);
+
+        ArticleViewActivityDto activityDto = articleViewActivityMapper.toDto(savedArticleView);
+        eventPublisher.publishEvent(new ArticleViewActivityCreateEvent(userId, activityDto));
+        log.debug("기사 뷰 활동 내역 이벤트 발행 완료: {}", activityDto);
 
         ArticleViewDto result = articleViewMapper.toDto(savedArticleView);
         log.info("기사 뷰 등록 완료 - id: {}", result.id());
@@ -327,6 +335,10 @@ public class ArticleServiceImpl implements ArticleService {
 
         articleViewRepository.deleteByArticleId(articleId);
         articleInterestRepository.deleteByArticleId(articleId);
+
+        ArticleViewActivityBulkDeleteEvent event = new ArticleViewActivityBulkDeleteEvent(
+            articleId);
+        eventPublisher.publishEvent(event);
 
         articleRepository.deleteById(articleId);
     }

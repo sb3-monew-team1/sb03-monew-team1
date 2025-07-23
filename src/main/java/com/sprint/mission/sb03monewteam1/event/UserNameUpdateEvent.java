@@ -2,9 +2,11 @@ package com.sprint.mission.sb03monewteam1.event;
 
 import java.util.UUID;
 
-public record SubscriptionActivityDeleteEvent(
+public record UserNameUpdateEvent(
+
     UUID userId,
-    UUID interestId
+
+    String newUserName
 ) {
 
 }

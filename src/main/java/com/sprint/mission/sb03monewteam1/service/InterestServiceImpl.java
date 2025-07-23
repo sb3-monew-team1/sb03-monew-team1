@@ -9,7 +9,10 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityKeywordUpdateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
@@ -217,6 +220,11 @@ public class InterestServiceImpl implements InterestService {
 
         log.info("관심사 수정 완료: response={}", updatedInterestDto);
 
+        eventPublisher.publishEvent(
+            new SubscriptionActivityKeywordUpdateEvent(interestId, newKeywords)
+        );
+        log.info("SubscriptionActivityKeywordUpdateEvent 발행 완료: interestId={}", interestId);
+
         return updatedInterestDto;
     }
 
@@ -234,6 +242,12 @@ public class InterestServiceImpl implements InterestService {
         interestRepository.delete(interest);
 
         log.info("관심사 삭제 완료: interestId={}", interestId);
+
+        SubscriptionActivityBulkDeleteEvent event = new SubscriptionActivityBulkDeleteEvent(
+            interestId);
+        eventPublisher.publishEvent(event);
+
+        log.debug("삭제된 관심사 구독 활동 내역 삭제 이벤트 발행 완료: {}", event);
     }
 
     @Override
@@ -255,6 +269,12 @@ public class InterestServiceImpl implements InterestService {
 
         log.info("구독 취소 완료: subscriptionId={}, userId={}, interestId={}, 남은 구독자 수={}",
             subscription.getId(), userId, interestId, interest.getSubscriberCount());
+
+        SubscriptionActivityDeleteEvent event = new SubscriptionActivityDeleteEvent(userId,
+            interestId);
+        eventPublisher.publishEvent(event);
+
+        log.debug("구독 활동 내역 삭제 이벤트 발행 완료: {}", event);
     }
 
     private String calculateNextCursor(List<Interest> interests, String orderBy, int limit) {

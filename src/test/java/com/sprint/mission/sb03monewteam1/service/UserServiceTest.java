@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.sprint.mission.sb03monewteam1.dto.UserDto;
@@ -19,6 +20,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
@@ -47,6 +49,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")
@@ -72,6 +75,9 @@ public class UserServiceTest {
 
     @InjectMocks
     private UserServiceImpl userService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
     @DisplayName("테스트 환경 설정 확인")
@@ -278,6 +284,8 @@ public class UserServiceTest {
 
             then(userRepository).should().findByIdAndIsDeletedFalse(userId);
             then(userMapper).should().toDto(existedUser);
+
+            verify(eventPublisher).publishEvent(any(UserNameUpdateEvent.class));
         }
 
         @Test

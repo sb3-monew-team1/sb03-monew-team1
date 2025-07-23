@@ -3,7 +3,6 @@ package com.sprint.mission.sb03monewteam1.repository.mongodb;
 import com.sprint.mission.sb03monewteam1.document.CommentActivity;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
