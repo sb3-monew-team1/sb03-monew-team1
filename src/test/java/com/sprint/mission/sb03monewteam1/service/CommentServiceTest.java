@@ -39,8 +39,8 @@ import com.sprint.mission.sb03monewteam1.mapper.CommentLikeActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -295,7 +295,7 @@ public class CommentServiceTest {
         }
 
         @Test
-        void 커서기반으로_다음페이지를_정상조회한다() {
+        void 커서기반으로_다음페이지를_정상조회한다_생성일_기준() {
 
             // given
             UUID articleId = UUID.randomUUID();
@@ -318,6 +318,65 @@ public class CommentServiceTest {
 
             Comment lastOfFirstPage = firstPage.get(pageSize - 1);
             Instant cursor = lastOfFirstPage.getCreatedAt();
+            Instant after = lastOfFirstPage.getCreatedAt();
+
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
+            given(commentRepository.findCommentsWithCursorBySort(
+                eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
+                .willReturn(secondPage);
+            given(commentRepository.countByArticleIdAndIsDeletedFalse(article.getId())).willReturn(10L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                    Comment comment = invocation.getArgument(0);
+                    return CommentFixture.createCommentDto(comment);
+                }
+            );
+
+            // when
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
+                articleId, cursor.toString(), after, pageSize, sortBy, sortDirection, userId
+            );
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(5);
+
+            List<String> expectedContents = secondPage.stream()
+                .map(Comment::getContent)
+                .toList();
+
+            List<String> actualContents = result.content().stream()
+                .map(CommentDto::content)
+                .toList();
+
+            assertThat(actualContents).isEqualTo(expectedContents);
+            assertThat(result.totalElements()).isEqualTo(10L);
+            assertThat(result.hasNext()).isFalse();
+        }
+
+        @Test
+        void 커서기반으로_다음페이지를_정상조회한다_좋아요수_기준() {
+
+            // given
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            int pageSize = 5;
+            String sortBy = "likeCount";
+            String sortDirection = "DESC";
+
+            List<Comment> commentList = createCommentsWithLikeCount(10, article, user);
+
+            List<Comment> sorted = commentList.stream()
+                .sorted(Comparator.comparing(Comment::getLikeCount).reversed())
+                .collect(Collectors.toList());
+
+            List<Comment> firstPage = sorted.subList(0, pageSize + 1);
+            List<Comment> secondPage = sorted.subList(pageSize, sorted.size());
+
+            Comment lastOfFirstPage = firstPage.get(pageSize - 1);
+            Long cursor = lastOfFirstPage.getLikeCount();
             Instant after = lastOfFirstPage.getCreatedAt();
 
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
@@ -482,7 +541,7 @@ public class CommentServiceTest {
         }
 
         @Test
-        void 유효하지_않은_커서로_조회시_예외가_발생한다() {
+        void 유효하지_않은_커서로_조회시_예외가_발생한다_생성일_기준() {
 
             // given
             UUID articleId = UUID.randomUUID();
@@ -504,6 +563,31 @@ public class CommentServiceTest {
                 commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection, userId)
             ).isInstanceOf(InvalidCursorException.class)
                 .hasMessageContaining(ErrorCode.INVALID_CURSOR_DATE.getMessage());
+        }
+
+        @Test
+        void 유효하지_않은_커서로_조회시_예외가_발생한다_좋아요수_기준() {
+
+            // given
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            String invalidCursor = "invalid-value";
+            int pageSize = 5;
+            String sortBy = "likeCount";
+            String sortDirection = "DESC";
+
+            List<Comment> comments = createCommentsWithLikeCount(pageSize, article, user);
+
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
+
+            // when & then
+            assertThatThrownBy(() ->
+                commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection, userId)
+            ).isInstanceOf(InvalidCursorException.class)
+                .hasMessageContaining(ErrorCode.INVALID_CURSOR_COUNT.getMessage());
         }
 
         @Test
@@ -566,6 +650,66 @@ public class CommentServiceTest {
             )
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_DIRECTION.getMessage());
+        }
+
+        @Test
+        void articleId가_null인_경우_삭제되지_않은_전체_댓글수를_반환한다() {
+
+            // given
+            UUID articleId = UUID.randomUUID();
+            Article article = ArticleFixture.createArticleWithId(articleId);
+            UUID articleId2 = UUID.randomUUID();
+            Article article2 = ArticleFixture.createArticleWithId(articleId2);
+            UUID userId = UUID.randomUUID();
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            int pageSize = 5;
+            String sortBy = "createdAt";
+            String sortDirection = "DESC";
+
+            List<Comment> commentList = createCommentsWithCreatedAt(5, article, user);
+            commentList.addAll(createCommentsWithCreatedAt(5, article2, user));
+
+            List<Comment> sorted = commentList.stream()
+                .sorted(Comparator.comparing(Comment::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+
+            List<Comment> firstPage = sorted.subList(0, pageSize + 1);
+
+            given(commentRepository.findCommentsWithCursorBySort(
+                eq(null), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
+                .willReturn(firstPage);
+            given(commentRepository.countByIsDeletedFalse()).willReturn(10L);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                    Comment comment = invocation.getArgument(0);
+                    return CommentFixture.createCommentDto(comment);
+                }
+            );
+
+            // when
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
+                null, null, null, pageSize, sortBy, sortDirection, userId
+            );
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(pageSize);
+
+            List<String> expectedContents = sorted.subList(0, pageSize).stream()
+                .map(Comment::getContent)
+                .toList();
+
+            List<String> actualContents = result.content().stream()
+                .map(CommentDto::content)
+                .toList();
+
+            assertThat(actualContents).isEqualTo(expectedContents);
+            assertThat(result.nextCursor()).isEqualTo(sorted.get(pageSize).getCreatedAt().toString());
+            assertThat(result.nextAfter()).isEqualTo(sorted.get(pageSize).getCreatedAt());
+            assertThat(result.size()).isEqualTo(pageSize);
+            assertThat(result.totalElements()).isEqualTo(10L);
+            assertThat(result.hasNext()).isTrue();
         }
     }
 
@@ -655,6 +799,35 @@ public class CommentServiceTest {
                 commentService.update(commentId, otherUserId, commentUpdateRequest
                 )).isInstanceOf(UnauthorizedCommentAccessException.class)
                 .hasMessageContaining(ErrorCode.FORBIDDEN_ACCESS.getMessage());
+        }
+
+        @Test
+        void 댓글DTO가_null이면_예외가_발생한다() {
+
+            // given
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+            UUID userId = user.getId();
+            Article article = ArticleFixture.createArticleWithId(UUID.randomUUID());
+            String originalContent = "기존 댓글";
+            String updateContent = "댓글 수정 테스트";
+            Comment comment = CommentFixture.createComment(originalContent, user, article);
+            ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+            UUID commentId = comment.getId();
+
+            CommentUpdateRequest commentUpdateRequest = CommentUpdateRequest.builder()
+                .content(updateContent)
+                .build();
+
+            given(commentRepository.findByIdAndIsDeletedFalse(commentId)).willReturn(Optional.of(comment));
+            given(commentMapper.toDto(any(Comment.class))).willReturn(null);
+
+            // when & then
+            assertThatThrownBy(() ->
+                commentService.update(commentId, userId, commentUpdateRequest)
+            )
+                .isInstanceOf(CommentException.class)
+                .hasMessageContaining(ErrorCode.INTERNAL_SERVER_ERROR.getMessage());
         }
     }
 

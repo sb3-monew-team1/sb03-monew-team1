@@ -135,11 +135,7 @@ public class CommentServiceImpl implements CommentService {
             switch (orderField) {
                 case "createdAt" -> parseInstant(cursor);
                 case "likeCount" -> parseLong(cursor);
-                default ->
-                    throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
-                        orderField);
             }
-            ;
         }
 
         List<Comment> comments = commentRepository.findCommentsWithCursorBySort(
