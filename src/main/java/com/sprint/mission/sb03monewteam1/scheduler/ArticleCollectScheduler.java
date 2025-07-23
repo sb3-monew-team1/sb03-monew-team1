@@ -21,19 +21,11 @@ public class ArticleCollectScheduler {
     private final JobLauncher jobLauncher;
     private final JobExplorer jobExplorer;
     private final JobOperator jobOperator;
-    private final Job naverNewsCollectJob;
-    private final Job hankyungNewsCollectJob;
+    private final Job newsCollectJob;
 
-    @Scheduled(cron = "0 0 * * * *")
-//    @Scheduled(cron = "0 */3 * * * *")
-    public void runNaverNewsCollectJob() {
-        runJobIfNotRunning("naverNewsCollectJob", naverNewsCollectJob);
-    }
-
-    @Scheduled(cron = "0 0 * * * *")
-//    @Scheduled(cron = "0 */3 * * * *")
-    public void runHankyungNewsCollectJob() {
-        runJobIfNotRunning("hankyungNewsCollectJob", hankyungNewsCollectJob);
+    @Scheduled(cron = "0 0 0 * * *")
+    public void runNewsCollectJob() {
+        runJobIfNotRunning("newsCollectJob", newsCollectJob);
     }
 
     private void runJobIfNotRunning(String jobName, Job job) {

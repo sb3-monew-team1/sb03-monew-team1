@@ -31,7 +31,6 @@ public class NotificationEventListener {
 
     private final java.util.Map<java.util.UUID, Integer> articleCountMap = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Map<java.util.UUID, String> interestNameMap = new java.util.concurrent.ConcurrentHashMap<>();
-    private final java.util.Set<String> completedJobs = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     @EventListener
     public void handleCollectArticle(NewArticleCollectEvent event) {
@@ -49,13 +48,10 @@ public class NotificationEventListener {
 
     @EventListener
     public void handleCollectJobCompleted(NewsCollectJobCompletedEvent event) {
-        completedJobs.add(event.getJobName());
-        if (completedJobs.contains("naverNewsCollectJob") && completedJobs.contains(
-            "hankyungNewsCollectJob")) {
+        if ("newsCollectJob".equals(event.getJobName())) {
             flushNotifications();
             articleCountMap.clear();
             interestNameMap.clear();
-            completedJobs.clear();
         }
     }
 

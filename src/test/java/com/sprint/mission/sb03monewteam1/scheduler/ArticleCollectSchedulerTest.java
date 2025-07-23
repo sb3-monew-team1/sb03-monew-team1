@@ -28,25 +28,15 @@ class ArticleCollectSchedulerTest {
     private JobLauncher jobLauncher;
 
     @Autowired
-    private Job naverNewsCollectJob;
-
-    @Autowired
-    private Job hankyungNewsCollectJob;
+    private Job newsCollectJob;
 
     @Autowired
     private ArticleCollectScheduler articleCollectScheduler;
 
     @Test
-    void naverNewsCollectJob_스케줄러_실행_테스트() throws Exception {
-        articleCollectScheduler.runNaverNewsCollectJob();
-        verify(jobLauncher, times(1)).run(org.mockito.ArgumentMatchers.eq(naverNewsCollectJob),
-            org.mockito.ArgumentMatchers.any());
-    }
-
-    @Test
-    void hankyungNewsCollectJob_스케줄러_실행_테스트() throws Exception {
-        articleCollectScheduler.runHankyungNewsCollectJob();
-        verify(jobLauncher, times(1)).run(org.mockito.ArgumentMatchers.eq(hankyungNewsCollectJob),
+    void newsCollectJob_스케줄러_실행_테스트() throws Exception {
+        articleCollectScheduler.runNewsCollectJob();
+        verify(jobLauncher, times(1)).run(org.mockito.ArgumentMatchers.eq(newsCollectJob),
             org.mockito.ArgumentMatchers.any());
     }
 }

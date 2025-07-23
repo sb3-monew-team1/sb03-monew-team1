@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
 
         String encodedPassword = BCrypt.withDefaults().hashToString(12, rawPassword.toCharArray());
 
-            User user = User.builder()
+        User user = User.builder()
             .email(email)
             .nickname(nickname)
             .password(encodedPassword)
@@ -85,7 +85,8 @@ public class UserServiceImpl implements UserService {
                     return new InvalidEmailOrPasswordException(email);
                 });
 
-        BCrypt.Result result = BCrypt.verifyer().verify(rawPassword.toCharArray(), user.getPassword());
+        BCrypt.Result result = BCrypt.verifyer()
+            .verify(rawPassword.toCharArray(), user.getPassword());
 
         if ((!result.verified || user.isDeleted())) {
             log.warn("로그인 실패 - 잘못된 비밀번호: email={}", email);

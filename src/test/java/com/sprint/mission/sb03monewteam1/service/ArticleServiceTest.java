@@ -39,6 +39,7 @@ import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleViewFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
+import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.UserFixture;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleMapper;
 import com.sprint.mission.sb03monewteam1.mapper.ArticleViewActivityMapper;
@@ -241,13 +242,11 @@ class ArticleServiceTest {
             eq(publishDateToInstant),
             eq(after), eq(limit + 1), eq(false)))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
-            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
             keyword, sourceIn, interests, publishDateFrom, publishDateTo,
-            orderBy, direction, cursor, after, limit);
+            orderBy, direction, cursor, after, limit, null);
 
         // then
         assertThat(result).isNotNull();
@@ -281,12 +280,10 @@ class ArticleServiceTest {
         when(articleRepository.findArticlesWithCursorByViewCount(
             any(), any(), any(), any(), anyLong(), any(Instant.class), anyInt(), anyBoolean()))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
-            .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, cursor, after, limit);
+            null, null, null, null, null, orderBy, direction, cursor, after, limit, null);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -318,12 +315,12 @@ class ArticleServiceTest {
             isNull(), isNull(), isNull(), isNull(), eq(50L), any(Instant.class), eq(limit + 1),
             eq(false)))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
+        when(articleMapper.toDto(any(Article.class), anyBoolean()))
             .thenReturn(articleDtos.get(0), articleDtos.get(1));
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, cursor, after, limit);
+            null, null, null, null, null, orderBy, direction, cursor, after, limit, null);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -345,12 +342,12 @@ class ArticleServiceTest {
         when(articleRepository.findArticlesWithCursorByDate(
             isNull(), isNull(), isNull(), isNull(), isNull(), eq(3), eq(false)))
             .thenReturn(articles);
-        when(articleMapper.toDto(any(Article.class)))
+        when(articleMapper.toDto(any(Article.class), anyBoolean()))
             .thenReturn(ArticleDto.builder().id(UUID.randomUUID()).title("제목").build());
 
         // when
         CursorPageResponse<ArticleDto> result = articleService.getArticles(
-            null, null, null, null, null, "publishDate", "DESC", null, null, 2);
+            null, null, null, null, null, "publishDate", "DESC", null, null, 2, null);
 
         // then
         assertThat(result.content()).hasSize(2);
@@ -386,7 +383,7 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit, null))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
@@ -401,7 +398,7 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit, null))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_COUNT.getMessage(), invalidCursor);
     }
@@ -416,7 +413,7 @@ class ArticleServiceTest {
 
         // when & then
         assertThatThrownBy(() -> articleService.getArticles(
-            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit))
+            null, null, null, null, null, orderBy, direction, invalidCursor, null, limit, null))
             .isInstanceOf(InvalidCursorException.class)
             .hasMessage(ErrorCode.INVALID_CURSOR_DATE.getMessage(), invalidCursor);
     }
@@ -424,8 +421,8 @@ class ArticleServiceTest {
     @Test
     void 네이버_뉴스_수집시_ArticleInterest_저장_확인() {
         // given
-        Interest interest1 = Interest.builder().name("IT").build();
-        Interest interest2 = Interest.builder().name("SPORTS").build();
+        Interest interest1 = InterestFixture.createInterestWithId();
+        Interest interest2 = InterestFixture.createInterestWithId();
         String keyword = "테스트";
         InterestKeyword ik1 = InterestKeyword.builder().interest(interest1).keyword(keyword)
             .build();
@@ -456,7 +453,7 @@ class ArticleServiceTest {
 
         // then
         verify(articleRepository).saveAll(anyList());
-        verify(articleInterestRepository, times(2)).saveAll(anyList());
+        verify(articleInterestRepository, times(1)).saveAll(anyList());
     }
 
     @Test

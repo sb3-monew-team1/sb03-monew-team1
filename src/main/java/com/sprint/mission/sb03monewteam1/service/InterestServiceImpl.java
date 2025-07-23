@@ -1,8 +1,8 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.SubscriptionDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestRegisterRequest;
-import com.sprint.mission.sb03monewteam1.dto.InterestDto;
 import com.sprint.mission.sb03monewteam1.dto.request.InterestUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.entity.Interest;

@@ -111,6 +111,7 @@ public class ArticleFixture {
             .commentCount(DEFAULT_COMMENT_COUNT)
             .interests(List.of("테스트 관심사"))
             .createdAt(Instant.now())
+            .viewedByMe(false)
             .build();
     }
 
@@ -126,6 +127,7 @@ public class ArticleFixture {
             .commentCount(DEFAULT_COMMENT_COUNT)
             .interests(interests)
             .createdAt(Instant.now())
+            .viewedByMe(false)
             .build();
     }
 

@@ -61,7 +61,7 @@ class ArticleControllerTest {
 
         when(articleService.getArticles(
             isNull(), isNull(), isNull(), isNull(), isNull(),
-            eq("publishDate"), isNull(), isNull(), isNull(), eq(10)))
+            eq("publishDate"), isNull(), isNull(), isNull(), eq(10), isNull()))
             .thenReturn(response);
 
         // when & then
@@ -110,7 +110,7 @@ class ArticleControllerTest {
 
         when(articleService.getArticles(
             eq(keyword), eq(sourceIn), isNull(), isNull(), isNull(),
-            eq("publishDate"), eq("DESC"), isNull(), isNull(), eq(10)))
+            eq("publishDate"), eq("DESC"), isNull(), isNull(), eq(10), isNull()))
             .thenReturn(response);
 
         // when & then
@@ -156,7 +156,7 @@ class ArticleControllerTest {
 
         when(articleService.getArticles(
             isNull(), isNull(), isNull(), isNull(), isNull(),
-            eq("viewCount"), eq("ASC"), eq("5"), isNull(), eq(10)))
+            eq("viewCount"), eq("ASC"), eq("5"), isNull(), eq(10), isNull()))
             .thenReturn(response);
 
         // when & then
@@ -196,7 +196,7 @@ class ArticleControllerTest {
 
         when(articleService.getArticles(
             isNull(), isNull(), isNull(), isNull(), isNull(),
-            eq("commentCount"), eq("DESC"), isNull(), isNull(), eq(10)))
+            eq("commentCount"), eq("DESC"), isNull(), isNull(), eq(10), isNull()))
             .thenReturn(response);
 
         // when & then

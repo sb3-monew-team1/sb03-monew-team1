@@ -29,8 +29,8 @@ public class NaverNewsCollector {
     private final ObjectMapper objectMapper;
 
     private final RateLimiter<Object> rateLimiter =
-        RateLimiter.smoothBuilder(10, Duration.ofSeconds(1))
-            .withMaxWaitTime(Duration.ofMillis(200)).build();
+        RateLimiter.smoothBuilder(5, Duration.ofSeconds(1))
+            .withMaxWaitTime(Duration.ofSeconds(1)).build();
 
     @Value("${news.api.naver.client-id}")
     private String naverClientId;

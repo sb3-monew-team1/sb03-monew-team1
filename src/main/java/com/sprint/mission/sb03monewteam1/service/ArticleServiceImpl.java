@@ -45,9 +45,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -141,31 +141,41 @@ public class ArticleServiceImpl implements ArticleService {
         String direction,
         String cursor,
         Instant after,
-        int limit) {
+        int limit,
+        UUID userId) {
 
         Instant from = parseToKstInstant(publishDateFrom);
         Instant to = parseToKstInstant(publishDateTo);
 
-        String sortBy = orderBy != null ? orderBy : "publishDate";
+        String sortBy = (orderBy != null) ? orderBy : "publishDate";
         boolean isAscending = "ASC".equalsIgnoreCase(direction);
 
         List<Article> articles = getArticlesBySortType(
             keyword, sourceIn, from, to,
-            sortBy, isAscending, cursor, after, limit);
+            sortBy, isAscending, cursor, after, limit
+        );
 
         boolean hasNext = articles.size() > limit;
         if (hasNext) {
             articles = articles.subList(0, limit);
         }
 
+        List<UUID> articleIds = articles.stream()
+            .map(Article::getId)
+            .toList();
+
+        Set<UUID> viewedIds = (userId != null && !articleIds.isEmpty())
+            ? articleViewRepository.findViewedArticleIdsByUserIdAndArticleIds(userId, articleIds)
+            : java.util.Collections.emptySet();
+
         List<ArticleDto> articleDtos = articles.stream()
-            .map(articleMapper::toDto)
-            .collect(Collectors.toList());
+            .map(article -> articleMapper.toDto(article, viewedIds.contains(article.getId())))
+            .toList();
 
         String nextCursor = generateNextCursor(articles, sortBy, hasNext);
         Instant nextAfter = generateNextAfter(articles, hasNext);
 
-        CursorPageResponse<ArticleDto> result = CursorPageResponse.<ArticleDto>builder()
+        return CursorPageResponse.<ArticleDto>builder()
             .content(articleDtos)
             .nextCursor(nextCursor)
             .nextAfter(nextAfter)
@@ -173,9 +183,6 @@ public class ArticleServiceImpl implements ArticleService {
             .totalElements(null)
             .hasNext(hasNext)
             .build();
-
-        log.info("기사 목록 조회 완료 - 조회된 기사 수: {}, hasNext: {}", articleDtos.size(), hasNext);
-        return result;
     }
 
     private List<Article> getArticlesBySortType(
@@ -360,32 +367,62 @@ public class ArticleServiceImpl implements ArticleService {
         articleRepository.saveAll(filteredArticles);
         monewMetrics.getArticleCreatedCounter().increment(filteredArticles.size());
 
-        List<ArticleDto> articleDtos = filteredArticles.stream()
-            .map(articleMapper::toDto)
+        // 저장할 모든 (article_id, interest_id) 조합 생성
+        List<InterestKeyword> interestKeywords = interestKeywordRepository.findAllByKeyword(
+            keyword);
+        List<UUID> articleIds = filteredArticles.stream()
+            .map(Article::getId)
+            .toList();
+        List<UUID> interestIds = interestKeywords.stream()
+            .map(ik -> ik.getInterest().getId())
+            .distinct()
             .toList();
 
-        List<InterestKeyword> interestKeywords =
-            interestKeywordRepository.findAllByKeyword(keyword);
+        // 이미 존재하는 (article_id, interest_id) 조합을 한 번에 조회
+        Set<Pair<UUID, UUID>> existingPairs = articleInterestRepository
+            .findExistingArticleInterestPairsAsPairs(articleIds, interestIds);
 
-        for (InterestKeyword ik : interestKeywords) {
-            List<ArticleInterest> articleInterestList = filteredArticles.stream()
-                .map(article -> ArticleInterest.builder()
-                    .article(article)
-                    .interest(ik.getInterest())
-                    .build())
-                .toList();
+        // 저장할 ArticleInterest 리스트 생성
+        List<ArticleInterest> articleInterestList = new java.util.ArrayList<>();
+        for (UUID interestId : interestIds) {
+            for (Article article : filteredArticles) {
+                Pair<UUID, UUID> pair = Pair.of(article.getId(), interestId);
+                if (!existingPairs.contains(pair)) {
+                    articleInterestList.add(
+                        ArticleInterest.builder()
+                            .article(article)
+                            .interest(interestKeywords.stream()
+                                .filter(ik -> ik.getInterest().getId().equals(interestId))
+                                .findFirst().get().getInterest())
+                            .build()
+                    );
+                }
+            }
+        }
 
+        if (!articleInterestList.isEmpty()) {
             articleInterestRepository.saveAll(articleInterestList);
 
-            monewMetrics.getInterestArticleMappedCounter(ik.getInterest().getId(),
-                    ik.getInterest().getName())
-                .increment(filteredArticles.size());
+            for (InterestKeyword ik : interestKeywords) {
+                monewMetrics.getInterestArticleMappedCounter(ik.getInterest().getId(),
+                        ik.getInterest().getName())
+                    .increment(filteredArticles.size());
+            }
+        }
+
+        for (UUID interestId : interestIds) {
+            String interestName = interestKeywords.stream()
+                .filter(ik -> ik.getInterest().getId().equals(interestId))
+                .findFirst()
+                .map(ik -> ik.getInterest().getName())
+                .orElse("Unknown Interest");
+            List<ArticleDto> articleDtos = filteredArticles.stream()
+                .map(articleMapper::toDto)
+                .toList();
 
             eventPublisher.publishEvent(
-                new NewArticleCollectEvent(
-                    ik.getInterest().getId(),
-                    ik.getInterest().getName(),
-                    articleDtos));
+                new NewArticleCollectEvent(interestId, interestName, articleDtos)
+            );
         }
     }
 

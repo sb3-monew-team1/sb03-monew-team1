@@ -1,33 +1,35 @@
 package com.sprint.mission.sb03monewteam1.batch.job;
 
-import java.util.List;
-
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.JpaPagingItemReader;
-import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.PlatformTransactionManager;
-
 import com.sprint.mission.sb03monewteam1.config.metric.MonewMetrics;
 import com.sprint.mission.sb03monewteam1.dto.ArticleWithKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.event.listener.NewsCollectJobCompletionListener;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleCollectException;
 import com.sprint.mission.sb03monewteam1.service.ArticleService;
-
 import jakarta.persistence.EntityManagerFactory;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecutionListener;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.flow.Flow;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @RequiredArgsConstructor
@@ -38,16 +40,71 @@ public class ArticleCollectJobConfig {
     private final ApplicationEventPublisher eventPublisher;
     private final MonewMetrics monewMetrics;
 
-    @Bean
-    public JobExecutionListener naverNewsCollectJobExecutionListener() {
-        return new NewsCollectJobCompletionListener(eventPublisher, monewMetrics,
-            "naverNewsCollectJob");
+    @Bean(name = "batchTaskExecutor")
+    public TaskExecutor batchTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(100);
+        executor.initialize();
+        return executor;
+    }
+
+    @Configuration
+    public class RateLimiterConfig {
+
     }
 
     @Bean
-    public JobExecutionListener hankyungNewsCollectJobExecutionListener() {
+    public JobExecutionListener newsCollectJobExecutionListener() {
         return new NewsCollectJobCompletionListener(eventPublisher, monewMetrics,
-            "hankyungNewsCollectJob");
+            "newsCollectJob");
+    }
+
+    @Bean
+    public Job newsCollectJob(
+        JobRepository jobRepository,
+        Step naverNewsCollectStep,
+        Step hankyungNewsCollectStep,
+        JobExecutionListener newsCollectJobExecutionListener,
+        @Qualifier("batchTaskExecutor") TaskExecutor taskExecutor
+) {
+        Flow naverFlow = new FlowBuilder<Flow>("naverFlow")
+            .start(naverNewsCollectStep)
+            .build();
+
+        Flow hankyungFlow = new FlowBuilder<Flow>("hankyungFlow")
+            .start(hankyungNewsCollectStep)
+            .build();
+
+        return new JobBuilder("newsCollectJob", jobRepository)
+            .start(new FlowBuilder<Flow>("splitFlow")
+                .split(taskExecutor)
+                .add(naverFlow, hankyungFlow)
+                .build())
+            .end()
+            .listener(newsCollectJobExecutionListener)
+            .build();
+    }
+
+    // Naver
+    @Bean
+    public Step naverNewsCollectStep(
+        JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        EntityManagerFactory entityManagerFactory,
+        @Qualifier("batchTaskExecutor") TaskExecutor taskExecutor
+    ) {
+        return new StepBuilder("naverNewsCollectStep", jobRepository)
+            .<String, ArticleWithKeyword>chunk(10, transactionManager)
+            .reader(distinctKeywordReader(entityManagerFactory))
+            .processor(naverNewsCollectProcessor())
+            .writer(articleWithKeywordWriter())
+            .faultTolerant()
+            .skipLimit(10)
+            .skip(ArticleCollectException.class)
+            .skip(NullPointerException.class)
+            .build();
     }
 
     @Bean
@@ -63,38 +120,6 @@ public class ArticleCollectJobConfig {
             .build();
     }
 
-    // Naver
-    @Bean
-    public Step naverNewsCollectStep(
-        JobRepository jobRepository,
-        PlatformTransactionManager transactionManager,
-        EntityManagerFactory entityManagerFactory
-    ) {
-        return new StepBuilder("naverNewsCollectStep", jobRepository)
-            .<String, ArticleWithKeyword>chunk(10, transactionManager)
-            .reader(distinctKeywordReader(entityManagerFactory))
-            .processor(naverNewsCollectProcessor())
-            .writer(articleWithKeywordWriter())
-            .faultTolerant()
-            .skipLimit(10)
-            .skip(ArticleCollectException.class)
-            .skip(NullPointerException.class)
-            .build();
-    }
-
-    @Bean
-    public Job naverNewsCollectJob(
-        JobRepository jobRepository,
-        Step naverNewsCollectStep,
-        JobExecutionListener naverNewsCollectJobExecutionListener
-    ) {
-        return new JobBuilder("naverNewsCollectJob", jobRepository)
-            .start(naverNewsCollectStep)
-            .listener(naverNewsCollectJobExecutionListener)
-            .build();
-    }
-
-
     @Bean
     public ItemProcessor<String, ArticleWithKeyword> naverNewsCollectProcessor() {
         return keyword -> {
@@ -108,7 +133,8 @@ public class ArticleCollectJobConfig {
     public Step hankyungNewsCollectStep(
         JobRepository jobRepository,
         PlatformTransactionManager transactionManager,
-        EntityManagerFactory entityManagerFactory
+        EntityManagerFactory entityManagerFactory,
+        @Qualifier("batchTaskExecutor") TaskExecutor taskExecutor
     ) {
         return new StepBuilder("hankyungNewsCollectStep", jobRepository)
             .<String, ArticleWithKeyword>chunk(10, transactionManager)
@@ -119,18 +145,6 @@ public class ArticleCollectJobConfig {
             .skipLimit(10)
             .skip(ArticleCollectException.class)
             .skip(NullPointerException.class)
-            .build();
-    }
-
-    @Bean
-    public Job hankyungNewsCollectJob(
-        JobRepository jobRepository,
-        Step hankyungNewsCollectStep,
-        JobExecutionListener hankyungNewsCollectJobExecutionListener
-    ) {
-        return new JobBuilder("hankyungNewsCollectJob", jobRepository)
-            .start(hankyungNewsCollectStep)
-            .listener(hankyungNewsCollectJobExecutionListener)
             .build();
     }
 

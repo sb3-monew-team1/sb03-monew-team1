@@ -18,8 +18,8 @@ import com.sprint.mission.sb03monewteam1.entity.Notification;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
-import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.event.NewsCollectJobCompletedEvent;
+import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.InterestFixture;
 import com.sprint.mission.sb03monewteam1.fixture.NotificationFixture;
@@ -210,8 +210,7 @@ public class NotificationIntegrationTest {
             // When
             eventPublisher.publishEvent(new NewArticleCollectEvent(
                 savedInterest.getId(), savedInterest.getName(), articles));
-            eventPublisher.publishEvent(new NewsCollectJobCompletedEvent("naverNewsCollectJob"));
-            eventPublisher.publishEvent(new NewsCollectJobCompletedEvent("hankyungNewsCollectJob"));
+            eventPublisher.publishEvent(new NewsCollectJobCompletedEvent("newsCollectJob"));
 
             // Then
             Awaitility.await()
@@ -338,7 +337,8 @@ public class NotificationIntegrationTest {
 
             // given
             User user = userRepository.save(UserFixture.createUser());
-            List<Notification> notifications = notificationRepository.saveAll(NotificationFixture.createUncheckedNotifications(user, 5));
+            List<Notification> notifications = notificationRepository.saveAll(
+                NotificationFixture.createUncheckedNotifications(user, 5));
 
             // when & then
             mockMvc.perform(patch("/api/notifications")
@@ -362,7 +362,7 @@ public class NotificationIntegrationTest {
 
             // when & then
             mockMvc.perform(patch("/api/notifications")
-                .header("Monew-Request-User-ID", invalidUserId))
+                    .header("Monew-Request-User-ID", invalidUserId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.name()))
                 .andExpect(jsonPath("$.message").exists());
