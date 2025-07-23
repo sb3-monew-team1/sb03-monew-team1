@@ -26,6 +26,9 @@ public class MDCLoggingInterceptor implements HandlerInterceptor {
     ) {
         String requestId = UUID.randomUUID().toString();
         String ip = (String) request.getAttribute("clientIp");
+        if (ip == null) {
+            ip = "unknown";
+        }
         MDC.put(REQUEST_ID, requestId);
         MDC.put(REQUEST_METHOD, request.getMethod());
         MDC.put(REQUEST_URL, request.getRequestURI());
