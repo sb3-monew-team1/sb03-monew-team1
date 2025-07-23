@@ -34,6 +34,7 @@ import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 
 
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
@@ -70,6 +71,9 @@ class InterestServiceTest {
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
+
+    @Mock
+    private ArticleInterestRepository articleInterestRepository;
 
     @Mock
     private InterestMapper interestMapper;
@@ -486,6 +490,7 @@ class InterestServiceTest {
             // Then
             verify(interestRepository).findById(interest.getId());
             verify(interestRepository).delete(interest);
+            verify(articleInterestRepository).deleteByInterestId(interest.getId());
             verify(interestKeywordRepository).deleteByInterestId(interest.getId());
             verify(subscriptionRepository).deleteByInterestId(interest.getId());
         }
