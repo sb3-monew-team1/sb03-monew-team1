@@ -20,7 +20,10 @@ import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.SubscriptionActivityKeywordUpdateEvent;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
 import com.sprint.mission.sb03monewteam1.exception.interest.InterestDuplicateException;
@@ -39,6 +42,7 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeyword
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +58,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -317,6 +322,121 @@ class InterestServiceTest {
             then(interestRepository).shouldHaveNoInteractions();
             then(interestMapper).shouldHaveNoInteractions();
         }
+
+        @Test
+        void 잘못된_direction값_인경우_InvalidSortOptionException이_발생한다() {
+            // Given
+            int limit = 10;
+            String keyword = "soccer";
+            String cursor = null;
+            String orderBy = "subscriberCount";
+            String direction = "invalidDirection";
+
+            // When
+            Throwable throwable = catchThrowable(() ->
+                interestService.getInterests(UUID.randomUUID(), keyword, cursor, limit, orderBy,
+                    direction)
+            );
+
+            // Then
+            assertThat(throwable)
+                .isInstanceOf(InvalidSortOptionException.class)
+                .hasMessageContaining("지원하지 않는 정렬 방향입니다.");
+
+            then(interestRepository).shouldHaveNoInteractions();
+            then(interestMapper).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 조회_결과가_limit초과시_cursor가_계산된다_subscriberCount() {
+            // Given
+            int limit = 2;
+            String orderBy = "subscriberCount";
+            String direction = "desc";
+            String cursor = "300";
+            UUID userId = UUID.randomUUID();
+
+            Interest interest1 = Interest.builder()
+                .name("first")
+                .subscriberCount(250L)
+                .build();
+
+            Interest interest2 = Interest.builder()
+                .name("second")
+                .subscriberCount(200L)
+                .build();
+
+            Interest interest3 = Interest.builder()
+                .name("third")
+                .subscriberCount(150L)
+                .build();
+
+            List<Interest> interests = List.of(interest1, interest2, interest3);
+
+            when(interestRepository.searchByKeywordOrName(null, cursor, limit + 1, orderBy,
+                direction))
+                .thenReturn(interests);
+            when(subscriptionRepository.findAllByUserId(userId))
+                .thenReturn(List.of());
+
+            // When
+            CursorPageResponse<InterestDto> result = interestService.getInterests(
+                userId, null, cursor, limit, orderBy, direction
+            );
+
+            // Then
+            assertThat(result.content()).hasSize(limit);
+            assertThat(result.hasNext()).isTrue();
+            assertThat(result.nextCursor()).isEqualTo("200");
+
+            verify(interestRepository).searchByKeywordOrName(null, cursor, limit + 1, orderBy,
+                direction);
+            verify(subscriptionRepository).findAllByUserId(userId);
+        }
+
+        @Test
+        void 조회_결과가_limit초과시_cursor가_계산된다_name() {
+            // Given
+            int limit = 2;
+            String orderBy = "name";
+            String direction = "asc";
+            String cursor = "cursor";
+            UUID userId = UUID.randomUUID();
+
+            Interest interest1 = Interest.builder()
+                .name("apple")
+                .build();
+
+            Interest interest2 = Interest.builder()
+                .name("bee")
+                .build();
+
+            Interest interest3 = Interest.builder()
+                .name("cookie")
+                .build();
+
+            List<Interest> interests = List.of(interest1, interest2, interest3);
+
+            when(interestRepository.searchByKeywordOrName(null, cursor, limit + 1, orderBy,
+                direction))
+                .thenReturn(interests);
+            when(subscriptionRepository.findAllByUserId(userId))
+                .thenReturn(List.of());
+
+            // When
+            CursorPageResponse<InterestDto> result = interestService.getInterests(
+                userId, null, cursor, limit, orderBy, direction
+            );
+
+            // Then
+            assertThat(result.content()).hasSize(limit);
+            assertThat(result.hasNext()).isTrue();
+            assertThat(result.nextCursor()).isEqualTo("bee");
+
+            verify(interestRepository).searchByKeywordOrName(null, cursor, limit + 1, orderBy,
+                direction);
+            verify(subscriptionRepository).findAllByUserId(userId);
+        }
     }
 
     @Nested
@@ -447,6 +567,7 @@ class InterestServiceTest {
             verify(interestRepository).findById(interestId);
             verify(interestRepository).save(existingInterest);
             verify(interestMapper).toDto(updatedInterest, true);
+            verify(eventPublisher).publishEvent(any(SubscriptionActivityKeywordUpdateEvent.class));
         }
 
 
@@ -493,6 +614,7 @@ class InterestServiceTest {
             verify(articleInterestRepository).deleteByInterestId(interest.getId());
             verify(interestKeywordRepository).deleteByInterestId(interest.getId());
             verify(subscriptionRepository).deleteByInterestId(interest.getId());
+            verify(eventPublisher).publishEvent(any(SubscriptionActivityBulkDeleteEvent.class));
         }
 
         @Test
@@ -540,6 +662,7 @@ class InterestServiceTest {
             verify(subscriptionRepository).delete(subscription);
             assertThat(interest.getSubscriberCount()).isEqualTo(originalCount - 1);
             verify(interestRepository).findById(interest.getId());
+            verify(eventPublisher).publishEvent(any(SubscriptionActivityDeleteEvent.class));
         }
 
         @Test

@@ -35,7 +35,6 @@ import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewCountUpdateEvent;
-import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
