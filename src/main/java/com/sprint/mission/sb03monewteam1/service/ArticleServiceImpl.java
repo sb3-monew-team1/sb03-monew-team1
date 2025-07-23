@@ -1,7 +1,26 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
 import com.sprint.mission.sb03monewteam1.collector.NaverNewsCollector;
@@ -16,9 +35,9 @@ import com.sprint.mission.sb03monewteam1.entity.Article;
 import com.sprint.mission.sb03monewteam1.entity.ArticleInterest;
 import com.sprint.mission.sb03monewteam1.entity.ArticleView;
 import com.sprint.mission.sb03monewteam1.entity.Comment;
+import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
-import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewCountUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
@@ -34,26 +53,9 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepositor
 import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.util.S3Util;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -129,6 +131,9 @@ public class ArticleServiceImpl implements ArticleService {
     private Instant parseToKstInstant(String value) {
         if (value == null || value.isBlank()) {
             return null;
+        }
+        if (value.endsWith("Z")) {
+            return Instant.parse(value);
         }
 
         DateTimeFormatter formatter = value.contains(".")
@@ -444,9 +449,11 @@ public class ArticleServiceImpl implements ArticleService {
         LocalDate fromDate;
         LocalDate toDate;
         try {
-            fromDate = Instant.parse(from).atZone(KST).toLocalDate();
-            toDate = Instant.parse(to).atZone(KST).toLocalDate();
-        } catch (DateTimeParseException e) {
+            Instant fromInstant = tryParseInstantOrKst(from);
+            Instant toInstant = tryParseInstantOrKst(to);
+            fromDate = fromInstant.atZone(KST).toLocalDate();
+            toDate = toInstant.atZone(KST).toLocalDate();
+        } catch (DateTimeParseException | IllegalArgumentException e) {
             throw new IllegalArgumentException("잘못된 날짜 형식입니다: " + e.getMessage(), e);
         }
 
@@ -457,8 +464,17 @@ public class ArticleServiceImpl implements ArticleService {
         return results;
     }
 
+    private Instant tryParseInstantOrKst(String value) {
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException e) {
+            // 타임존 없는 경우 KST로 파싱
+            return parseToKstInstant(value);
+        }
+    }
+
     private ArticleRestoreResultDto restoreByDate(LocalDate date) {
-        String key = backupPrefix + "backup-articles-" + date + ".json";
+        String key = String.format("%s/backup-articles-%s.json", backupPrefix, date);
         List<UUID> restoredIds = new ArrayList<>();
         final int BATCH_SIZE = 1000;
         try {
@@ -467,20 +483,20 @@ public class ArticleServiceImpl implements ArticleService {
                 return buildResult(date, restoredIds);
             }
 
-            List<ArticleDto> batch = new ArrayList<>(BATCH_SIZE);
-            Set<String> allSourceUrls = new HashSet<>();
             ObjectMapper mapper = objectMapper;
             try (InputStream is = new ByteArrayInputStream(data)) {
-                JsonParser parser = mapper.getFactory().createParser(is);
-                if (parser.nextToken() != JsonToken.START_ARRAY) {
+                JsonNode root = mapper.readTree(is);
+                JsonNode items = root.get("items");
+                if (items == null || !items.isArray()) {
                     return buildResult(date, restoredIds);
                 }
-
-                while (parser.nextToken() == JsonToken.START_OBJECT) {
-                    ArticleDto dto = mapper.readValue(parser, ArticleDto.class);
+                // 중복 선언 제거
+                List<ArticleDto> batch = new ArrayList<>(BATCH_SIZE);
+                Set<String> allSourceUrls = new HashSet<>();
+                for (JsonNode node : items) {
+                    ArticleDto dto = mapper.treeToValue(node, ArticleDto.class);
                     batch.add(dto);
                     allSourceUrls.add(dto.sourceUrl());
-
                     if (batch.size() == BATCH_SIZE) {
                         restoredIds.addAll(processBatch(batch, allSourceUrls));
                         batch.clear();
@@ -492,7 +508,7 @@ public class ArticleServiceImpl implements ArticleService {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to restore articles for date {}", date, e);
+            log.error("요청 날짜의 뉴스 기사 복원 실패: {}", date, e);
         }
         return buildResult(date, restoredIds);
     }
@@ -510,7 +526,6 @@ public class ArticleServiceImpl implements ArticleService {
             }
 
             Article article = Article.builder()
-                .id(dto.id())
                 .source(dto.source())
                 .sourceUrl(dto.sourceUrl())
                 .title(dto.title())
