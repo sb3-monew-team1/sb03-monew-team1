@@ -4,15 +4,16 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.when;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sprint.mission.sb03monewteam1.dto.ArticleDto;
+import com.sprint.mission.sb03monewteam1.dto.ArticleRestoreResultDto;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -274,5 +275,34 @@ class ArticleControllerTest {
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value(ErrorCode.ARTICLE_NOT_FOUND.name()))
             .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void 기사_복구__성공() throws Exception {
+        String from = "2025-07-20T00:00:00Z";
+        String to = "2025-07-22T00:00:00Z";
+        List<ArticleRestoreResultDto> results = Arrays.asList(
+            ArticleRestoreResultDto.builder()
+                .restoreDate(Instant.parse("2025-07-20T00:00:00Z"))
+                .restoredArticleCount(10)
+                .build(),
+            ArticleRestoreResultDto.builder()
+                .restoreDate(Instant.parse("2025-07-21T00:00:00Z"))
+                .restoredArticleCount(5)
+                .build()
+        );
+
+        when(articleService.restoreArticles(from, to)).thenReturn(results);
+
+        mockMvc.perform(get("/api/articles/restore")
+                .param("from", from)
+                .param("to", to)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$[0].restoreDate").value("2025-07-20T00:00:00Z"))
+            .andExpect(jsonPath("$[0].restoredArticleCount").value(10))
+            .andExpect(jsonPath("$[1].restoreDate").value("2025-07-21T00:00:00Z"))
+            .andExpect(jsonPath("$[1].restoredArticleCount").value(5));
     }
 }
