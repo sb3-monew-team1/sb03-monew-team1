@@ -99,7 +99,7 @@ public class ArticleBackupJobConfig {
     public ItemWriter<ArticleDto> writer() {
         return articles -> {
             Timer.Sample sample = Timer.start(monewMetrics.getMeterRegistry());
-            String dateStr = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(0)
+            String dateStr = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             String key = String.format("%s/backup-articles-%s.json", backupPrefix, dateStr);
             try {

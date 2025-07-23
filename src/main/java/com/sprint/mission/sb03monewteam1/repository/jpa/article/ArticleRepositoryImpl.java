@@ -132,7 +132,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
     @Override
     public List<ArticleDto> findAllCreatedYesterday() {
-        LocalDate yesterday = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(0);
+        LocalDate yesterday = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1);
         Instant start = yesterday.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant end = yesterday.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
 
