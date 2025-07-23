@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentCursorRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -202,7 +203,6 @@ public class CommentServiceTest {
             UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
             ReflectionTestUtils.setField(user, "id", userId);
-
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
@@ -214,6 +214,8 @@ public class CommentServiceTest {
                     .collect(Collectors.toList());
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
+
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
 
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
@@ -227,9 +229,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -272,6 +272,8 @@ public class CommentServiceTest {
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
@@ -284,9 +286,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -324,6 +324,8 @@ public class CommentServiceTest {
             Instant cursor = lastOfFirstPage.getCreatedAt();
             Instant after = lastOfFirstPage.getCreatedAt();
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, cursor.toString(), after, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
@@ -336,9 +338,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, cursor.toString(), after, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -383,6 +383,8 @@ public class CommentServiceTest {
             Long cursor = lastOfFirstPage.getLikeCount();
             Instant after = lastOfFirstPage.getCreatedAt();
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, cursor.toString(), after, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(cursor.toString()), eq(after), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
@@ -395,9 +397,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, cursor.toString(), after, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -440,6 +440,8 @@ public class CommentServiceTest {
 
             List<Comment> lastPage = sorted.subList(pageSize, sorted.size());
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(nextCursor.toString()), eq(nextAfter), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
@@ -452,9 +454,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, nextCursor.toString(), nextAfter, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -486,6 +486,8 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
@@ -493,9 +495,7 @@ public class CommentServiceTest {
             given(commentRepository.countByArticleIdAndIsDeletedFalse(article.getId())).willReturn(0L);
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -522,6 +522,8 @@ public class CommentServiceTest {
 
             List<Comment> commentList = createCommentsWithCreatedAt(pageSize, article, user);
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(articleId), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
@@ -533,9 +535,7 @@ public class CommentServiceTest {
             });
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -558,13 +558,15 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-            List<Comment> comments = createCommentsWithCreatedAt(pageSize, article, user);
+//            List<Comment> comments = createCommentsWithCreatedAt(pageSize, article, user);
+
+            CommentCursorRequest request = new CommentCursorRequest(articleId, invalidCursor, null, pageSize, sortBy, sortDirection);
 
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection, userId)
+                commentService.getCommentsWithCursorBySort(request, userId)
             ).isInstanceOf(InvalidCursorException.class)
                 .hasMessageContaining(ErrorCode.INVALID_CURSOR_DATE.getMessage());
         }
@@ -583,13 +585,15 @@ public class CommentServiceTest {
             String sortBy = "likeCount";
             String sortDirection = "DESC";
 
-            List<Comment> comments = createCommentsWithLikeCount(pageSize, article, user);
+//            List<Comment> comments = createCommentsWithLikeCount(pageSize, article, user);
+
+            CommentCursorRequest request = new CommentCursorRequest(articleId, invalidCursor, null, pageSize, sortBy, sortDirection);
 
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, invalidCursor, null, pageSize, sortBy, sortDirection, userId)
+                commentService.getCommentsWithCursorBySort(request, userId)
             ).isInstanceOf(InvalidCursorException.class)
                 .hasMessageContaining(ErrorCode.INVALID_CURSOR_COUNT.getMessage());
         }
@@ -605,11 +609,13 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, invalidPageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, null, null, invalidPageSize, sortBy, sortDirection, userId)
+                commentService.getCommentsWithCursorBySort(request, userId)
             ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("페이지 크기는 1 이상이어야 합니다");
         }
@@ -625,11 +631,13 @@ public class CommentServiceTest {
             int pageSize = 5;
             String sortDirection = "DESC";
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, invalidSort, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, invalidSort, sortDirection, userId)
+                commentService.getCommentsWithCursorBySort(request, userId)
             )
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
@@ -644,13 +652,15 @@ public class CommentServiceTest {
             Article article = ArticleFixture.createArticleWithId(articleId);
             int pageSize = 5;
             String sortBy = "createdAt";
-            String invalidSortDirection = "unknownDirection";  // 허용되지 않은 정렬 방향
+            String invalidSortDirection = "unknownDirection";
+
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, invalidSortDirection);
 
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
 
             // when & then
             assertThatThrownBy(() ->
-                commentService.getCommentsWithCursorBySort(articleId, null, null, pageSize, sortBy, invalidSortDirection, userId)
+                commentService.getCommentsWithCursorBySort(request, userId)
             )
                 .isInstanceOf(InvalidSortOptionException.class)
                 .hasMessageContaining(ErrorCode.INVALID_SORT_DIRECTION.getMessage());
@@ -667,7 +677,6 @@ public class CommentServiceTest {
             UUID userId = UUID.randomUUID();
             User user = UserFixture.createUser();
             ReflectionTestUtils.setField(user, "id", userId);
-
             int pageSize = 5;
             String sortBy = "createdAt";
             String sortDirection = "DESC";
@@ -681,6 +690,8 @@ public class CommentServiceTest {
 
             List<Comment> firstPage = sorted.subList(0, pageSize + 1);
 
+            CommentCursorRequest request = new CommentCursorRequest(null, null, null, pageSize, sortBy, sortDirection);
+
             given(commentRepository.findCommentsWithCursorBySort(
                 eq(null), eq(null), eq(null), eq(pageSize + 1), eq(sortBy), eq(sortDirection)))
                 .willReturn(firstPage);
@@ -692,9 +703,7 @@ public class CommentServiceTest {
             );
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                null, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -731,6 +740,8 @@ public class CommentServiceTest {
 
             List<Comment> commentList = createCommentsWithCreatedAt(5, article, user);
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 any(UUID.class), any(), any(), anyInt(), anyString(), anyString()))
@@ -741,9 +752,7 @@ public class CommentServiceTest {
                 });
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -764,6 +773,8 @@ public class CommentServiceTest {
 
             List<Comment> commentList = createCommentsWithCreatedAt(5, article, user);
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
             given(commentRepository.findCommentsWithCursorBySort(
                 any(UUID.class), any(), any(), anyInt(), anyString(), anyString()))
@@ -774,9 +785,7 @@ public class CommentServiceTest {
             });
 
             // when
-            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-                articleId, null, null, pageSize, sortBy, sortDirection, userId
-            );
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(request, userId);
 
             // then
             assertThat(result).isNotNull();
@@ -790,13 +799,15 @@ public class CommentServiceTest {
             UUID articleId = UUID.randomUUID();
             int pageSize = 5;
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, "createdAt", "DESC");
+
             given(articleRepository.findByIdAndIsDeletedFalse(articleId))
                 .willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() ->
                 commentService.getCommentsWithCursorBySort(
-                    articleId, null, null, pageSize, "createdAt", "DESC", userId)
+                    request, userId)
             )
                 .isInstanceOf(CommentException.class)
                 .hasMessageContaining(ErrorCode.ARTICLE_NOT_FOUND.getMessage());
