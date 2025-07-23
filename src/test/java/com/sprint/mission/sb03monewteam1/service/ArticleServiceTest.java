@@ -32,7 +32,10 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.Interest;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.entity.User;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewCountUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidCursorException;
@@ -154,6 +157,7 @@ class ArticleServiceTest {
         verify(articleRepository).findByIdAndIsDeletedFalse(articleId);
         verify(articleViewRepository).save(any(ArticleView.class));
         verify(eventPublisher).publishEvent(any(ArticleViewActivityCreateEvent.class));
+        verify(eventPublisher).publishEvent(any(ArticleViewCountUpdateEvent.class));
     }
 
     @Test
@@ -501,6 +505,7 @@ class ArticleServiceTest {
         verify(articleViewRepository).deleteByArticleId(articleId);
         verify(articleInterestRepository).deleteByArticleId(articleId);
         verify(articleRepository).deleteById(articleId);
+        verify(eventPublisher).publishEvent(any(ArticleViewActivityBulkDeleteEvent.class));
     }
 
     @Test

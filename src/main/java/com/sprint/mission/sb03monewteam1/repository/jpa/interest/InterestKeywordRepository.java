@@ -19,5 +19,5 @@ public interface InterestKeywordRepository extends JpaRepository<InterestKeyword
     List<InterestKeyword> findAllByKeyword(String keyword);
 
     @Transactional
-    void deleteByInterestId(UUID interestId);
+    long deleteByInterestId(UUID interestId);
 }

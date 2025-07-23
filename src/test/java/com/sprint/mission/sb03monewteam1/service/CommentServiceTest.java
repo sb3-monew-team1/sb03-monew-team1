@@ -19,6 +19,8 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.User;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
@@ -602,6 +604,8 @@ public class CommentServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.id()).isEqualTo(commentId);
             assertThat(result.content()).isEqualTo(updateContent);
+
+            verify(eventPublisher).publishEvent(any(CommentActivityUpdateEvent.class));
         }
 
         @Test
@@ -686,6 +690,8 @@ public class CommentServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.getIsDeleted()).isTrue();
             assertThat(article.getCommentCount()).isEqualTo(0L);
+
+            verify(eventPublisher).publishEvent(any(CommentActivityDeleteEvent.class));
         }
 
         @Test

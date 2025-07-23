@@ -19,6 +19,9 @@ public interface ArticleInterestRepository extends JpaRepository<ArticleInterest
     @Transactional
     void deleteByArticleId(UUID articleId);
 
+    @Transactional
+    long deleteByInterestId(UUID interestId);
+
     @Query("select new org.apache.commons.lang3.tuple.ImmutablePair(ai.article.id, ai.interest.id) " +
            "from ArticleInterest ai " +
            "where ai.article.id in :articleIds and ai.interest.id in :interestIds")
