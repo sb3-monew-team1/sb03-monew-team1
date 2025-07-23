@@ -22,8 +22,6 @@ public class S3Util {
 
     public void upload(String bucketName, String key, InputStream inputStream, long length,
         String contentType) {
-        log.info("S3 파일 업로드 시작: bucket={}, key={}, length={}, contentType={}", bucketName, key,
-            length, contentType);
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -33,8 +31,6 @@ public class S3Util {
                 .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, length));
-
-            log.info("S3 파일 업로드 성공: bucket={}, key={}", bucketName, key);
         } catch (Exception e) {
             log.error("S3 파일 업로드 실패: bucket={}, key={}", bucketName, key, e);
             throw new S3UploadException("S3 파일 업로드 실패: " + e.getMessage());
@@ -42,8 +38,6 @@ public class S3Util {
     }
 
     public byte[] download(String bucketName, String key) {
-        log.info("S3 파일 다운로드 시작: bucket={}, key={}", bucketName, key);
-
         try {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
@@ -53,7 +47,6 @@ public class S3Util {
             ResponseBytes<GetObjectResponse> objectBytes = s3Client.getObjectAsBytes(
                 getObjectRequest);
 
-            log.info("S3 파일 다운로드 완료: bucket={}, key={}", bucketName, key);
             return objectBytes.asByteArray();
         } catch (Exception e) {
             log.error("S3 파일 다운로드 실패: bucket={}, key={}", bucketName, key, e);

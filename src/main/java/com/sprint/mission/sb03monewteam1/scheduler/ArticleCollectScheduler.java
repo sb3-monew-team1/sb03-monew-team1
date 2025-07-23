@@ -23,7 +23,7 @@ public class ArticleCollectScheduler {
     private final JobOperator jobOperator;
     private final Job newsCollectJob;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     public void runNewsCollectJob() {
         runJobIfNotRunning("newsCollectJob", newsCollectJob);
     }
@@ -33,6 +33,8 @@ public class ArticleCollectScheduler {
             log.warn("{}이(가) 아직 실행 중이므로 이번 실행은 건너뜁니다.", jobName);
             return;
         }
+
+        log.info("스케줄러: 기사 수집 배치 잡 실행 요청");
 
         if (restartPreviousExecution(jobName)) {
             return;

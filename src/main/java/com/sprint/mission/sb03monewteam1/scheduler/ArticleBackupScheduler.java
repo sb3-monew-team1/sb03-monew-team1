@@ -29,6 +29,7 @@ public class ArticleBackupScheduler {
             log.warn("articleBackupJob이 아직 실행 중입니다.");
             return;
         }
+        log.info("스케줄러: 기사 백업 배치 잡 실행 요청");
 
         if (restartPreviousExecution()) {
             return;

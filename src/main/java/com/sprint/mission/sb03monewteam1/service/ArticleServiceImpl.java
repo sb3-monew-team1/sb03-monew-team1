@@ -1,25 +1,5 @@
 package com.sprint.mission.sb03monewteam1.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.collector.HankyungNewsCollector;
@@ -53,9 +33,26 @@ import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepositor
 import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.util.S3Util;
-
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -87,7 +84,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Value("${aws.s3.bucket:}")
     private String backupBucket;
 
-    @Value("${aws.s3.backup-prefix:articles/}")
+    @Value("${aws.s3.backup-prefix:articles}")
     private String backupPrefix;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -490,7 +487,7 @@ public class ArticleServiceImpl implements ArticleService {
                 if (items == null || !items.isArray()) {
                     return buildResult(date, restoredIds);
                 }
-                // 중복 선언 제거
+
                 List<ArticleDto> batch = new ArrayList<>(BATCH_SIZE);
                 Set<String> allSourceUrls = new HashSet<>();
                 for (JsonNode node : items) {
