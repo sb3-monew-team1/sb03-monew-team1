@@ -3,6 +3,8 @@ package com.sprint.mission.sb03monewteam1.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -22,6 +24,7 @@ import com.sprint.mission.sb03monewteam1.event.CommentActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
+import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentException;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentLikeNotFoundException;
@@ -710,6 +713,92 @@ public class CommentServiceTest {
             assertThat(result.size()).isEqualTo(pageSize);
             assertThat(result.totalElements()).isEqualTo(10L);
             assertThat(result.hasNext()).isTrue();
+        }
+
+        @Test
+        void sortBy가_null인_경우_createAt으로_설정된다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            UUID articleId = UUID.randomUUID();
+            int pageSize = 5;
+            String sortBy = null;
+            String sortDirection = "DESC";
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            Article article = ArticleFixture.createArticleWithId(articleId);
+
+            List<Comment> commentList = createCommentsWithCreatedAt(5, article, user);
+
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
+            given(commentRepository.findCommentsWithCursorBySort(
+                any(UUID.class), any(), any(), anyInt(), anyString(), anyString()))
+                .willReturn(commentList);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                    Comment comment = invocation.getArgument(0);
+                    return CommentFixture.createCommentDto(comment);
+                });
+
+            // when
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
+                articleId, null, null, pageSize, sortBy, sortDirection, userId
+            );
+
+            // then
+            assertThat(result).isNotNull();
+        }
+
+        @Test
+        void sortDirection가_null인_경우_DESC으로_설정된다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            UUID articleId = UUID.randomUUID();
+            int pageSize = 5;
+            String sortBy = "createdAt";
+            String sortDirection = null;
+            User user = UserFixture.createUser();
+            ReflectionTestUtils.setField(user, "id", userId);
+            Article article = ArticleFixture.createArticleWithId(articleId);
+
+            List<Comment> commentList = createCommentsWithCreatedAt(5, article, user);
+
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
+            given(commentRepository.findCommentsWithCursorBySort(
+                any(UUID.class), any(), any(), anyInt(), anyString(), anyString()))
+                .willReturn(commentList);
+            given(commentMapper.toDto(any(Comment.class))).willAnswer(invocation -> {
+                Comment comment = invocation.getArgument(0);
+                return CommentFixture.createCommentDto(comment);
+            });
+
+            // when
+            CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
+                articleId, null, null, pageSize, sortBy, sortDirection, userId
+            );
+
+            // then
+            assertThat(result).isNotNull();
+        }
+
+        @Test
+        void 존재하지_않는_기사의_댓글을_조회_요청시_예외가_발생한다() {
+
+            // given
+            UUID userId = UUID.randomUUID();
+            UUID articleId = UUID.randomUUID();
+            int pageSize = 5;
+
+            given(articleRepository.findByIdAndIsDeletedFalse(articleId))
+                .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() ->
+                commentService.getCommentsWithCursorBySort(
+                    articleId, null, null, pageSize, "createdAt", "DESC", userId)
+            )
+                .isInstanceOf(CommentException.class)
+                .hasMessageContaining(ErrorCode.ARTICLE_NOT_FOUND.getMessage());
         }
     }
 

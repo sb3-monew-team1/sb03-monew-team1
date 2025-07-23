@@ -243,9 +243,6 @@ public class CommentRepositoryTest {
         );
 
         // then
-        result.forEach(c ->
-            System.out.printf("likeCount: %d, createdAt: %s%n", c.getLikeCount(), c.getCreatedAt()));
-
         assertThat(result).allSatisfy(comment -> {
             boolean valid =
                 comment.getLikeCount() > 2 ||
