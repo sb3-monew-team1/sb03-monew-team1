@@ -136,13 +136,14 @@ public class CommentRepositoryTest {
         // given
         UUID savedArticleId = article.getId();
         int pageSize = 5;
+        String cursor = "2";
         String sortBy = "likeCount";
         String sortDirection = "DESC";
 
         // when
         List<Comment> result = commentRepository.findCommentsWithCursorBySort(
             savedArticleId,
-            null,
+            cursor,
             null,
             pageSize,
             sortBy,
@@ -151,9 +152,45 @@ public class CommentRepositoryTest {
 
         // then
         assertThat(result).hasSize(pageSize);
+        assertThat(result).extracting(Comment::getLikeCount).allMatch(count -> count < 2L);
         assertThat(result).isSortedAccordingTo(
             Comparator.comparing(Comment::getLikeCount).reversed()
         );
+    }
+
+
+    @Test
+    void likeCount기준_내림차순_정렬에서_nextAfter가_있을때_정확히_조회된다() {
+
+        // given
+        UUID savedArticleId = article.getId();
+        int pageSize = 5;
+        String cursor = "2";
+        Instant nextAfter = baseTime.plusSeconds(4000);
+        String sortBy = "likeCount";
+        String sortDirection = "DESC";
+
+        // when
+        List<Comment> result = commentRepository.findCommentsWithCursorBySort(
+            savedArticleId,
+            cursor,
+            nextAfter,
+            pageSize,
+            sortBy,
+            sortDirection
+        );
+
+        // then
+        assertThat(result).allSatisfy(comment -> {
+            boolean valid =
+                comment.getLikeCount() < 2 ||
+                    (comment.getLikeCount() == 2 && comment.getCreatedAt().isBefore(nextAfter));
+            assertThat(valid).isTrue();
+        });
+        assertThat(result)
+            .isSortedAccordingTo(Comparator
+                .comparing(Comment::getLikeCount).reversed()
+            );
     }
 
     @Test
@@ -161,14 +198,15 @@ public class CommentRepositoryTest {
 
         // given
         UUID savedArticleId = article.getId();
-        int pageSize = 5;
+        int pageSize = 2;
+        String cursor = "2";
         String sortBy = "likeCount";
         String sortDirection = "ASC";
 
         // when
         List<Comment> result = commentRepository.findCommentsWithCursorBySort(
             savedArticleId,
-            null,
+            cursor,
             null,
             pageSize,
             sortBy,
@@ -177,13 +215,52 @@ public class CommentRepositoryTest {
 
         // then
         assertThat(result).hasSize(pageSize);
+        assertThat(result).extracting(Comment::getLikeCount).allMatch(count -> count > 2L);
         assertThat(result).isSortedAccordingTo(
             Comparator.comparing(Comment::getLikeCount)
         );
     }
 
     @Test
-    void 커서가_주어졌을_때_이후_데이터만_조회된다() {
+    void likeCount기준_오름차순_정렬에서_nextAfter가_있을때_정확히_조회된다() {
+
+        // given
+        UUID savedArticleId = article.getId();
+        int pageSize = 5;
+        String cursor = "2";
+        Instant nextAfter = baseTime.plusSeconds(4000);
+        String sortBy = "likeCount";
+        String sortDirection = "ASC";
+
+        // when
+        List<Comment> result = commentRepository.findCommentsWithCursorBySort(
+            savedArticleId,
+            cursor,
+            nextAfter,
+            pageSize,
+            sortBy,
+            sortDirection
+        );
+
+        // then
+        result.forEach(c ->
+            System.out.printf("likeCount: %d, createdAt: %s%n", c.getLikeCount(), c.getCreatedAt()));
+
+        assertThat(result).allSatisfy(comment -> {
+            boolean valid =
+                comment.getLikeCount() > 2 ||
+                    (comment.getLikeCount() == 2 && comment.getCreatedAt().isAfter(nextAfter));
+            assertThat(valid).isTrue();
+        });
+        assertThat(result)
+            .isSortedAccordingTo(Comparator
+                .comparing(Comment::getLikeCount)
+            );
+    }
+
+
+    @Test
+    void 커서가_주어졌을_때_이후_데이터만_조회된다_DESC_정렬() {
 
         // given
         UUID savedArticleId = article.getId();
@@ -211,11 +288,57 @@ public class CommentRepositoryTest {
     }
 
     @Test
-    void 잘못된_정렬기준_입력시_예외_발생한다() {
+    void 커서가_주어졌을_때_이후_데이터만_조회된다_ASC_정렬() {
 
         // given
         UUID savedArticleId = article.getId();
-        String cursor = baseTime.plusSeconds(5000).toString();
+        String cursor = baseTime.plusSeconds(2000).toString();
+        int pageSize = 5;
+        String sortBy = "createdAt";
+        String sortDirection = "ASC";
+
+        // when
+        List<Comment> result = commentRepository.findCommentsWithCursorBySort(
+            savedArticleId,
+            cursor,
+            null,
+            pageSize,
+            sortBy,
+            sortDirection
+        );
+
+        // then
+        Instant cursorInstant = Instant.parse(cursor);
+        assertThat(result)
+            .allMatch(c -> c.getCreatedAt().isAfter(cursorInstant));
+        assertThat(result)
+            .isSortedAccordingTo(Comparator.comparing(Comment::getCreatedAt));
+    }
+
+    @Test
+    void 잘못된_정렬기준_입력시_예외_발생한다_커서_없음() {
+
+        // given
+        UUID savedArticleId = article.getId();
+        String cursor = null;
+        int pageSize = 5;
+        String invalidSortBy = "invalid_sortBy";
+        String sortDirection = "DESC";
+
+        // when & then
+        assertThatThrownBy(() ->
+            commentRepository.findCommentsWithCursorBySort(savedArticleId, cursor, null, pageSize, invalidSortBy, sortDirection)
+        )
+            .isInstanceOf(InvalidSortOptionException.class)
+            .hasMessageContaining(ErrorCode.INVALID_SORT_FIELD.getMessage());
+    }
+
+    @Test
+    void 잘못된_정렬기준_입력시_예외_발생한다_커서_있음() {
+
+        // given
+        UUID savedArticleId = article.getId();
+        String cursor = baseTime.plusSeconds(2000).toString();
         int pageSize = 5;
         String invalidSortBy = "invalid_sortBy";
         String sortDirection = "DESC";
