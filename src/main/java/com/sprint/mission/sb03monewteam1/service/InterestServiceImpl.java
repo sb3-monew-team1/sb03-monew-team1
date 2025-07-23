@@ -23,6 +23,7 @@ import com.sprint.mission.sb03monewteam1.exception.interest.SubscriptionNotFound
 import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.mapper.InterestMapper;
 import com.sprint.mission.sb03monewteam1.mapper.SubscriptionMapper;
+import com.sprint.mission.sb03monewteam1.repository.jpa.articleInterest.ArticleInterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestKeywordRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
@@ -51,6 +52,7 @@ public class InterestServiceImpl implements InterestService {
     private final SubscriptionRepository subscriptionRepository;
     private final InterestKeywordRepository interestKeywordRepository;
     private final UserRepository userRepository;
+    private final ArticleInterestRepository articleInterestRepository;
 
     private final InterestMapper interestMapper;
     private final SubscriptionMapper subscriptionMapper;
@@ -235,10 +237,12 @@ public class InterestServiceImpl implements InterestService {
         Interest interest = interestRepository.findById(interestId)
             .orElseThrow(() -> new InterestNotFoundException(interestId));
 
-        subscriptionRepository.deleteByInterestId(interestId);
+        long articleInterestCount = articleInterestRepository.deleteByInterestId(interestId);
+        long subscriptionCount = subscriptionRepository.deleteByInterestId(interestId);
+        long keywordCount = interestKeywordRepository.deleteByInterestId(interestId);
 
-        interestKeywordRepository.deleteByInterestId(interestId);
-
+        log.info("관심사 연관 데이터 삭제 완료: articleInterest={}건, subscription={}건, keyword={}건",
+            articleInterestCount, subscriptionCount, keywordCount);
         interestRepository.delete(interest);
 
         log.info("관심사 삭제 완료: interestId={}", interestId);
