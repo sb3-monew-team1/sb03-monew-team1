@@ -558,8 +558,6 @@ public class CommentServiceTest {
             String sortBy = "createdAt";
             String sortDirection = "DESC";
 
-//            List<Comment> comments = createCommentsWithCreatedAt(pageSize, article, user);
-
             CommentCursorRequest request = new CommentCursorRequest(articleId, invalidCursor, null, pageSize, sortBy, sortDirection);
 
             given(articleRepository.findByIdAndIsDeletedFalse(articleId)).willReturn(Optional.of(article));
@@ -584,8 +582,6 @@ public class CommentServiceTest {
             int pageSize = 5;
             String sortBy = "likeCount";
             String sortDirection = "DESC";
-
-//            List<Comment> comments = createCommentsWithLikeCount(pageSize, article, user);
 
             CommentCursorRequest request = new CommentCursorRequest(articleId, invalidCursor, null, pageSize, sortBy, sortDirection);
 

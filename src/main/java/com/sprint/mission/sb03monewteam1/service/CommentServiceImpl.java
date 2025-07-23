@@ -54,6 +54,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CommentServiceImpl implements CommentService {
 
+    private static final String ORDER_BY_CREATED_AT = "createdAt";
+    private static final String ORDER_BY_LIKE_COUNT = "likeCount";
+    private static final String DIRECTION_DESC = "DESC";
+    private static final String DIRECTION_ASC = "ASC";
+    private static final int MIN_PAGE_SIZE = 1;
+
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final ArticleRepository articleRepository;
@@ -105,8 +111,8 @@ public class CommentServiceImpl implements CommentService {
         String cursor = request.cursor();
         Instant after = request.after();
         int limit = request.limit();
-        String orderBy = (request.orderBy() != null) ? request.orderBy() : "createdAt";
-        String direction = (request.direction() != null) ? request.direction() : "DESC";
+        String orderBy = (request.orderBy() != null) ? request.orderBy() : ORDER_BY_CREATED_AT;
+        String direction = (request.direction() != null) ? request.direction() : DIRECTION_DESC;
 
         log.info("댓글 목록 조회 시작: 기사 ID = {}, cursor = {}, after = {}, size = {}, order = {} {}", articleId, cursor, after, limit, orderBy, direction);
 
@@ -292,24 +298,24 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
         }
 
-        if (limit < 1) {
+        if (limit < MIN_PAGE_SIZE) {
             throw new IllegalArgumentException("페이지 크기는 1 이상이어야 합니다");
         }
 
-        if (!orderBy.equals("createdAt") && !orderBy.equals("likeCount")) {
+        if (!orderBy.equals(ORDER_BY_CREATED_AT) && !orderBy.equals(ORDER_BY_LIKE_COUNT)) {
             throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy",
                 orderBy);
         }
 
-        if (!direction.equals("DESC") && !direction.equals("ASC")) {
+        if (!direction.equals(DIRECTION_DESC) && !direction.equals(DIRECTION_ASC)) {
             throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "direction",
                 direction);
         }
 
         if (cursor != null) {
             switch (orderBy) {
-                case "createdAt" -> parseInstant(cursor);
-                case "likeCount" -> parseLong(cursor);
+                case ORDER_BY_CREATED_AT -> parseInstant(cursor);
+                case ORDER_BY_LIKE_COUNT -> parseLong(cursor);
             }
         }
     }
@@ -317,8 +323,8 @@ public class CommentServiceImpl implements CommentService {
     private String resolveNextCursor(Comment lastComment, String orderBy) {
         if (lastComment == null) return null;
         return switch (orderBy) {
-            case "createdAt" -> lastComment.getCreatedAt().toString();
-            case "likeCount" -> String.valueOf(lastComment.getLikeCount());
+            case ORDER_BY_CREATED_AT -> lastComment.getCreatedAt().toString();
+            case ORDER_BY_LIKE_COUNT -> String.valueOf(lastComment.getLikeCount());
             default -> throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy", orderBy);
         };
     }
