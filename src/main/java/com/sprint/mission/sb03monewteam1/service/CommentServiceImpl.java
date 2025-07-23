@@ -4,6 +4,7 @@ import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentCursorRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -97,96 +98,41 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CursorPageResponse<CommentDto> getCommentsWithCursorBySort(
-        UUID articleId, String cursor,
-        Instant nextAfter, int size,
-        String sortBy, String sortDirection, UUID userId) {
+        CommentCursorRequest request,
+        UUID userId
+    ) {
+        UUID articleId = request.articleId();
+        String cursor = request.cursor();
+        Instant after = request.after();
+        int limit = request.limit();
+        String orderBy = (request.orderBy() != null) ? request.orderBy() : "createdAt";
+        String direction = (request.direction() != null) ? request.direction() : "DESC";
 
-        log.info(
-            "댓글 목록 조회 시작: 기사 ID = {}, cursor = {}, nextAfter = {},  size = {}, sortBy = {}, direction = {}"
-            , articleId, cursor, nextAfter, size, sortBy, sortDirection);
+        log.info("댓글 목록 조회 시작: 기사 ID = {}, cursor = {}, after = {}, size = {}, order = {} {}", articleId, cursor, after, limit, orderBy, direction);
 
-        if (articleId != null) {
-            articleRepository.findByIdAndIsDeletedFalse(articleId)
-                .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
-        }
-
-        // 페이지 크기 유효성 검사
-        if (size < 1) {
-            throw new IllegalArgumentException("페이지 크기는 1 이상이어야 합니다");
-        }
-
-        String orderField = (sortBy != null) ? sortBy : "createdAt";
-        String orderDirection = (sortDirection != null) ? sortDirection : "DESC";
-
-        // 정렬 기준 유효성 검사
-        if (!orderField.equals("createdAt") && !orderField.equals("likeCount")) {
-            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
-                orderField);
-        }
-
-        // 정렬 방향 유효성 검사
-        if (!orderDirection.equals("DESC") && !orderDirection.equals("ASC")) {
-            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "sortDirection",
-                orderDirection);
-        }
-
-        // 커서 유효성 검사
-        if (cursor != null) {
-            switch (orderField) {
-                case "createdAt" -> parseInstant(cursor);
-                case "likeCount" -> parseLong(cursor);
-            }
-        }
+        validateCursorRequest(articleId, limit, orderBy, direction, cursor);
 
         List<Comment> comments = commentRepository.findCommentsWithCursorBySort(
             articleId,
             cursor,
-            nextAfter,
-            size + 1,
-            orderField,
-            orderDirection
+            after,
+            limit + 1,
+            orderBy,
+            direction
         );
 
-        boolean hasNext = comments.size() > size;
+        boolean hasNext = comments.size() > limit;
         Comment lastComment = hasNext ? comments.get(comments.size() - 1) : null;
+        comments = hasNext ? comments.subList(0, limit) : comments;
 
-        String nextCursor = null;
-        Instant nextCursorAfter = null;
-
-        if (hasNext && lastComment != null) {
-            nextCursor = switch (orderField) {
-                case "createdAt" -> lastComment.getCreatedAt().toString();
-                case "likeCount" -> String.valueOf(lastComment.getLikeCount());
-                default ->
-                    throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
-                        orderField);
-            };
-            nextCursorAfter = lastComment.getCreatedAt();
-        }
+        String nextCursor = resolveNextCursor(lastComment, orderBy);
+        Instant nextCursorAfter = lastComment != null ? lastComment.getCreatedAt() : null;
 
         Long totalElements = (articleId == null)
             ? commentRepository.countByIsDeletedFalse()
             : commentRepository.countByArticleIdAndIsDeletedFalse(articleId);
 
-        comments = hasNext ? comments.subList(0, size) : comments;
-
-        List<UUID> commentIds = comments.stream()
-            .map(Comment::getId)
-            .toList();
-
-        Set<UUID> likedCommentIds = (userId != null && !commentIds.isEmpty())
-            ? commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIds(userId, commentIds)
-            : Collections.emptySet();
-
-        List<CommentDto> commentDtos = comments.stream()
-            .map(comment -> {
-                boolean likedByMe = likedCommentIds.contains(comment.getId());
-                return commentMapper.toDto(comment)
-                    .toBuilder()
-                    .likedByMe(likedByMe)
-                    .build();
-            })
-            .toList();
+        List<CommentDto> commentDtos = convertToDtosWithLikedByMe(comments, userId);
 
         log.info("댓글 목록 조회 완료 - 조회된 댓글 수: {}, hasNext: {}", commentDtos.size(), hasNext);
 
@@ -194,7 +140,7 @@ public class CommentServiceImpl implements CommentService {
             commentDtos,
             nextCursor,
             nextCursorAfter,
-            size,
+            limit,
             totalElements,
             hasNext
         );
@@ -339,10 +285,73 @@ public class CommentServiceImpl implements CommentService {
         log.debug("댓글 좋아요 활동 삭제 이벤트 발행 완료: {}", event);
     }
 
+    private void validateCursorRequest(UUID articleId, int limit, String orderBy, String direction, String cursor) {
+
+        if (articleId != null) {
+            articleRepository.findByIdAndIsDeletedFalse(articleId)
+                .orElseThrow(() -> new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
+        }
+
+        if (limit < 1) {
+            throw new IllegalArgumentException("페이지 크기는 1 이상이어야 합니다");
+        }
+
+        if (!orderBy.equals("createdAt") && !orderBy.equals("likeCount")) {
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy",
+                orderBy);
+        }
+
+        if (!direction.equals("DESC") && !direction.equals("ASC")) {
+            throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION, "direction",
+                direction);
+        }
+
+        if (cursor != null) {
+            switch (orderBy) {
+                case "createdAt" -> parseInstant(cursor);
+                case "likeCount" -> parseLong(cursor);
+            }
+        }
+    }
+
+    private String resolveNextCursor(Comment lastComment, String orderBy) {
+        if (lastComment == null) return null;
+        return switch (orderBy) {
+            case "createdAt" -> lastComment.getCreatedAt().toString();
+            case "likeCount" -> String.valueOf(lastComment.getLikeCount());
+            default -> throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "orderBy", orderBy);
+        };
+    }
+
     private void validateAuthor(Comment comment, UUID userId) {
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new UnauthorizedCommentAccessException();
         }
+    }
+
+    private List<CommentDto> convertToDtosWithLikedByMe(List<Comment> comments, UUID userId) {
+
+        if (comments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<UUID> commentIds = comments.stream()
+            .map(Comment::getId)
+            .toList();
+
+        Set<UUID> likedCommentIds = (userId != null)
+            ? commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIds(userId, commentIds)
+            : Collections.emptySet();
+
+        return comments.stream()
+            .map(comment -> {
+                boolean likedByMe = likedCommentIds.contains(comment.getId());
+                return commentMapper.toDto(comment)
+                    .toBuilder()
+                    .likedByMe(likedByMe)
+                    .build();
+            })
+            .toList();
     }
 
     public CommentDto toCommentDtoWithLikedByMe(Comment comment, UUID userId) {

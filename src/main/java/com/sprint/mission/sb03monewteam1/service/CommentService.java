@@ -2,6 +2,7 @@ package com.sprint.mission.sb03monewteam1.service;
 
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentCursorRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -15,12 +16,7 @@ public interface CommentService {
     CommentDto create(CommentRegisterRequest commentRegisterRequest);
 
     CursorPageResponse<CommentDto> getCommentsWithCursorBySort(
-        UUID articleId,
-        String cursor,
-        Instant nextAfter,
-        int size,
-        String sortBy,
-        String sortDirection,
+        CommentCursorRequest request,
         UUID userId
     );
 
