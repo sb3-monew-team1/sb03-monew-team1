@@ -1,9 +1,9 @@
 package com.sprint.mission.sb03monewteam1.service;
 
+import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
-import com.sprint.mission.sb03monewteam1.dto.CommentActivityDto;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -32,8 +32,8 @@ import com.sprint.mission.sb03monewteam1.mapper.CommentLikeActivityMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentLikeMapper;
 import com.sprint.mission.sb03monewteam1.mapper.CommentMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.article.ArticleRepository;
-import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -135,11 +135,7 @@ public class CommentServiceImpl implements CommentService {
             switch (orderField) {
                 case "createdAt" -> parseInstant(cursor);
                 case "likeCount" -> parseLong(cursor);
-                default ->
-                    throw new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD, "sortBy",
-                        orderField);
             }
-            ;
         }
 
         List<Comment> comments = commentRepository.findCommentsWithCursorBySort(
