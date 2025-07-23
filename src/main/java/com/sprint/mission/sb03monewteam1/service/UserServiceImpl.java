@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public UserDto create(UserRegisterRequest userRegisterRequest) {
+    public UserDto createUser(UserRegisterRequest userRegisterRequest) {
 
         log.info("사용자 생성 시작: email={}, nickname={}", userRegisterRequest.email(),
             userRegisterRequest.nickname());
@@ -98,7 +98,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto update(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request) {
+    public UserDto updateUser(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request) {
 
         log.info("사용자 정보 수정 시작 - userId={}, nickname={}", userId, request.nickname());
         validateOwnership(requestHeaderUserId, userId);
@@ -118,7 +118,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(UUID requestHeaderUserId, UUID userId) {
+    public void deleteUser(UUID requestHeaderUserId, UUID userId) {
 
         log.info("사용자 논리 삭제 시작: userId={}", userId);
         validateOwnership(requestHeaderUserId, userId);
@@ -133,7 +133,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteHard(UUID requestHeaderUserId, UUID userId) {
+    public void deleteHardUser(UUID requestHeaderUserId, UUID userId) {
 
         log.info("사용자 물리 삭제 요청: userId={}", userId);
         validateOwnership(requestHeaderUserId, userId);

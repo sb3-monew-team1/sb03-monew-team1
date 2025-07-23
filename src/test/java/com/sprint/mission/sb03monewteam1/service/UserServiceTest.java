@@ -101,7 +101,7 @@ public class UserServiceTest {
             given(userMapper.toDto(any(User.class))).willReturn(expectedUserDto);
 
             // When
-            UserDto result = userService.create(userRegisterRequest);
+            UserDto result = userService.createUser(userRegisterRequest);
 
             // Then
             assertThat(result).isNotNull();
@@ -124,7 +124,7 @@ public class UserServiceTest {
 
             // When & Then
             assertThatThrownBy(
-                () -> userService.create(userRegisterRequest)).isInstanceOf(
+                () -> userService.createUser(userRegisterRequest)).isInstanceOf(
                 EmailAlreadyExistsException.class);
 
             then(userRepository).should().existsByEmail(userRegisterRequest.email());
@@ -267,7 +267,7 @@ public class UserServiceTest {
             given(userMapper.toDto(existedUser)).willReturn(existedUserDto);
 
             // When
-            UserDto result = userService.update(requesterId, userId, userUpdateRequest);
+            UserDto result = userService.updateUser(requesterId, userId, userUpdateRequest);
 
             // Then
             assertThat(result).isNotNull();
@@ -289,7 +289,7 @@ public class UserServiceTest {
 
             // When & Then
             assertThatThrownBy(
-                () -> userService.update(requesterId, targetId, userUpdateRequest))
+                () -> userService.updateUser(requesterId, targetId, userUpdateRequest))
                 .isInstanceOf(ForbiddenAccessException.class)
                 .hasMessageContaining("접근 권한이 없습니다")
                 .extracting("errorCode")
@@ -305,7 +305,7 @@ public class UserServiceTest {
             given(userRepository.findByIdAndIsDeletedFalse(userId)).willReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> userService.update(userId, userId, userUpdateRequest))
+            assertThatThrownBy(() -> userService.updateUser(userId, userId, userUpdateRequest))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining("사용자를 찾을 수 없습니다")
                 .extracting("errorCode")
@@ -336,7 +336,7 @@ public class UserServiceTest {
             given(commentLikeRepository.findAllByUserId(userId)).willReturn(commentLikes);
 
             // When
-            userService.delete(requesterId, userId);
+            userService.deleteUser(requesterId, userId);
 
             // Then
             assertThat(existedUser.isDeleted()).isTrue();
@@ -357,7 +357,7 @@ public class UserServiceTest {
             UUID requesterId = UUID.randomUUID();
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(requestUserId, requesterId))
+            assertThatThrownBy(() -> userService.deleteUser(requestUserId, requesterId))
                 .isInstanceOf(ForbiddenAccessException.class);
 
             then(userRepository).shouldHaveNoInteractions();
@@ -373,7 +373,7 @@ public class UserServiceTest {
                 UserNotFoundException.class);
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(requesterId, userId))
+            assertThatThrownBy(() -> userService.deleteUser(requesterId, userId))
                 .isInstanceOf(UserNotFoundException.class);
 
             then(userRepository).should().findByIdAndIsDeletedFalse(userId);
@@ -394,7 +394,7 @@ public class UserServiceTest {
                 UserNotFoundException.class);
 
             // When & Then
-            assertThatThrownBy(() -> userService.delete(requesterId, userId))
+            assertThatThrownBy(() -> userService.deleteUser(requesterId, userId))
                 .isInstanceOf(UserNotFoundException.class);
 
             then(userRepository).should().findByIdAndIsDeletedFalse(userId);
@@ -433,7 +433,7 @@ public class UserServiceTest {
             willDoNothing().given(userRepository).deleteById(userId);
 
             // When
-            userService.deleteHard(requesterId, userId);
+            userService.deleteHardUser(requesterId, userId);
 
             // Then
             assertThat(existedUser.isDeleted()).isTrue();
@@ -460,7 +460,7 @@ public class UserServiceTest {
             UUID requesterId = UUID.randomUUID();
 
             // When & Then
-            assertThatThrownBy(() -> userService.deleteHard(requestUserId, requesterId))
+            assertThatThrownBy(() -> userService.deleteHardUser(requestUserId, requesterId))
                 .isInstanceOf(ForbiddenAccessException.class);
 
             then(userRepository).shouldHaveNoInteractions();
@@ -475,7 +475,7 @@ public class UserServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> userService.deleteHard(requesterId, userId))
+            assertThatThrownBy(() -> userService.deleteHardUser(requesterId, userId))
                 .isInstanceOf(UserNotFoundException.class);
 
             then(userRepository).should().findById(userId);
@@ -504,7 +504,7 @@ public class UserServiceTest {
             willDoNothing().given(userRepository).deleteById(userId);
 
             // When
-            userService.deleteHard(requesterId, userId);
+            userService.deleteHardUser(requesterId, userId);
 
             // Then
             assertThat(deletedUser.isDeleted()).isTrue();
