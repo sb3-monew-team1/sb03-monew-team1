@@ -8,14 +8,14 @@ import java.util.UUID;
 
 public interface UserService {
 
-    UserDto create(UserRegisterRequest userRegisterRequest);
+    UserDto createUser(UserRegisterRequest userRegisterRequest);
 
     UserDto login(UserLoginRequest userLoginRequest);
 
-    UserDto update(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request);
+    UserDto updateUser(UUID requestHeaderUserId, UUID userId, UserUpdateRequest request);
 
-    void delete(UUID requestHeaderUserId, UUID userId);
+    void deleteUser(UUID requestHeaderUserId, UUID userId);
 
-    void deleteHard(UUID requestHeaderUserId, UUID userId);
+    void deleteHardUser(UUID requestHeaderUserId, UUID userId);
 
 }

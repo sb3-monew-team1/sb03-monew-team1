@@ -38,7 +38,7 @@ public class UserController implements UserApi {
         log.info("회원가입 요청: email={}, nickname={}",
             userRegisterRequest.email(), userRegisterRequest.nickname());
 
-        UserDto userDto = userService.create(userRegisterRequest);
+        UserDto userDto = userService.createUser(userRegisterRequest);
 
         log.info("회원가입 완료: id={}, email={}, nickname={}",
             userDto.id(), userDto.email(), userDto.nickname());
@@ -73,7 +73,7 @@ public class UserController implements UserApi {
         UUID requestUserId = (UUID) httpServletRequest.getAttribute("userId");
         log.info("Monew-Request-User-ID: {}", requestUserId);
 
-        UserDto userDto = userService.update(requestUserId, userId, request);
+        UserDto userDto = userService.updateUser(requestUserId, userId, request);
 
         log.info("사용자 정보 수정 완료: id={}, nickname={}", userDto.id(), userDto.nickname());
 
@@ -90,7 +90,7 @@ public class UserController implements UserApi {
         UUID requestUserId = (UUID) httpServletRequest.getAttribute("userId");
         log.info("Monew-Request-User-ID: {}", requestUserId);
 
-        userService.delete(requestUserId, userId);
+        userService.deleteUser(requestUserId, userId);
 
         log.info("사용자 논리 삭제 완료: id={}", userId);
 
@@ -107,7 +107,7 @@ public class UserController implements UserApi {
         UUID requestUserId = (UUID) httpServletRequest.getAttribute("userId");
         log.info("Monew-Request-User-ID: {}", requestUserId);
 
-        userService.deleteHard(requestUserId, userId);
+        userService.deleteHardUser(requestUserId, userId);
 
         log.info("사용자 물리 삭제 완료: id={}", userId);
 

@@ -68,7 +68,7 @@ public class UserControllerTest {
             UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequest();
             UserDto userDto = UserFixture.createUserDto();
 
-            given(userService.create(userRegisterRequest)).willReturn(userDto);
+            given(userService.createUser(userRegisterRequest)).willReturn(userDto);
 
             // When & Then
             mockMvc.perform(post("/api/users")
@@ -85,7 +85,7 @@ public class UserControllerTest {
             UserRegisterRequest userRegisterRequest = UserFixture.createUserRegisterRequestWithDuplicateEmail();
             UserDto userDto = UserFixture.createUserDto();
 
-            given(userService.create(userRegisterRequest))
+            given(userService.createUser(userRegisterRequest))
                 .willThrow(new EmailAlreadyExistsException(UserFixture.getDefaultEmail()));
 
             // When & Then
@@ -242,7 +242,7 @@ public class UserControllerTest {
                 Instant.now()
             );
 
-            given(userService.update(requestHeaderUserId, userId, userUpdateRequest)).willReturn(
+            given(userService.updateUser(requestHeaderUserId, userId, userUpdateRequest)).willReturn(
                 userDto);
 
             // When & Then
@@ -276,7 +276,7 @@ public class UserControllerTest {
             UUID userId = UUID.randomUUID();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
-            given(userService.update(requestHeaderUserId, userId, userUpdateRequest))
+            given(userService.updateUser(requestHeaderUserId, userId, userUpdateRequest))
                 .willThrow(new ForbiddenAccessException("권한이 없습니다"));
 
             // When & Then
@@ -294,7 +294,7 @@ public class UserControllerTest {
             UUID userId = UserFixture.getDefaultId();
             UserUpdateRequest userUpdateRequest = UserFixture.userUpdateRequest("newNickname");
 
-            given(userService.update(requestHeaderUserId, userId, userUpdateRequest))
+            given(userService.updateUser(requestHeaderUserId, userId, userUpdateRequest))
                 .willThrow(new UserNotFoundException(userId));
 
             // When & Then
@@ -316,7 +316,7 @@ public class UserControllerTest {
             UUID requestHeaderUserId = UserFixture.getDefaultId();
             UUID userId = UserFixture.getDefaultId();
 
-            willDoNothing().given(userService).delete(requestHeaderUserId, userId);
+            willDoNothing().given(userService).deleteUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}", userId)
@@ -332,7 +332,7 @@ public class UserControllerTest {
 
             willThrow(new ForbiddenAccessException("다른 사용자는 삭제할 수 없습니다"))
                 .given(userService)
-                .delete(requestHeaderUserId, userId);
+                .deleteUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}", userId)
@@ -348,7 +348,7 @@ public class UserControllerTest {
 
             willThrow(new UserNotFoundException(userId))
                 .given(userService)
-                .delete(requestHeaderUserId, userId);
+                .deleteUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}", userId)
@@ -364,7 +364,7 @@ public class UserControllerTest {
 
             willThrow(new UserNotFoundException(userId))
                 .given(userService)
-                .delete(requestHeaderUserId, userId);
+                .deleteUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}", userId)
@@ -383,7 +383,7 @@ public class UserControllerTest {
             UUID requestHeaderUserId = UserFixture.getDefaultId();
             UUID userId = UserFixture.getDefaultId();
 
-            willDoNothing().given(userService).deleteHard(requestHeaderUserId, userId);
+            willDoNothing().given(userService).deleteHardUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}/hard", userId)
@@ -398,7 +398,7 @@ public class UserControllerTest {
             UUID userId = UUID.randomUUID();
 
             willThrow(new ForbiddenAccessException("다른 사용자를 삭제 할 수 없습니다"))
-                .given(userService).deleteHard(requestHeaderUserId, userId);
+                .given(userService).deleteHardUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}/hard", userId)
@@ -413,7 +413,7 @@ public class UserControllerTest {
             UUID userId = UserFixture.getDefaultId();
 
             willThrow(new UserNotFoundException(userId))
-                .given(userService).deleteHard(requestHeaderUserId, userId);
+                .given(userService).deleteHardUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}/hard", userId)
@@ -430,7 +430,7 @@ public class UserControllerTest {
             UUID userId = user.getId();
             user.setDeleted();
 
-            willDoNothing().given(userService).deleteHard(requestHeaderUserId, userId);
+            willDoNothing().given(userService).deleteHardUser(requestHeaderUserId, userId);
 
             // When & Then
             mockMvc.perform(delete("/api/users/{userId}/hard", userId)
