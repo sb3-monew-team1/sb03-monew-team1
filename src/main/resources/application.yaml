@@ -33,6 +33,9 @@ spring:
     job:
       enabled: false
 
+server:
+  forward-headers-strategy: native
+
 logging:
   level:
     root: info
