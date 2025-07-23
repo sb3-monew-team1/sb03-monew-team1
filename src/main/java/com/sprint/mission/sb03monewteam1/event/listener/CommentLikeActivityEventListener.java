@@ -86,7 +86,9 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
 
         Query query = new Query(Criteria.where("commentLikes.commentUserId").is(userId));
 
-        Update update = new Update().set("commentLikes.$.commentUserNickname", newUserName);
+        Update update = new Update()
+            .set("commentLikes.$[elem].commentUserNickname", newUserName)
+            .filterArray(Criteria.where("elem.commentUserId").is(userId));
 
         UpdateResult result = mongoTemplate.updateMulti(query, update, CommentLikeActivity.class);
 
