@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.logging.MDC;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Profile("!test")
 public class IpLoggingInterceptor implements HandlerInterceptor {
 
+    private static final String IP_ADDRESS = "ip";
     private static final List<String> IP_HEADER_CANDIDATES = List.of(
         "X-Forwarded-For",
         "Proxy-Client-IP",
@@ -25,8 +27,8 @@ public class IpLoggingInterceptor implements HandlerInterceptor {
     public boolean preHandle(
         HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String clientIp = getClientIp(request);
-        log.info("요청 IP: {}", clientIp);
         request.setAttribute("clientIp", clientIp);
+        MDC.put(IP_ADDRESS, clientIp);
         return true;
     }
 
