@@ -5,7 +5,7 @@ import com.sprint.mission.sb03monewteam1.document.ArticleViewActivity;
 import com.sprint.mission.sb03monewteam1.dto.ArticleViewActivityDto;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityBulkDeleteEvent;
-import com.sprint.mission.sb03monewteam1.event.ArticleViewCountUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewCountActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.ArticleViewActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public class ArticleViewActivityEventListener extends AbstractActivityEventListe
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCreateEvent(ArticleViewActivityCreateEvent event) {
-        log.debug("기사 뷰 활동 ArticleViewActivityCreateEvent 리스너 실행: {}", event);
+        log.debug("ArticleViewActivityCreateEvent 리스너 실행: {}", event);
         saveUserActivity(event.userId(), event.articleViewActivityDto());
     }
 
@@ -78,7 +78,7 @@ public class ArticleViewActivityEventListener extends AbstractActivityEventListe
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleViewCountChanged(ArticleViewCountUpdateEvent event) {
+    public void handleViewCountUpdateEvent(ArticleViewCountActivityUpdateEvent event) {
         UUID articleId = event.articleId();
         long newViewCount = event.newViewCount();
 
@@ -89,6 +89,6 @@ public class ArticleViewActivityEventListener extends AbstractActivityEventListe
 
         UpdateResult result = mongoTemplate.updateMulti(query, update, ArticleViewActivity.class);
 
-        log.info("기사 뷰 수 동기화 완료: articleId={}, 반영된 문서 수={}", articleId, result.getModifiedCount());
+        log.debug("기사 뷰 수 동기화 완료: articleId={}, 반영된 문서 수={}", articleId, result.getModifiedCount());
     }
 }

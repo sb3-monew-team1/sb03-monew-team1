@@ -16,7 +16,7 @@ import com.sprint.mission.sb03monewteam1.event.CommentActivityDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
-import com.sprint.mission.sb03monewteam1.event.CommentLikeCountUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeCountActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentAlreadyLikedException;
@@ -300,8 +300,8 @@ public class CommentServiceImpl implements CommentService {
         eventPublisher.publishEvent(new CommentLikeEvent(user, comment));
         log.info("좋아요 등록 알림 이벤트 발행: likedBy={}, comment={}", user.getId(), comment.getId());
 
-        CommentLikeCountUpdateEvent countEvent =
-            new CommentLikeCountUpdateEvent(commentId, comment.getLikeCount());
+        CommentLikeCountActivityUpdateEvent countEvent =
+            new CommentLikeCountActivityUpdateEvent(commentId, comment.getLikeCount());
         eventPublisher.publishEvent(countEvent);
         log.debug("댓글 좋아요 사용 기록 동기화 이벤트 발행 완료: {}", countEvent);
 

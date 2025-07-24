@@ -89,7 +89,7 @@ public class SubscriptionActivityEventListener extends AbstractActivityEventList
         log.debug("[문서 검색] 조건에 맞는 문서 수={}", matchedDocs.size());
 
         UpdateResult result = mongoTemplate.updateMulti(query, update, SubscriptionActivity.class);
-        log.info("handleKeywordUpdateEvent 리스너 실행 완료: interestId={}, 수정 문서 수={}", interestId, result.getModifiedCount());
+        log.debug("handleKeywordUpdateEvent 리스너 실행 완료: interestId={}, 수정 문서 수={}", interestId, result.getModifiedCount());
     }
 
     @Async
