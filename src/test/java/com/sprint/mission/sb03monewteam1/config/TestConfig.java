@@ -15,7 +15,6 @@ public class TestConfig {
         return new EmbeddedDatabaseBuilder()
             .setType(EmbeddedDatabaseType.H2)
             .addScript("classpath:schema.sql")
-//                .addScript("classpath:org/springframework/batch/core/schema-h2.sql")
             .build();
     }
 }

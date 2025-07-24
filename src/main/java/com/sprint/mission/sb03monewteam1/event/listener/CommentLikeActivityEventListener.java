@@ -8,8 +8,8 @@ import com.sprint.mission.sb03monewteam1.dto.CommentLikeActivityDto;
 import com.sprint.mission.sb03monewteam1.event.CommentActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityCreateEvent;
 import com.sprint.mission.sb03monewteam1.event.CommentLikeActivityDeleteEvent;
-import com.sprint.mission.sb03monewteam1.event.CommentLikeCountUpdateEvent;
-import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.CommentLikeCountActivityUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.UserNameActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.repository.mongodb.CommentLikeActivityRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +77,7 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
 
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
-    public void handleUserNameUpdateForLikes(UserNameUpdateEvent event) {
+    public void handleUserNameUpdateEventForLikes(UserNameActivityUpdateEvent event) {
         UUID userId = event.userId();
         String newUserName = event.newUserName();
 
@@ -97,14 +97,14 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
         if (result.getModifiedCount() == 0) {
             log.warn("[업데이트 실패] userId={}에 대한 댓글 좋아요 수정이 적용되지 않았습니다.", userId);
         } else {
-            log.info("댓글 좋아요 활동 UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId,
+            log.debug("댓글 좋아요 활동 UserNameUpdateEvent 리스너 실행 완료 userId={}, 수정된 문서 수={}", userId,
                 result.getModifiedCount());
         }
     }
 
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
-    public void handleCommentActivityUpdateForLikes(CommentActivityUpdateEvent event) {
+    public void handleCommentActivityUpdateEventForLikes(CommentActivityUpdateEvent event) {
         UUID commentId = event.commentId();
         String updatedContent = event.commentActivityDto().content();
 
@@ -122,14 +122,14 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
         if (result.getModifiedCount() == 0) {
             log.warn("[업데이트 실패] commentId={}에 대한 댓글 내용 수정이 적용되지 않았습니다.", commentId);
         } else {
-            log.info("댓글 좋아요 활동 CommentActivityUpdateEvent 리스너 실행 완료 commentId={}, 수정된 문서 수={}",
+            log.debug("댓글 좋아요 활동 CommentActivityUpdateEvent 리스너 실행 완료 commentId={}, 수정된 문서 수={}",
                 commentId, result.getModifiedCount());
         }
     }
 
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
-    public void handleLikeCountChanged(CommentLikeCountUpdateEvent event) {
+    public void handleLikeCountUpdateEvent(CommentLikeCountActivityUpdateEvent event) {
         UUID commentId = event.commentId();
         long newLikeCount = event.newLikeCount();
 
@@ -141,7 +141,7 @@ public class CommentLikeActivityEventListener extends AbstractActivityEventListe
 
         UpdateResult result = mongoTemplate.updateMulti(query, update, CommentLikeActivity.class);
 
-        log.info("댓글 좋아요 활동 CommentLikeCountChangedEvent 리스너 실행 완료: commentId={}, 수정 문서 수={}", commentId,
+        log.debug("댓글 좋아요 활동 CommentLikeCountChangedEvent 리스너 실행 완료: commentId={}, 수정 문서 수={}", commentId,
             result.getModifiedCount());
     }
 }

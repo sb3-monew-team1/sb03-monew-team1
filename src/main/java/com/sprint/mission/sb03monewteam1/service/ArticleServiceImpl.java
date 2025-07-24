@@ -18,7 +18,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.InterestKeyword;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityBulkDeleteEvent;
 import com.sprint.mission.sb03monewteam1.event.ArticleViewActivityCreateEvent;
-import com.sprint.mission.sb03monewteam1.event.ArticleViewCountUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.ArticleViewCountActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.event.NewArticleCollectEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.article.ArticleNotFoundException;
@@ -109,8 +109,8 @@ public class ArticleServiceImpl implements ArticleService {
         ArticleView articleView = ArticleView.createArticleView(userId, article);
         ArticleView savedArticleView = articleViewRepository.save(articleView);
 
-        ArticleViewCountUpdateEvent event =
-            new ArticleViewCountUpdateEvent(article.getId(), article.getViewCount());
+        ArticleViewCountActivityUpdateEvent event =
+            new ArticleViewCountActivityUpdateEvent(article.getId(), article.getViewCount());
 
         eventPublisher.publishEvent(event);
         log.debug("기사 뷰 활동 내역 동기화 이벤트 발행 완료: {}", event);

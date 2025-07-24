@@ -20,7 +20,7 @@ import com.sprint.mission.sb03monewteam1.entity.Comment;
 import com.sprint.mission.sb03monewteam1.entity.CommentLike;
 import com.sprint.mission.sb03monewteam1.entity.Subscription;
 import com.sprint.mission.sb03monewteam1.entity.User;
-import com.sprint.mission.sb03monewteam1.event.UserNameUpdateEvent;
+import com.sprint.mission.sb03monewteam1.event.UserNameActivityUpdateEvent;
 import com.sprint.mission.sb03monewteam1.exception.ErrorCode;
 import com.sprint.mission.sb03monewteam1.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.sb03monewteam1.exception.user.ForbiddenAccessException;
@@ -285,7 +285,7 @@ public class UserServiceTest {
             then(userRepository).should().findByIdAndIsDeletedFalse(userId);
             then(userMapper).should().toDto(existedUser);
 
-            verify(eventPublisher).publishEvent(any(UserNameUpdateEvent.class));
+            verify(eventPublisher).publishEvent(any(UserNameActivityUpdateEvent.class));
         }
 
         @Test

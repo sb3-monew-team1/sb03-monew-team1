@@ -2,7 +2,7 @@ package com.sprint.mission.sb03monewteam1.event;
 
 import java.util.UUID;
 
-public record ArticleViewCountUpdateEvent(
+public record ArticleViewCountActivityUpdateEvent(
     UUID articleId,
     long newViewCount
 ) {
