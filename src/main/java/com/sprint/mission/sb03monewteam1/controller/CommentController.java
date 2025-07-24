@@ -3,6 +3,7 @@ package com.sprint.mission.sb03monewteam1.controller;
 import com.sprint.mission.sb03monewteam1.controller.api.CommentApi;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentCursorRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -61,9 +62,13 @@ public class CommentController implements CommentApi {
         log.info(
             "댓글 목록 조회 요청: articleId = {}, cursor = {}, after = {}, limit = {}, orderBy = {}, direction = {}",
             articleId, cursor, after, limit, orderBy, direction);
+
+        CommentCursorRequest request = new CommentCursorRequest(articleId, cursor, after, limit, orderBy, direction);
+
         CursorPageResponse<CommentDto> result = commentService.getCommentsWithCursorBySort(
-            articleId, cursor, after, limit, orderBy, direction, userId
+            request, userId
         );
+
         log.info("댓글 목록 조회 완료");
         log.info("조회된 댓글 수: {}", result.content().size());
 

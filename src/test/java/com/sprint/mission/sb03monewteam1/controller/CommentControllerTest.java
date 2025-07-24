@@ -1,6 +1,5 @@
 package com.sprint.mission.sb03monewteam1.controller;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -16,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.sb03monewteam1.dto.CommentDto;
 import com.sprint.mission.sb03monewteam1.dto.CommentLikeDto;
+import com.sprint.mission.sb03monewteam1.dto.request.CommentCursorRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentRegisterRequest;
 import com.sprint.mission.sb03monewteam1.dto.request.CommentUpdateRequest;
 import com.sprint.mission.sb03monewteam1.dto.response.CursorPageResponse;
@@ -29,7 +29,6 @@ import com.sprint.mission.sb03monewteam1.exception.comment.CommentLikeNotFoundEx
 import com.sprint.mission.sb03monewteam1.exception.comment.CommentNotFoundException;
 import com.sprint.mission.sb03monewteam1.exception.comment.UnauthorizedCommentAccessException;
 import com.sprint.mission.sb03monewteam1.exception.common.InvalidSortOptionException;
-import com.sprint.mission.sb03monewteam1.exception.user.UserNotFoundException;
 import com.sprint.mission.sb03monewteam1.fixture.ArticleFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentFixture;
 import com.sprint.mission.sb03monewteam1.fixture.CommentLikeFixture;
@@ -176,6 +175,8 @@ public class CommentControllerTest {
             int totalCount = 10;
             int pageSize = 5;
 
+            CommentCursorRequest request = new CommentCursorRequest(articleId, null, null, pageSize, sortBy, sortDirection);
+
             List<CommentDto> commentDtos = new ArrayList<>();
 
             for (int i = 0; i < totalCount; i++) {
@@ -197,7 +198,7 @@ public class CommentControllerTest {
                 .hasNext(true)
                 .build();
 
-            given(commentService.getCommentsWithCursorBySort(eq(articleId), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId)))
+            given(commentService.getCommentsWithCursorBySort(eq(request), eq(userId)))
                 .willReturn(result);
 
             // when & then
@@ -231,6 +232,9 @@ public class CommentControllerTest {
             String sortDirection = "DESC";
             int totalCount = 10;
             int pageSize = 5;
+            String cursor = baseTime.toString();
+
+            CommentCursorRequest request = new CommentCursorRequest(articleId, cursor, null, pageSize, sortBy, sortDirection);
 
             List<CommentDto> commentDtos = new ArrayList<>();
 
@@ -242,7 +246,6 @@ public class CommentControllerTest {
                 commentDtos.add(commentDto);
             }
 
-            String cursor = baseTime.toString();
             List<CommentDto> pageContent = commentDtos.stream()
                 .filter(c -> c.createdAt().isAfter(baseTime))
                 .limit(pageSize)
@@ -257,7 +260,7 @@ public class CommentControllerTest {
                 .hasNext(true)
                 .build();
 
-            given(commentService.getCommentsWithCursorBySort(eq(articleId), eq(cursor), eq(null), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId)))
+            given(commentService.getCommentsWithCursorBySort(eq(request), eq(userId)))
                 .willReturn(result);
 
             // when & then
@@ -288,8 +291,10 @@ public class CommentControllerTest {
             String sortDirection = "DESC";
             int pageSize = 5;
 
+            CommentCursorRequest request = new CommentCursorRequest(invalidArticleId, null, null, pageSize, sortBy, sortDirection);
+
             given(commentService.getCommentsWithCursorBySort(
-                eq(invalidArticleId), any(), any(), eq(pageSize), eq(sortBy), eq(sortDirection), eq(userId))
+                eq(request), eq(userId))
             ).willThrow(new CommentException(ErrorCode.ARTICLE_NOT_FOUND));
 
             // when & then
@@ -313,8 +318,10 @@ public class CommentControllerTest {
             String sortDirection = "DESC";
             int pageSize = 5;
 
+            CommentCursorRequest request = new CommentCursorRequest(null, null, null, pageSize, invalidSortBy, sortDirection);
+
             given(commentService.getCommentsWithCursorBySort(
-                eq(null), eq(null), eq(null), eq(pageSize), eq(invalidSortBy), eq(sortDirection), eq(userId)
+                eq(request), eq(userId)
             )).willThrow(new InvalidSortOptionException(ErrorCode.INVALID_SORT_FIELD));
 
             // when & then
@@ -336,8 +343,10 @@ public class CommentControllerTest {
             String sortBy = "createdAt";
             String invalidDirection = "INVALID";
 
+            CommentCursorRequest request = new CommentCursorRequest(null, null, null, pageSize, sortBy, invalidDirection);
+
             given(commentService.getCommentsWithCursorBySort(
-                eq(null), eq(null), eq(null), eq(pageSize), eq(sortBy), eq(invalidDirection), eq(userId)
+                eq(request), eq(userId)
             )).willThrow(new InvalidSortOptionException(ErrorCode.INVALID_SORT_DIRECTION));
 
             mockMvc.perform(get("/api/comments")
