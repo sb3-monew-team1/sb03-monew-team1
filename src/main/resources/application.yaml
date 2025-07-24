@@ -42,6 +42,9 @@ logging:
     com.sprint.mission: info
 
 management:
+  health:
+    mongo:
+      enabled: false
   endpoints:
     web:
       exposure:
