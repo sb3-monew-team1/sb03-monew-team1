@@ -26,6 +26,11 @@ spring:
     # OSIV 비활성화
     open-in-view: false
 
+aws:
+  s3:
+    logDir: logs    # 로그 경로
+    log-prefix: logs    # 로그 S3 저장 경로
+
 logging:
   level:
     root: info

@@ -26,11 +26,6 @@ public abstract class BaseEntity {
     @Column(columnDefinition = "timestamp with time zone", updatable = false, nullable = false)
     private Instant createdAt;
 
-    protected void assignId(UUID id) {
-        // 백업, 복원 등의 목적
-        this.id = id;
-    }
-
     public void setIdForTest(UUID id) {
         this.id = id;
     }

@@ -71,5 +71,6 @@ aws:
     region: ${AWS_S3_REGION}
     access-key: ${AWS_S3_ACCESS_KEY}
     secret-key: ${AWS_S3_SECRET_KEY}
-    backup-prefix: articles/    # S3 저장 경로
-    log-prefix: logs/    # 로그 백업 경로
+    backup-prefix: articles    # 기사 S3 저장 경로
+    logDir: /app/logs    # 로그 경로
+    log-prefix: logs    # 로그 S3 저장 경로

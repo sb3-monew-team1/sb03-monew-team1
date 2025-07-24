@@ -25,7 +25,9 @@ public class LogBackupScheduler {
             log.warn("로그 백업 작업이 아직 실행 중이므로 이번 실행은 건너뜁니다.");
             return;
         }
+
         log.info("스케줄러: 로그 백업 배치 잡 실행 요청");
+
         try {
             JobParameters params = new JobParametersBuilder()
                 .addLong("timestamp", System.currentTimeMillis())
