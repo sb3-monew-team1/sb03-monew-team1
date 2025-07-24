@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserService {
         log.info("사용자 정보 수정 완료 - id={}, nickname={}", user.getId(), user.getNickname());
 
         eventPublisher.publishEvent(new UserNameActivityUpdateEvent(userId, request.nickname()));
-        log.debug("UserNameUpdateEvent 발행 완료: userId={}, newUserName={}", userId, request.nickname());
+        log.debug("UserNameActivityUpdateEvent 발행 완료: userId={}, newUserName={}", userId, request.nickname());
 
         return userMapper.toDto(user);
     }
