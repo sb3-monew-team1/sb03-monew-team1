@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -91,7 +92,7 @@ class LogBackupJobConfigTest {
         assertEquals(RepeatStatus.FINISHED, status);
         verify(s3Util, times(1)).upload(
             eq("test-bucket"),
-            contains("/json/"),
+            argThat(key -> key.contains("/main/") || key.contains("/debug/")),
             any(InputStream.class),
             anyLong(),
             eq("application/gzip")

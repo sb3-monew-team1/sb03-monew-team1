@@ -60,6 +60,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -573,7 +574,8 @@ class ArticleServiceTest {
 
         ObjectMapper realMapper = new ObjectMapper();
         realMapper.registerModule(new JavaTimeModule());
-        String json = realMapper.writeValueAsString(dtos);
+
+        String json = realMapper.writeValueAsString(Map.of("items", dtos));
         byte[] bytes = json.getBytes();
 
         when(articleRepository.findAllBySourceUrlIn(anyList()))
@@ -583,7 +585,7 @@ class ArticleServiceTest {
 
         ReflectionTestUtils.setField(articleService, "objectMapper", realMapper);
         ReflectionTestUtils.setField(articleService, "backupBucket", "test-bucket");
-        ReflectionTestUtils.setField(articleService, "backupPrefix", "backup/");
+        ReflectionTestUtils.setField(articleService, "backupPrefix", "backup");
 
         List<ArticleRestoreResultDto> results = articleService.restoreArticles(from, to);
 
@@ -606,7 +608,7 @@ class ArticleServiceTest {
             .thenReturn(null);
 
         ReflectionTestUtils.setField(articleService, "backupBucket", "test-bucket");
-        ReflectionTestUtils.setField(articleService, "backupPrefix", "backup/");
+        ReflectionTestUtils.setField(articleService, "backupPrefix", "backup");
 
         List<ArticleRestoreResultDto> results = articleService.restoreArticles(from, to);
 

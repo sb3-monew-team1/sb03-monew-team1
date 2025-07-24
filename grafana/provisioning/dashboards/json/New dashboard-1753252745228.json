@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -74,29 +74,12 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "monew_batch_job_success_total{exported_job=\"naverNewsCollectJob\"}",
+          "expr": "monew_batch_job_success_total{exported_job=\"newsCollectJob\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{exported_job}}",
           "range": true,
           "refId": "A",
-          "useBackend": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "feseujtetqb5sd"
-          },
-          "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "monew_batch_job_success_total{exported_job=\"naverNewsCollectJob\"}",
-          "fullMetaSearch": false,
-          "hide": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "{{exported_job}}",
-          "range": true,
-          "refId": "B",
           "useBackend": false
         }
       ],
@@ -307,7 +290,7 @@
           "useBackend": false
         }
       ],
-      "title": "New panel",
+      "title": "관심사별 기사 개수",
       "type": "table"
     },
     {
@@ -459,5 +442,5 @@
   "timezone": "browser",
   "title": "New dashboard",
   "uid": "911196ba-c1cc-4cf7-85de-62ed51a8855f",
-  "version": 5
+  "version": 1
 }

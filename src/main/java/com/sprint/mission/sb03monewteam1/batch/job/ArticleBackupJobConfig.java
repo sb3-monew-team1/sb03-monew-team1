@@ -10,11 +10,17 @@ import io.micrometer.core.instrument.Timer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.StepExecutionListener;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -40,17 +46,17 @@ public class ArticleBackupJobConfig {
     @Value("${aws.s3.bucket:}")
     private String backupBucket;
 
-    @Value("${aws.s3.backup-prefix:articles/}")
+    @Value("${aws.s3.backup-prefix:articles}")
     private String backupPrefix;
 
     @Bean
-    public org.springframework.batch.core.JobExecutionListener articleBackupJobExecutionListener() {
+    public JobExecutionListener articleBackupJobExecutionListener() {
         return new JobCompletionMetricsListener("articleBackupJob", monewMetrics);
     }
 
     @Bean
     public Job articleBackupJob(JobRepository jobRepository, Step articleBackupStep,
-        org.springframework.batch.core.JobExecutionListener articleBackupJobExecutionListener) {
+        JobExecutionListener articleBackupJobExecutionListener) {
         return new JobBuilder("articleBackupJob", jobRepository)
             .start(articleBackupStep)
             .listener(articleBackupJobExecutionListener)
@@ -66,10 +72,19 @@ public class ArticleBackupJobConfig {
             .reader(reader())
             .processor(processor())
             .writer(writer())
+            .listener(new StepExecutionListener() {
+                @Override
+                public ExitStatus afterStep(StepExecution stepExecution) {
+                    long count = stepExecution.getWriteCount();
+                    log.info("기사 백업 전체 완료 - 전체 백업된 기사 개수: {}", count);
+                    return ExitStatus.COMPLETED;
+                }
+            })
             .build();
     }
 
     @Bean
+    @StepScope
     public ItemReader<ArticleDto> reader() {
         List<ArticleDto> articles = articleRepositoryCustom.findAllCreatedYesterday();
         return new IteratorItemReader<>(articles);
@@ -84,10 +99,10 @@ public class ArticleBackupJobConfig {
     public ItemWriter<ArticleDto> writer() {
         return articles -> {
             Timer.Sample sample = Timer.start(monewMetrics.getMeterRegistry());
-            String key = backupPrefix + "backup-articles-" +
-                LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1) + ".json";
+            String dateStr = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String key = String.format("%s/backup-articles-%s.json", backupPrefix, dateStr);
             try {
-                log.info("백업 파일 업로드 시작: key={}", key);
                 String json = objectMapper.writeValueAsString(articles);
                 byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
 
@@ -98,8 +113,6 @@ public class ArticleBackupJobConfig {
                     jsonBytes.length,
                     "application/json"
                 );
-
-                log.info("백업 파일 업로드 완료: key={}", key);
             } catch (Exception e) {
                 log.error("백업 파일 업로드 중 오류 발생", e);
                 throw new RuntimeException(e);

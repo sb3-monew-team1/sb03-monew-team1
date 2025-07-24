@@ -49,7 +49,6 @@ class ArticleCollectJobTest {
 
     @BeforeEach
     void setUp() {
-        // 필요할 때마다 Job을 지정해서 사용
         jobLauncherTestUtils.setJobLauncher(jobLauncher);
     }
 
