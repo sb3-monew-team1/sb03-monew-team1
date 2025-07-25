@@ -44,13 +44,12 @@ COPY --from=build /app/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar ./app.j
 EXPOSE 80
 
 # 애플리케이션 실행을 위한 ENTRYPOINT와 CMD 조합
-ENTRYPOINT ["sh", "-c"]
-CMD ["java ${JVM_OPTS} -jar app.jar"]
+CMD ["sh", "-c", "java $JVM_OPTS -jar app.jar --server.port=${SERVER_PORT:-80} --spring.profiles.active=${SPRING_PROFILES_ACTIVE}"]
 
 # (선택) 보안 강화를 위한 비루트 사용자 실행 예시
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # 로그 디렉토리 생성 및 권한 부여
-RUN mkdir -p /app/logs && chown -R appuser:appgroup /app/logs
+# RUN mkdir -p /app/logs && chown -R appuser:appgroup /app/logs
 
-USER appuser
+# USER appuser
