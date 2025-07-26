@@ -73,6 +73,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Debug files
+        run: |
+          echo "현재 작업 디렉토리:"
+          pwd
+          echo "루트 파일 목록:"
+          ls -al
+          echo "task-definition.json 내용 확인:"
+          cat task-definition.json || echo "파일을 찾지 못했습니다."
+
       - name: Render new task definition with updated image
         id: render-task
         uses: aws-actions/amazon-ecs-render-task-definition@v1
