@@ -20,7 +20,7 @@ jobs:
       image: ${{ steps.build-image.outputs.image }}
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
@@ -67,14 +67,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
-      #          sparse-checkout: |
-#            task-definition.json
-#          sparse-checkout-cone-mode: false
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -83,21 +80,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Debug files
-        run: |
-          echo "현재 작업 디렉토리:"
-          pwd
-          echo "루트 파일 목록:"
-          ls -al
-          echo "task-definition.json 내용 확인:"
-          cat task-definition.json || echo "파일을 찾지 못했습니다."
-
-      - name: Render new task definition with updated image
+      - name: Render new ECS task definition
         id: render-task
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: monew-app   # JSON 안의 containerDefinitions.name과 일치해야 함
+          container-name: monew-app
           image: ${{ needs.build-and-push.outputs.image }}
 
       - name: Deploy to ECS
