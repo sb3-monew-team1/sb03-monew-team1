@@ -61,7 +61,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           chmod +x ./gradlew
-          ./gradlew build
+          ./gradlew bootJar
 
           docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
                        -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest-${GITHUB_REF_NAME} .
