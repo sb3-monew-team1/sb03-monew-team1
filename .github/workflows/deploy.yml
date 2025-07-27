@@ -33,16 +33,6 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Configure AWS credentials for ECR
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -64,7 +54,7 @@ jobs:
           ./gradlew bootJar
 
           docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
-                       -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest-${GITHUB_REF_NAME} .
+                       -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest .
 
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
