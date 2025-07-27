@@ -11,6 +11,7 @@ env:
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
   ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
   ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+  TASK_DEF_PATH: task-definition.json
 
 jobs:
   build-and-push:
@@ -24,7 +25,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -32,6 +32,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Configure AWS credentials for ECR
         uses: aws-actions/configure-aws-credentials@v4
@@ -51,10 +61,10 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           chmod +x ./gradlew
-          ./gradlew bootJar
+          ./gradlew build
 
           docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
-                       -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest .
+                       -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest-${GITHUB_REF_NAME} .
 
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
@@ -71,7 +81,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -84,7 +93,7 @@ jobs:
         id: render-task
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: ${{ env.TASK_DEF_PATH }}
           container-name: monew-app
           image: ${{ needs.build-and-push.outputs.image }}
 
@@ -98,6 +107,7 @@ jobs:
 
       - name: Rollback on failure
         if: failure()
+        continue-on-error: false
         run: |
           echo "ECS Deploy Failed. Rolling back to previous task definition..."
           PREV_TASK_DEF=$(aws ecs describe-services \
@@ -105,7 +115,16 @@ jobs:
             --services ${{ env.ECS_SERVICE }} \
             --query "services[0].taskDefinition" \
             --output text)
-          aws ecs update-service \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ env.ECS_SERVICE }} \
-            --task-definition $PREV_TASK_DEF
+          
+            if aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --service ${{ env.ECS_SERVICE }} \
+              --task-definition $PREV_TASK_DEF; then
+              aws ecs wait services-stable \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --services ${{ env.ECS_SERVICE }}
+              echo "Rollback completed and service stabilized"
+            else
+              echo "Rollback failed"
+              exit 1
+            fi
