@@ -42,9 +42,6 @@ logging:
     com.sprint.mission: info
 
 management:
-  health:
-    mongo:
-      enabled: false
   endpoints:
     web:
       exposure:
@@ -52,6 +49,8 @@ management:
       base-path: /actuator  # Actuator 엔드포인트 기본 경로
   endpoint:
     health:
+      probes:
+        enabled: true
       show-details: always      # 건강 상태 상세 정보 표시
       show-components: always   # 컴포넌트별 상태 정보 표시
 
@@ -77,3 +76,4 @@ aws:
     backup-prefix: articles    # 기사 S3 저장 경로
     logDir: /app/logs    # 로그 경로
     log-prefix: logs    # 로그 S3 저장 경로
+
