@@ -10,7 +10,7 @@
 
 ## 테스트 커버리지
 
-[![codecov](https://codecov.io/gh/sb3-monew-team1/sb03-monew-team1/branch/dev/graph/badge.svg?token=QH0C73AD22)](https://codecov.io/gh/sb3-monew-team1/sb03-monew-team1)
+[![codecov](https://codecov.io/gh/sb3-monew-team1/sb03-monew-team1/graph/badge.svg?token=QH0C73AD22)](https://codecov.io/gh/sb3-monew-team1/sb03-monew-team1)
 
 ## 팀원 구성
 
