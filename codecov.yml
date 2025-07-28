@@ -12,4 +12,4 @@ ignore:
   - "**/config/**"
   - "**/*ActivityEventListener.java"
   - "**/Q*.java"
-  - "**/util"
+  - "**/util/**"
