@@ -1,0 +1,85 @@
+name: CI - Test & Coverage on PR
+
+# 트리거 조건 : main, dev 브랜치에 PR 생성시 자동 실행
+on:
+  pull_request:
+    branches: [ main, dev ]
+
+# 필요한 권한 설정
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 환경 변수 설정 (Variables)
+      - name: Set environment variables
+        run: |
+          echo "NEWS_API_NAVER_BASE_URL=${{ vars.NEWS_API_NAVER_BASE_URL }}" >> $GITHUB_ENV
+          echo "NEWS_API_NAVER_SOURCE=${{ vars.NEWS_API_NAVER_SOURCE }}" >> $GITHUB_ENV
+          echo "NEWS_RSS_HANKYUNG_URL=${{ vars.NEWS_RSS_HANKYUNG_URL }}" >> $GITHUB_ENV
+          echo "NEWS_RSS_CHOSUN_URL=${{ vars.NEWS_RSS_CHOSUN_URL }}" >> $GITHUB_ENV
+          echo "NEWS_RSS_YONHAP_URL=${{ vars.NEWS_RSS_YONHAP_URL }}" >> $GITHUB_ENV
+
+      # 환경 변수 설정 (Secrets)
+      - name: Set environment secrets
+        run: |
+          echo "NEWS_API_NAVER_CLIENT_ID=${{ secrets.NEWS_API_NAVER_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "NEWS_API_NAVER_CLIENT_SECRET=${{ secrets.NEWS_API_NAVER_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "AWS_S3_REGION=${{ secrets.AWS_S3_REGION }}" >> $GITHUB_ENV
+          echo "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}" >> $GITHUB_ENV
+          echo "AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}" >> $GITHUB_ENV
+
+      # Gradle 캐시 활용 (빌드 속도 향상)
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 테스트 및 커버리지 리포트 생성
+      - name: Run tests and generate JaCoCo report
+        run: ./gradlew clean test jacocoTestReport
+
+      # Codecov 업로드
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./build/reports/jacoco/test/jacocoTestReport.xml
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      # PR에 커버리지 요약 댓글 작성
+      - name: Report test Coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.7.2
+        if: success()
+        with:
+          title: 📝 Test Coverage Report
+          paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          update-comment: true
+          token: ${{ secrets.GITHUB_TOKEN }}

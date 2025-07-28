@@ -1,0 +1,36 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=${POSTGRES_SCHEMA}
+    driver-class-name: org.postgresql.Driver
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    # OSIV 비활성화
+    open-in-view: false
+
+  batch:
+    jdbc:
+      initialize-schema: never
+
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+
+server:
+  port: ${SERVER_PORT:80}
+
+logging:
+  level:
+    root: info
+    com.sprint.mission: info
