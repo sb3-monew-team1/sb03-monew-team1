@@ -16,3 +16,6 @@ ignore:
   - "**/config/**"
   - "**/*ActivityEventListener.java"
   - "**/Q*.java"
+  - "**/interceptor/**"
+  - "**/scheduler/**"
+  - "**/util/**"
