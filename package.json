@@ -1,0 +1,32 @@
+{
+  "name": "sb03-monew-team1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky install",
+    "postinstall": "chmod +x .husky/* || true",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sb3-monew-team1/sb03-monew-team1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sb3-monew-team1/sb03-monew-team1/issues"
+  },
+  "homepage": "https://github.com/sb3-monew-team1/sb03-monew-team1#readme",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "jira-prepare-commit-msg": "^1.7.2"
+  },
+  "description": "",
+
+  "jira-prepare-commit-msg": {
+    "messagePattern": "[$J] $M",
+    "allowEmptyCommitMessage": false,
+    "ignoredBranchesPattern": "^(master|main|dev|develop|development|release)$"
+  }
+}
