@@ -6,3 +6,9 @@ coverage:
       default:
 
 comment: true
+
+ignore:
+  - "**/seeder/**"
+  - "**/config/**"
+  - "**/*ActivityEventListener.java"
+  - "**/Q*.java"

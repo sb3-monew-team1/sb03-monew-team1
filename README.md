@@ -8,6 +8,10 @@
 >
 > 프로젝트 기간: 2025.07.08 ~ 2025.07.30
 
+## 테스트 커버리지
+
+[![codecov](https://codecov.io/gh/sb3-monew-team1/sb03-monew-team1/branch/dev/graph/badge.svg?token=QH0C73AD22)](https://codecov.io/gh/sb3-monew-team1/sb03-monew-team1)
+
 ## 팀원 구성
 
 ![image](src/main/resources/assets/Capture_2025-07-09_09-41-13.png)
