@@ -1,6 +1,6 @@
 # Monew - 1조 할머니 보쌈
 
-![cover](https://private-user-images.githubusercontent.com/99791512/471275650-38b404ec-dbe4-4c79-8f4d-3e5a71a68e76.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM2NjM3NTMsIm5iZiI6MTc1MzY2MzQ1MywicGF0aCI6Ii85OTc5MTUxMi80NzEyNzU2NTAtMzhiNDA0ZWMtZGJlNC00Yzc5LThmNGQtM2U1YTcxYTY4ZTc2LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzI4VDAwNDQxM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTVhNWE1MDA4NDgzNzM3MTM1ODg2NTU1Y2VjNzg2MmM3ODI4NGFhNGM1MjM5NDY0MTMxMWI1YWFjZGU2MWM5NjgmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.1O4l8W06I5c89W8t_wgK_iQVBYZmnlnbwMYChYhuZOo)
+![cover](src/main/resources/assets/raw.png)
 
 ## 프로젝트 소개
 
@@ -10,7 +10,7 @@
 
 ## 팀원 구성
 
-![image](https://private-user-images.githubusercontent.com/99791512/471275573-4eff9503-35a5-4b23-9870-62f9ce6d0d4d.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM2NjM3MDksIm5iZiI6MTc1MzY2MzQwOSwicGF0aCI6Ii85OTc5MTUxMi80NzEyNzU1NzMtNGVmZjk1MDMtMzVhNS00YjIzLTk4NzAtNjJmOWNlNmQwZDRkLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzI4VDAwNDMyOVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTE3M2Y5ZWJmNWRkZWM3ZDk4NTIzNjM1YmUyZmU1ZGI1YzgwYWQ5NDI5YzY4OGE5NjUzZjJiNWFkNzlmMzg3MWImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.ilm1U7hlNC5aDftnBHKWakNkD6QSna3TvMXkySpNXys)
+![image](src/main/resources/assets/Capture_2025-07-09_09-41-13.png)
 
 <table>
   <thead>
@@ -23,10 +23,10 @@
   </thead>
   <tbody>
     <tr>
-      <td><img src="https://private-user-images.githubusercontent.com/99791512/471275812-a34a761f-294c-4a97-8877-da49fabee031.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM2NjM4NjQsIm5iZiI6MTc1MzY2MzU2NCwicGF0aCI6Ii85OTc5MTUxMi80NzEyNzU4MTItYTM0YTc2MWYtMjk0Yy00YTk3LTg4NzctZGE0OWZhYmVlMDMxLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzI4VDAwNDYwNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTgzNTU0YzU0ZWJlYmJhNzJhNGQxMzU0ODhiMzk2MGU1NzU4MzZlOWFkMzVhOTE5YjhiZjBmNGZjNWU4YzU5YmMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.oCk_VN37p3xInxo04Ouu0ehgzC7G3rZSp3JrDM2iu0I" style="width: 100%; height: auto;"></td>
-      <td><img src="https://private-user-images.githubusercontent.com/99791512/471275821-46c80ce7-c6d6-49de-bbaa-b7bf26297188.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM2NjM4NjQsIm5iZiI6MTc1MzY2MzU2NCwicGF0aCI6Ii85OTc5MTUxMi80NzEyNzU4MjEtNDZjODBjZTctYzZkNi00OWRlLWJiYWEtYjdiZjI2Mjk3MTg4LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzI4VDAwNDYwNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTJmNzM3M2ZkYWE4OGQxNTZmNzExYTViOTIzNDRjMTZjMTI3YTNlMzJjZGZiODkzMzExMzA3MDkxZDg0NzRkODYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.E-kdFUs7D--Ea9Qz71ko5M6X5asENBSVCE6hRta2czw" style="width: 100%; height: auto;"></td>
-      <td><img src="https://private-user-images.githubusercontent.com/99791512/471275830-3b1a41a8-7ab6-4b58-94c0-9efc784b665e.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM2NjM4NjQsIm5iZiI6MTc1MzY2MzU2NCwicGF0aCI6Ii85OTc5MTUxMi80NzEyNzU4MzAtM2IxYTQxYTgtN2FiNi00YjU4LTk0YzAtOWVmYzc4NGI2NjVlLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzI4VDAwNDYwNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWQzZDExYWE1MmM3NTdkOWViMmJiZDk4MTUwZGE4YzRjMTA0OTcwN2JiYjE5OTczNGQ1OTM4MzJiMjA3MGE0YzkmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.bAJOuyLn98oac82cKvz0vAZS6lWGv-mn3eJH2D8IT5E" style="width: 100%; height: auto;"></td>
-      <td><img src="https://private-user-images.githubusercontent.com/99791512/471275838-48fd7428-abf5-4412-9d63-e20f7c33d184.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM2NjM4NjQsIm5iZiI6MTc1MzY2MzU2NCwicGF0aCI6Ii85OTc5MTUxMi80NzEyNzU4MzgtNDhmZDc0MjgtYWJmNS00NDEyLTlkNjMtZTIwZjdjMzNkMTg0LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzI4VDAwNDYwNFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTUzOTIzNzE0NDg0YmMzNjBkNmY5NjRjYmY3NjcwMjk4MzBiMGY0MTg4ZGM3NTQyMDQ0MzllMGZiOTJmYWRjOWEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.eGpIxYeUPLmnrBs57AHut8_Za1DbbbaQ5Ixy763mwZ0" style="width: 100%; height: auto;"></td>
+      <td><img src="src/main/resources/assets/Capture_2025-07-09_09-51-00.png" style="width: 100%; height: auto;"></td>
+      <td><img src="src/main/resources/assets/Capture_2025-07-09_09-40-37.png" style="width: 100%; height: auto;"></td>
+      <td><img src="src/main/resources/assets/Capture_2025-07-09_09-40-22.png" style="width: 100%; height: auto;"></td>
+      <td><img src="src/main/resources/assets/Capture_2025-07-09_09-40-03.png" style="width: 100%; height: auto;"></td>
     </tr>
     <tr>
       <td>BE / Infra</td>
@@ -60,8 +60,6 @@
 | 일정 관리     | <img src="https://img.shields.io/badge/Jira-0052CC.svg?&logo=jira&logoColor=white"> <img src="https://img.shields.io/badge/Notion-Timeline-333333.svg?&logo=Notion&labelColor=000000&logoColor=white">                                                                                                                                                                                                                                                                                    |
 | 배포 & 모니터링 | <img src="https://img.shields.io/badge/AWS-ECR,ECS,RDS,S3-333333.svg?&logo=aws&labelColor=000000&logoColor=white"> <img src="https://img.shields.io/badge/Docker-2496ED.svg?&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Prometheus-E6522C.svg?&logo=prometheus&logoColor=white"> <img src="https://img.shields.io/badge/Grafana-F46800.svg?&logo=grafana&logoColor=white">                                                                                      |
 | IDE       | <img src="https://img.shields.io/badge/IntellijIDEA-000000.svg?&logo=intellijidea&logoColor=white">                                                                                                                                                                                                                                                                                                                                                                                       |
-
-## 주요 기능
 
 ## 프로젝트 구조
 
