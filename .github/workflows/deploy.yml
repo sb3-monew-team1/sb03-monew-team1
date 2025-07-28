@@ -3,7 +3,7 @@ name: Deploy to AWS ECS
 # 트리거 조건: release 브랜치에 푸시 시 자동 실행
 on:
   push:
-    branches: [ release, chore-MN-36 ]
+    branches: [ release ]
   workflow_dispatch:
 
 env:
@@ -52,10 +52,8 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew bootJar
-          
           docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest .
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
-
           echo "image=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest" >> $GITHUB_OUTPUT
 
   deploy:
@@ -75,10 +73,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Render new ECS task definition
         id: render-task
