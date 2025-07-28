@@ -2,12 +2,8 @@ coverage:
   status:
     project:
       default:
-        target: auto
-        threshold: 1%
-        branches: off
     patch:
       default:
-        branches: off
 
 comment: true
 
