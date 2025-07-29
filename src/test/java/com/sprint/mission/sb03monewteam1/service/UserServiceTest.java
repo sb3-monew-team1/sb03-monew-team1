@@ -35,6 +35,7 @@ import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.time.Instant;
@@ -71,6 +72,9 @@ public class UserServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
+    private NotificationRepository notificationRepository;
+
+    @Mock
     private UserMapper userMapper;
 
     @InjectMocks
@@ -87,6 +91,7 @@ public class UserServiceTest {
         assertNotNull(interestRepository);
         assertNotNull(commentLikeRepository);
         assertNotNull(commentRepository);
+        assertNotNull(notificationRepository);
         assertNotNull(userMapper);
         assertNotNull(userService);
     }
@@ -438,6 +443,7 @@ public class UserServiceTest {
             willDoNothing().given(commentRepository).delete(any());
             willDoNothing().given(commentLikeRepository).deleteByUserId(userId);
             willDoNothing().given(subscriptionRepository).deleteByUserId(userId);
+            willDoNothing().given(notificationRepository).deleteAllByUserId(userId);
             willDoNothing().given(userRepository).deleteById(userId);
 
             // When
@@ -509,6 +515,7 @@ public class UserServiceTest {
             willDoNothing().given(commentRepository).delete(any());
             willDoNothing().given(commentLikeRepository).deleteByUserId(userId);
             willDoNothing().given(subscriptionRepository).deleteByUserId(userId);
+            willDoNothing().given(notificationRepository).deleteAllByUserId(userId);
             willDoNothing().given(userRepository).deleteById(userId);
 
             // When

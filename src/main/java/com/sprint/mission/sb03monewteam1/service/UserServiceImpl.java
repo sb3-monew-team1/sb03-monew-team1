@@ -18,6 +18,7 @@ import com.sprint.mission.sb03monewteam1.mapper.UserMapper;
 import com.sprint.mission.sb03monewteam1.repository.jpa.comment.CommentRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.commentLike.CommentLikeRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
+import com.sprint.mission.sb03monewteam1.repository.jpa.notification.NotificationRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.user.UserRepository;
 import java.util.List;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final InterestRepository interestRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final CommentRepository commentRepository;
+    private final NotificationRepository notificationRepository;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -157,10 +159,13 @@ public class UserServiceImpl implements UserService {
             commentLikeRepository.deleteByCommentId(comment.getId());
             commentRepository.delete(comment);
         });
+
         commentLikeRepository.deleteByUserId(userId);
         log.debug("댓글 좋아요 객체 삭제 완료");
         subscriptionRepository.deleteByUserId(userId);
         log.debug("구독 객체 삭제 완료");
+        notificationRepository.deleteAllByUserId(userId);
+        log.debug("알림 객체 삭제 완료");
         userRepository.deleteById(userId);
         log.debug("사용자 삭제 완료");
 
