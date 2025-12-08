@@ -152,9 +152,10 @@ src/main/java
 npm install
 ```
 
-## 프로젝트 회고록
-🔗 [발표 자료](https://drive.google.com/file/d/1KYeLmpio8ld3cvXxDOc0MM9R_aDwEdeH/view?usp=sharing)
-
+## 🔗 추가 자료
+- 📚 [팀 노션](https://ohgiraffers.notion.site/1-207649136c1180d8b4bfcf36855253db?source=copy_link)  
+- 🗣️ [발표 자료](https://drive.google.com/file/d/1KYeLmpio8ld3cvXxDOc0MM9R_aDwEdeH/view?usp=sharing)
+- 💭 [프로젝트 회고록](https://www.notion.so/codeit/1-2396fd228e8d80c69b3ac32c9b53b903)
 
 
 
