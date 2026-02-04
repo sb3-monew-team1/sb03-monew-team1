@@ -12,7 +12,10 @@ import com.sprint.mission.sb03monewteam1.exception.notification.NotificationSend
 import com.sprint.mission.sb03monewteam1.repository.jpa.interest.InterestRepository;
 import com.sprint.mission.sb03monewteam1.repository.jpa.subscription.SubscriptionRepository;
 import com.sprint.mission.sb03monewteam1.service.NotificationService;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -29,13 +32,13 @@ public class NotificationEventListener {
     private final SubscriptionRepository subscriptionRepository;
     private final InterestRepository interestRepository;
 
-    private final java.util.Map<java.util.UUID, Integer> articleCountMap = new java.util.concurrent.ConcurrentHashMap<>();
-    private final java.util.Map<java.util.UUID, String> interestNameMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Integer> articleCountMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, String> interestNameMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     @EventListener
     public void handleCollectArticle(NewArticleCollectEvent event) {
 
-        java.util.UUID interestId = event.getInterestId();
+        UUID interestId = event.getInterestId();
         String interestName = event.getInterestName();
         List<ArticleDto> articles = event.getArticles();
 
@@ -44,20 +47,23 @@ public class NotificationEventListener {
 
     }
 
+    @Async
     @EventListener
     public void handleCollectJobCompleted(NewsCollectJobCompletedEvent event) {
         if ("newsCollectJob".equals(event.getJobName())) {
-            flushNotifications();
+            Map<UUID, Integer> articleCounts = new HashMap<>(articleCountMap);
+            Map<UUID, String> interestNames = new HashMap<>(interestNameMap);
             articleCountMap.clear();
             interestNameMap.clear();
+            flushNotifications(articleCounts, interestNames);
         }
     }
 
-    private void flushNotifications() {
-        for (java.util.Map.Entry<java.util.UUID, Integer> entry : articleCountMap.entrySet()) {
-            java.util.UUID interestId = entry.getKey();
+    private void flushNotifications(Map<UUID, Integer> articleCounts, Map<UUID, String> interestNames) {
+        for (Map.Entry<UUID, Integer> entry : articleCounts.entrySet()) {
+            UUID interestId = entry.getKey();
             int count = entry.getValue();
-            String interestName = interestNameMap.getOrDefault(interestId, "");
+            String interestName = interestNames.getOrDefault(interestId, "");
 
             List<User> subscribers = subscriptionRepository.findAllByInterestIdFetchUser(interestId)
                 .stream()
